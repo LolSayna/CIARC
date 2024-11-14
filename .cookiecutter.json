@@ -1,0 +1,16 @@
+{
+  "_checkout": null,
+  "_output_dir": "/shared/CIARC",
+  "_repo_dir": "/tmp/tmp9pguacgi/cookiecutter-python-agc-edition-main",
+  "_template": "/shared/cookiecutter-python-agc-edition-main.zip",
+  "author": "Riftonauts",
+  "copyright_year": "2024",
+  "development_status": "Development Status :: 1 - Planning",
+  "email": "TBD",
+  "friendly_name": "Ciarc",
+  "gitlab_path": "Lolsayna",
+  "license": "MIT",
+  "package_name": "CIARC",
+  "project_name": "CIARC",
+  "version": "0.0.0"
+}

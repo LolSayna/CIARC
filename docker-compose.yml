@@ -1,0 +1,47 @@
+version: '3.8'  
+  
+services:  
+  traefik:  
+    image: traefik:v3.1  
+    command:  
+#      - "--log.level=DEBUG"  
+      - "--api.insecure=true"  
+      - "--providers.docker=true"  
+      - "--providers.docker.exposedbydefault=false"  
+      - "--entrypoints.web.address=:80"  
+      - "--entrypoints.websecure.address=:443"  
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"  
+      - "--certificatesresolvers.myresolver.acme.email=Discord@hotmail.de"  
+#      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"  
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"  
+      - "--certificatesresolvers.myresolver.acme.httpChallenge.entryPoint=web"  
+    ports:  
+      - "80:80"  
+      - "443:443"  
+      - "8080:8080"  
+    volumes:  
+      - "./letsencrypt:/letsencrypt"  
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"  
+    labels:  
+      - "traefik.enable=true"  
+      - "traefik.http.routers.traefik.rule=Host(`c103-219.cloud.gwdg.de`)"  
+      - "traefik.http.routers.traefik.entrypoints=websecure"  
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"  
+  
+  web:  
+    build: .  
+    environment:  
+      - FLASK_ENV=production  
+    volumes:  
+      - ./data:/app/data  
+      - ./.env:/app/.env  
+    labels:  
+      - "traefik.http.routers.web.rule=Host(`c103-219.cloud.gwdg.de`)"  
+      - "traefik.http.routers.web.entrypoints=websecure"  
+      - "traefik.http.routers.web.tls.certresolver=myresolver"  
+      - "traefik.http.services.web.loadbalancer.server.port=8000"  
+    depends_on:  
+      - traefik  
+  
+volumes:  
+  letsencrypt:
