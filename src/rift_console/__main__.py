@@ -23,7 +23,7 @@ def main() -> None:
 def run_server() -> None:
     """Run the Flask development server on port 8000."""
     click.echo("Starting Flask development server on port 8000...")
-    app.run(port=8000)
+    app.run(port=8000, debug=False)
 
 
 @main.command()

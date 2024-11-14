@@ -143,6 +143,8 @@ def mypy(session: Session) -> None:
     """Type-scan using mypy."""
     args = session.posargs or ["src", "tests", "docs/conf.py"]
     session.install(".")
+    requirements = session.poetry.export_requirements()
+    session.install("-r", str(requirements))
     session.install("mypy", "pytest")
     session.run("mypy", *args)
     if not session.posargs:
@@ -154,6 +156,8 @@ def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
     session.install("coverage[toml]", "pytest", "pygments")
+    requirements = session.poetry.export_requirements()
+    session.install("-r", str(requirements))
     try:
         session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
     finally:
@@ -179,6 +183,8 @@ def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
     session.install("pytest", "typeguard", "pygments")
+    requirements = session.poetry.export_requirements()
+    session.install("-r", str(requirements))
     session.run("pytest", f"--typeguard-packages={packages}", *session.posargs)
 
 
@@ -207,6 +213,8 @@ def docs_build(session: Session) -> None:
 
     session.install(".")
     session.install("sphinx", "sphinx-click", "furo", "myst-parser")
+    requirements = session.poetry.export_requirements()
+    session.install("-r", str(requirements))
 
     build_dir = Path("html")
     if build_dir.exists():

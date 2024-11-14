@@ -49,10 +49,10 @@ test: ## run tests quickly with the default Python
 	pytest
 
 test-melvonaut:
-    pytest tests/test_melvonaut
+	pytest tests/test_melvonaut
 
 test-rift-console:
-    pytest tests/test_rift_console
+	pytest tests/test_rift_console
 
 test-all: ## run tests on every Python version with tox
 	nox
