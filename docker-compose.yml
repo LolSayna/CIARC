@@ -24,6 +24,7 @@ services:
     volumes:
       - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./.http-pass:/.http-pass"
     labels:
       - "traefik.enable=true"
 
@@ -45,6 +46,8 @@ services:
       - "traefik.http.services.flask.loadbalancer.server.url=10.254.1.31"
       - "traefik.http.routers.flask.tls=true"
       - "traefik.enable=true"
+      - "traefik.http.routers.flask.middlewares=flask_auth"
+      - "traefik.http.middlewares.flask_auth.basicauth.usersfile=/.http-pass"
     depends_on:
       - traefik
 
