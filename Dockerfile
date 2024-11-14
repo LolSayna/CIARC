@@ -8,12 +8,14 @@ WORKDIR /app
 
 COPY poetry.lock pyproject.toml ./
 
-RUN pip install poetry && poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+RUN pip install poetry && poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi --no-root
 
 COPY . .
+
+RUN poetry install
 
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
-CMD ["ciarc"]
+CMD ["rift-console run-server"]

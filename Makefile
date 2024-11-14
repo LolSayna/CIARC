@@ -48,6 +48,12 @@ lint: ## check style
 test: ## run tests quickly with the default Python
 	pytest
 
+test-melvonaut:
+    pytest tests/test_melvonaut
+
+test-rift-console:
+    pytest tests/test_rift_console
+
 test-all: ## run tests on every Python version with tox
 	nox
 
@@ -75,13 +81,13 @@ install: clean ## Install CIARC
 	poetry install
 
 run: ## Run CIARC
-	PYTHONPATH=$(shell pwd) ciarc
+	PYTHONPATH=$(shell pwd) rift-console run-server
 
-docker-build: clean test-all ## Build docker image for CIARC
-	docker build -t docker.gitlab-ce.gwdg.de/hpc-team/scalable-ai/CIARC:latest .
+docker-build: clean ## Build docker image for CIARC
+	docker build -t local/rift-console:latest .
 
 docker-run: ## Run CIARC in docker
-	docker run --rm -v $(shell pwd)/.env:/app/.env:ro docker.gitlab-ce.gwdg.de/Lolsayna/CIARC:latest
+	docker run --rm -v $(shell pwd)/.env:/app/.env:ro local/rift-console:latest
 
 docker-push: ## Push docker image to gitlab
 	docker login docker.gitlab-ce.gwdg.de

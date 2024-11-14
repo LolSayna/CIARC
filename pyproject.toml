@@ -13,8 +13,8 @@ classifiers = [
 ]
 
 packages = [
-    { include = "src/melvonaut" },
-    { include = "src/rift_console" }
+    { include = "melvonaut", from = "src" },
+    { include = "rift_console", from = "src" }
 ]
 
 [tool.poetry.urls]
@@ -27,6 +27,7 @@ click = ">=8.0.1"
 [tool.poetry.group.melvonaut.dependencies]
 
 [tool.poetry.group.rift_console.dependencies]
+flask = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
