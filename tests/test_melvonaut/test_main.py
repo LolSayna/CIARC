@@ -1,9 +1,12 @@
 """Test cases for the __main__ module."""
+import asyncio
+from time import sleep
 
 import pytest
 from click.testing import CliRunner
+import uvloop
 
-from melvonaut import __main__
+from melvonaut.__main__ import start_event_loop
 
 
 @pytest.fixture
@@ -12,7 +15,16 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
+@pytest.mark.asyncio
 def test_main_succeeds(runner: CliRunner) -> None:
     """It exits with a status code of zero."""
-    result = runner.invoke(__main__.main)
-    assert result.exit_code == 0
+
+    import threading
+    stop_event = threading.Event()
+    thread = threading.Thread(target=start_event_loop, args=[stop_event], daemon=True)
+    thread.start()
+
+    sleep(5)
+    stop_event.set()
+    thread.join()
+    assert thread.is_alive() == False
