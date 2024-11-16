@@ -5,13 +5,14 @@ import signal
 import sys
 from collections.abc import Callable
 from pprint import pprint
-from typing import Any
+from typing import Any, Awaitable
 
 import aiohttp
 import click
 from loguru import logger
 import uvloop
 import enum
+
 from pydantic import BaseModel, ConfigDict
 
 import melvonaut.constants as con
@@ -40,11 +41,11 @@ class State(enum.Enum):
 class Timer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    timeout: int = 0
-    callback: Callable[[], Any] = None
-    task: asyncio.Task = None
+    timeout: int
+    callback: Callable[[], Awaitable[Any]]
+    task: asyncio.Task[None]
 
-    def __init__(self, timeout: int, callback: lambda: Any) -> None:
+    def __init__(self, timeout: int, callback: Callable[[], Awaitable[Any]]) -> None:
         super().__init__()
         self.timeout = timeout
         self.callback = callback
@@ -84,8 +85,8 @@ async def get_announcements() -> None:
         ) as response:
             if response.status == 200:
                 async for line in response.content:
-                    line = line.decode("utf-8").strip()
-                    logger.info(f"Received announcement: {line.strip()}")
+                    clean_line = line.decode("utf-8").strip()
+                    logger.info(f"Received announcement: {clean_line}")
             else:
                 logger.warning(f"Failed to get announcements: {response.status}")
 

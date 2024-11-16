@@ -1,48 +1,56 @@
-# Ciarc
+# CIARC - Riftonauts
 
-[![pipeline status](https://gitlab-ce.gwdg.de/Lolsayna/CIARC/badges/main/pipeline.svg)](https://gitlab-ce.gwdg.de/Lolsayna/CIARC/-/commits/main)
-[![coverage report](https://gitlab-ce.gwdg.de/Lolsayna/CIARC/badges/main/coverage.svg)](https://gitlab-ce.gwdg.de/Lolsayna/CIARC/-/commits/main)
-[![Latest Release](https://gitlab-ce.gwdg.de/Lolsayna/CIARC/-/badges/release.svg)](https://gitlab-ce.gwdg.de/Lolsayna/CIARC/-/releases)
-
-[![Docs](https://img.shields.io/badge/Documentation-Pages-blue)](https://Lolsayna.pages-ce.gwdg.de/CIARC/)
+[![Web](https://img.shields.io/badge/Web-blue)](https://c103-219.cloud.gwdg.de/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
 
 [pre-commit]: https://github.com/pre-commit/pre-commit
-[black]: https://github.com/psf/black
 
-## Features
+## Overview
 
-- TODO
+This is the [Riftonaut's CIARC](https://github.com/Lolsayna/CIARC) repository.
+It implements software for MELVIN and the Operator Console of the
+ESA [Computer In A Room Challenge 3](https://www.esa.int/Education/Engagement/Applications_are_now_open_for_the_ESA_Academy_s_Computer_In_A_Room_Challenge_CIARC_3).
+
+The Operator Console, referred to as _Rift-Console_, implements a web application based on Flask,
+which provides an interface to visualize and control the MELVIN in the satellite simulation.
+Moreover, it implements background tasks to monitor MELVIN and to retrieve data from it.
+
+The driver software for MELVIN, referred to as _Melvonaut_, implements an async python service,
+which continuously operates MELVIN towards the completion of its tasks.
+Moreover, it provides endpoints to retrieve the collected data to the Rift-Console.
 
 ## Requirements
 
-- TODO
+The implementation uses Python 3.12.
+To install the requirements use [Poetry](https://python-poetry.org/).
+In order to run the test suite, [Nox](https://nox.thea.codes/) is required.
+
+The easiest way to set up both Nox and Poetry is to use [pipx](https://pipx.pypa.io/)
+and then to run
+
+```bash
+pipx install poetry
+pipx install nox
+pipx inject nox nox-poetry
+```
 
 ## Installation
 
-- TODO
+To install the requirements run `poetry install`.
+This provides the `melvonaut` and `rift-console` commands.
+
+The rift-console can be deployed as a docker container.
+Use the `docker-compose up --build -d` command to start it.
+Or refer to `make docker-compose-up` in the Makefile.
 
 ## Usage
 
-Please see the [Command-line Reference] for details.
-
-## Contributing
-
-Contributions are very welcome.
-To learn more, see the [Contributor Guide].
+- TODO
 
 ## License
 
 Distributed under the terms of the [MIT license][license],
 _Ciarc_ is free and open source software.
 
-## Issues
 
-If you encounter any problems,
-please [file an issue] along with a detailed description.
-
-[file an issue]: https://gitlab-ce.gwdg.de/Lolsayna/CIARC/issues
-[license]: https://gitlab-ce.gwdg.de/Lolsayna/CIARC/blob/main/LICENSE
-[contributor guide]: https://Lolsayna.pages-ce.gwdg.de/CIARC/CONTRIBUTING.html
-[command-line reference]: https://Lolsayna.pages-ce.gwdg.de/CIARC/usage.html
+[license]: https://github.com/Lolsayna/CIARC/blob/main/LICENSE

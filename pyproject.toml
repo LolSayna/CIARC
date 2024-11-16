@@ -5,9 +5,9 @@ description = "Ciarc"
 authors = ["Riftonauts <TBD>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://gitlab-ce.gwdg.de/Lolsayna/CIARC"
-repository = "https://gitlab-ce.gwdg.de/Lolsayna/CIARC"
-documentation = "https://Lolsayna.pages-ce.gwdg.de/CIARC"
+homepage = "https://github.com/Lolsayna/CIARC"
+repository = "https://github.com/Lolsayna/CIARC"
+#documentation = ""
 classifiers = [
     "Development Status :: 1 - Planning",
 ]
@@ -18,7 +18,7 @@ packages = [
 ]
 
 [tool.poetry.urls]
-Changelog = "https://gitlab-ce.gwdg.de/Lolsayna/CIARC/-/blob/main/CHANGELOG"
+Changelog = "https://github.com/Lolsayna/CIARC/-/blob/main/CHANGELOG"
 
 [tool.poetry.dependencies]
 python = "^3.12"

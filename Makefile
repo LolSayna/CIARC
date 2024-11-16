@@ -92,3 +92,6 @@ docker-run: ## Run CIARC in docker
 docker-push: ## Push docker image to gitlab
 	docker login docker.gitlab-ce.gwdg.de
 	docker push docker.gitlab-ce.gwdg.de/Lolsayna/CIARC
+
+docker-compose-up:
+	docker-compose up --build -d

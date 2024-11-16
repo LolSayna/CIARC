@@ -10,7 +10,6 @@ maxdepth: 1
 
 usage
 reference
-contributing
 License <license>
-Changelog <https://gitlab-ce.gwdg.de/Lolsayna/CIARC/-/blob/main/CHANGELOG>
+Changelog <"https://github.com/Lolsayna/CIARC/-/blob/main/CHANGELOG">
 ```
