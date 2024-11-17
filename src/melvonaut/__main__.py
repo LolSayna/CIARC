@@ -19,11 +19,14 @@ import click
 from aiofile import async_open
 from loguru import logger
 import uvloop
+# wofür wird das BaseModel benutzt?
 from pydantic import BaseModel, ConfigDict
 from PIL import Image
 
 import melvonaut.constants as con
 
+
+##### LOGGING #####
 logger.remove()
 logger.add(sink=sys.stderr, level="DEBUG", backtrace=True, diagnose=True)
 logger.add(
@@ -34,9 +37,9 @@ logger.add(
     diagnose=True,
 )
 
-loop = uvloop.new_event_loop()
 
-
+##### ENUMS #####
+# melvin satellite modes
 class State(StrEnum):
     Deployment = "deployment"
     Acquisition = "acquisition"
@@ -45,27 +48,47 @@ class State(StrEnum):
     Communication = "communication"
     Transition = "transition"
     Unknown = "none"
-
-
+# melvin lenses
 class Angle(StrEnum):
     Wide = "wide"
     Narrow = "narrow"
     Normal = "normal"
     Unknown = "unknown"
+# part of melvins state machine
+class MELVINTasks(StrEnum):
+    Mapping = "mapping"
+    Emergencies = "emergencies"
+    events = "events"
+    idle = "idle"
+# helper for images??
+class MelvinImage(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    image: Image.Image
+    angle: Angle
+    cor_x: float
+    cor_y: float
+    time: datetime.datetime
 
 
-class AreaCovered(BaseModel):
-    narrow: float
-    normal: float
-    wide: float
+##### Global Variables #####
+loop = uvloop.new_event_loop()
+current_telemetry = None
+state_planner = None
 
-
-class DataVolume(BaseModel):
-    data_volume_received: int
-    data_volume_sent: int
-
-
+##### TELEMETRY #####
 class Telemetry(BaseModel):
+
+    # helper enum for Telemetry
+    class AreaCovered(BaseModel):
+        narrow: float
+        normal: float
+        wide: float
+    # helper enum for Telemetry
+    class DataVolume(BaseModel):
+        data_volume_received: int
+        data_volume_sent: int
+
     model_config = ConfigDict(use_enum_values=True)
 
     active_time: float
@@ -111,9 +134,7 @@ class Telemetry(BaseModel):
         loop.create_task(self.store_observation())
 
 
-current_telemetry = None
-
-
+##### Timer #####
 class Timer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -138,13 +159,7 @@ class Timer(BaseModel):
         return self._task
 
 
-class MELVINTasks(StrEnum):
-    Mapping = "mapping"
-    Emergencies = "emergencies"
-    events = "events"
-    idle = "idle"
-
-
+##### State machine #####
 class StatePlanner(BaseModel):
     current_telemetry: Optional[Telemetry] = None
     previous_telemetry: Optional[Telemetry] = None
@@ -283,7 +298,7 @@ class StatePlanner(BaseModel):
                         # Transitioning directly to Acquisition is somehow bugged when safe was triggered due to empty battery
                         # await self.switch_if_battery_low(State.Charge, State.Acquisition)
                         logger.debug("State is Safe, triggering transition to Charge")
-                        await self.trigger_state_transition(State.Charge)
+                        await self.trigger_state_transition(State.Communication)
                     case State.Communication:
                         await self.switch_if_battery_low(
                             State.Charge, State.Acquisition
@@ -372,7 +387,7 @@ class StatePlanner(BaseModel):
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()
             await asyncio.gather(image_task)
 
-
+# remove once we have classes
 state_planner = StatePlanner()
 
 
@@ -420,15 +435,6 @@ async def run_get_announcements() -> None:
         await asyncio.gather(get_announcements())
         logger.info("Restarted announcements subscription")
 
-
-class MelvinImage(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    image: Image.Image
-    angle: Angle
-    cor_x: float
-    cor_y: float
-    time: datetime.datetime
 
 
 async def read_images() -> AsyncIterable[MelvinImage]:
@@ -488,7 +494,7 @@ def start_event_loop() -> None:
     loop.create_task(run_get_observations())
     loop.create_task(run_get_announcements())
 
-    # loop.create_task(run_read_images())
+    loop.create_task(run_read_images())
 
     loop.run_forever()
 
