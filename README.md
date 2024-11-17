@@ -38,6 +38,8 @@ pipx inject nox nox-poetry
 
 To install the requirements run `poetry install`.
 This provides the `melvonaut` and `rift-console` commands.
+Use `poetry shell` to get a python shell with the virtual environment activated.
+Then the commands can be used.
 
 The rift-console can be deployed as a docker container.
 Use the `docker-compose up --build -d` command to start it.
