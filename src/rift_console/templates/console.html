@@ -1,47 +1,170 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Meta tags required for Bootstrap -->
+    <!-- Boiler plate code incl Bootstrap framework-->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
+    <!-- Tab name-->
     <title>Rift-Console</title>
+
+    <!-- CSS -->
+    <style>
+      .column {
+            background-color: #f8f9fa; /* Light gray background */
+            border: 1px solid #dee2e6; /* Light border */
+            padding: 20px;
+            text-align: center;
+      }
+      /* creates some padding */
+      .spacer {
+            margin-top: 30px;
+      }
+
+      /* makes input files Xpx wide*/
+      input[type="range"] {
+          width: 100px;
+      }
+
+      /* Container for a world map */
+      /* TODO - warum klebt der manchmal an der rechten Kante 
+        und ist nicht zentriert?*/
+      #map-container {
+          position: relative;
+          width: 216px;
+          height: 108px;
+          border: 2px solid #000;
+          background-color: #f0f0f0;
+          margin-left: auto;
+          margin-right: auto;
+      }
+
+      .line {
+          position: absolute;
+          background-color: red;
+      }
+
+      .horizontal {
+          width: 12px;
+          height: 2px;
+          top: {{height_y / 100}}px;
+          left: {{(width_x / 100) - 5}}px; 
+      }
+
+      .vertical {
+          height: 12px;
+          width: 2px;
+          top: {{(height_y / 100) - 5}}px; 
+          left: {{width_x / 100}}px;
+      }
+
+      /* To display past and future pos */
+      .point {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+      }
+
+      .point_past {
+        background-color: blue;
+        top: {{(old_y / 100) - 3}}px;
+        left: {{(old_x / 100) - 3}}px;
+      }
+
+      .point_paster {
+        background-color: rgb(132, 0, 255);
+        top: {{(older_y / 100) - 3}}px;
+        left: {{(older_x / 100) - 3}}px;
+      }
+
+      .point_pastest {
+        background-color: rgb(255, 0, 212);
+        top: {{(oldest_y / 100) - 3}}px;
+        left: {{(oldest_x / 100) - 3}}px;
+      }
+    
+
+    </style>
   </head>
+
+  <!-- Main Page -->
   <body>
+
+    <!-- Display title at top -->
     <div class="container mt-5">
       <h1 class="display-3 text-center">Rift-Console</h1>
     </div>
+
+    <!-- 3 Main elements next to each other-->
     <div class="container mt-5">
-      <h2 class="text-center">Battery</h2>
-      <div class="progress mt-4">
-        <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}%</div>
+      <div class="row">
+
+        <!-- First Block: melvins status-->
+        <div class="col-md-4 column">
+          <h2>Fuel</h2>
+          <div class="progress mt-4">
+            <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}%</div>
+          </div>
+          <h2 class="spacer">Battery</h2>
+          <div class="progress mt-4">
+            <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}%</div>
+          </div>
+          <h3 class="spacer">Sim_speed: {{simulation_speed}}</h3>
+          <h3 class="spacer">width_x: {{width_x}}</h3>
+          <h3 class="spacer">height_y: {{height_y}}</h3>
+          <h3 class="spacer">timestamp: {{timestamp}}</h3>
+          
+          <!-- expand here -->
+
+        </div>
+
+        <!-- Second Block: map (and more)-->
+        <div class="col-md-4 column">
+
+          <div id="map-container">
+            <div class="line horizontal"></div>
+            <div class="line vertical"></div>
+
+
+            <div class="point point_past"></div>
+            <div class="point point_paster"></div>
+            <div class="point point_pastest"></div>
+          </div>
+        
+          <!-- expand here -->
+
+        </div>
+
+        <!-- Thrid Block: Clicky Dinge (and more)-->
+        <div class="col-md-4 column">
+
+          <h3>Clicky Dinge</h3>
+          <form action="{{ url_for('refresh_button') }}" method="post">
+            <button type="submit" class="btn btn-success">Refresh</button>
+          </form>
+
+          <div class="spacer"></div>
+          <form action="{{ url_for('reset_button') }}" method="post">
+            <button type="submit" class="btn btn-danger">Reset Sim</button>
+          </form>
+
+          <div class="spacer"></div>
+          <form action="{{ url_for('slider_button') }}" method="post">
+            <label for="speedSlider">Sim Speed Mult: </label>
+            <input type="range" id="speedSlider" name="speed" min="1" max="20" value="20">
+            <br>
+            <button type="submit" class="btn btn-primary">Change Simulation Speed</button>
+          </form>
+
+          <!-- expand here -->
+           
+        </div>
       </div>
-    </div>
-    <div class="container mt-5">
-      <h2 class="text-center">Fuel</h2>
-      <div class="progress mt-4">
-        <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}%</div>
-      </div>
-    </div>
-    <div class="container mt-5">
-      <h2 class="text-center">Pos: {{width_x}} + {{height_y}}</h2>
     </div>
 
-    <div class="text-center mt-4">
-      <h3 class="text-center">Clicky Dinge</h3>
-      <form action="{{ url_for('telemtry_button') }}" method="post">
-        <button type="submit" class="btn btn-success">Update Telemtry</button>
-      </form>
-      <form action="{{ url_for('reset_button') }}" method="post">
-        <button type="submit" class="btn btn-danger">Reset</button>
-      </form>
-    </div>
-    <!-- Bootstrap JS and dependencies (if needed) -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Load Bootstrap script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></script>
   </body>
 </html>

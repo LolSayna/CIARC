@@ -5,12 +5,12 @@ from flask import *
 from shared.constants import *
 from shared.melvin import *
 
+import threading
+import time
+
 
 app = Flask(__name__)
 melvin = Melvin()
-
-# used for flash func
-app.secret_key = 'your_secure_random_secret_key'
 
 # Main Page
 @app.route("/", methods=['GET'])
@@ -18,18 +18,39 @@ def index() -> str:
     
     # when refreshing pull updated telemetry
     melvin.update_telemetry()
-    return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, fuel=melvin.fuel)
 
+    return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, fuel=melvin.fuel,
+                           simulation_speed=melvin.simulation_speed, timestamp=melvin.timestamp,
+                           old_x=melvin.old_pos[0], old_y=melvin.old_pos[1],
+                           older_x=melvin.older_pos[0], older_y=melvin.older_pos[1],
+                           oldest_x=melvin.oldest_pos[0], oldest_y=melvin.oldest_pos[1],)
+
+
+# ja das mit dem Threading ist irgendwie doch nicht so einfach :P
+def call_telemetry():
+    while True:
+        print("Updating Telemtry")
+        melvin.update_telemetry()
+        time.sleep(3)
 
 
 # /NAME wird nicht weiter verwendet, func name muss in html matchen
 @app.route('/telemetry', methods=['POST'])
-def telemtry_button():
+def refresh_button():
     # just refresh the page
     return redirect(url_for('index'))
 
+# Slider
+@app.route('/slider', methods=['POST'])
+def slider_button():
+    
+    slider_value = request.form.get('speed', default=20, type=int)
+    print(slider_value)
+    melvin.change_simulationspeed(slider_value)
 
+    return redirect(url_for('index'))
 
+# Reset
 @app.route('/reset', methods=['POST'])
 def reset_button():
     
@@ -49,6 +70,10 @@ def main() -> None:
 def run_server() -> None:
     """Run the Flask development server on port 8000."""
     click.echo("Starting Flask development server on port 8000...")
+
+    thread = threading.Thread(target=call_telemetry)
+    thread.start()
+
     app.run(port=8000, debug=True)
 
 
@@ -59,4 +84,5 @@ def cli_only() -> None:
 
 
 if __name__ == "__main__":
+
     main(prog_name="Rift Console")  # pragma: no cover
