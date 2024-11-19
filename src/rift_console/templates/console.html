@@ -31,25 +31,14 @@
     </div>
 
     <div class="text-center mt-4">
-        <button type="button" class="btn btn-primary">Observe</button>
-        <button type="button" class="btn btn-danger">Reset</button>
+      <h3 class="text-center">Clicky Dinge</h3>
+      <form action="{{ url_for('telemtry_button') }}" method="post">
+        <button type="submit" class="btn btn-success">Update Telemtry</button>
+      </form>
+      <form action="{{ url_for('reset_button') }}" method="post">
+        <button type="submit" class="btn btn-danger">Reset</button>
+      </form>
     </div>
-    
-    <div class="container mt-5">
-      <div class="text-center mt-4">
-        <form action="{{ url_for('execute_function') }}" method="post">
-          <button type="submit" class="btn btn-success">Update Telemtry</button>
-        </form>
-      </div>
-      {% with messages = get_flashed_messages() %}
-        {% if messages %}
-          <div class="alert alert-info mt-4">
-            {{ messages[0] }}
-          </div>
-        {% endif %}
-      {% endwith %}
-    </div>
-
     <!-- Bootstrap JS and dependencies (if needed) -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>

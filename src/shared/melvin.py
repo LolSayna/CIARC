@@ -38,7 +38,17 @@ class Melvin():
         self.width_x = -1
         self.height_y = -1
 
-    def update_telemtry(self):
+    def reset(self):
+        try:
+            response  = requests.get(RESET_ENDPOINT)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            data = f"Error fetching data: {e}"
+
+        self.update_telemetry()
+
+    def update_telemetry(self):
         try:
             response  = requests.get(OBSERVATION_ENDPOINT)
             response.raise_for_status()
@@ -54,3 +64,4 @@ class Melvin():
         self.height_y = data['height_y']
 
         return "updated Telemetry"
+    

@@ -9,34 +9,32 @@ from shared.melvin import *
 app = Flask(__name__)
 melvin = Melvin()
 
+# used for flash func
 app.secret_key = 'your_secure_random_secret_key'
 
+# Main Page
 @app.route("/", methods=['GET'])
 def index() -> str:
-    """index"""
-    print(melvin.update_telemtry())
+    
+    # when refreshing pull updated telemetry
+    melvin.update_telemetry()
     return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, fuel=melvin.fuel)
 
 
-@app.route("/hello")
-def hello_world() -> str:
-    """Simple Hello World endpoint."""
-    return "Hello, World from Rift Console's Flask Server!"
 
-
-@app.route('/exec', methods=['POST'])
-def execute_function():
-    # Call your Python function here
-    button()
-    # Provide feedback to the user
-    flash('Updated Telemtry!')
+# /NAME wird nicht weiter verwendet, func name muss in html matchen
+@app.route('/telemetry', methods=['POST'])
+def telemtry_button():
+    # just refresh the page
     return redirect(url_for('index'))
 
 
-def button():
-    print("TSET")
-    print(melvin.update_telemtry())
-    return
+
+@app.route('/reset', methods=['POST'])
+def reset_button():
+    
+    melvin.reset()
+    return redirect(url_for('index'))
 
 
 
