@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Meta tags required for Bootstrap -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <title>Rift-Console</title>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="display-3 text-center">Rift-Console</h1>
+    </div>
+    <div class="container mt-5">
+      <h2 class="text-center">Energy</h2>
+      <div class="progress mt-4">
+        <div class="progress-bar"="progressbar" style="width: {{energy}}%;" aria-valuenow="{{energy}}" aria-valuemin="0" aria-valuemax="100">{{energy}}%</div>
+      </div>
+    </div>
+    <div class="container mt-5">
+      <h2 class="text-center">Fuel</h2>
+      <div class="progress mt-4">
+        <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}%</div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button type="button" class="btn btn-primary">Observe</button>
+        <button type="button" class="btn btn-danger">Reset</button>
+    </div>
+    <!-- Bootstrap JS and dependencies (if needed) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>
