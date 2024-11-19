@@ -111,7 +111,7 @@ class Telemetry(BaseModel):
     width_x: float
 
     async def store_observation(self) -> None:
-        logger.info("Storing observation")
+        # logger.info("Storing observation")
         try:
             async with async_open(con.TELEMETRY_LOCATION, "r") as afp:
                 raw_telemetry = await afp.read()
@@ -126,9 +126,9 @@ class Telemetry(BaseModel):
         json_telemetry = json.dumps(dict_telemetry, indent=4, sort_keys=True)
 
         async with async_open(con.TELEMETRY_LOCATION, "w") as afp:
-            logger.debug(f"Writing to {con.TELEMETRY_LOCATION}")
+            # logger.debug(f"Writing to {con.TELEMETRY_LOCATION}")
             await afp.write(str(json_telemetry))
-        logger.debug("Observation stored")
+        # logger.debug("Observation stored")
 
     def model_post_init(self, __context__: Any) -> None:
         loop.create_task(self.store_observation())
@@ -298,7 +298,7 @@ class StatePlanner(BaseModel):
                         # Transitioning directly to Acquisition is somehow bugged when safe was triggered due to empty battery
                         # await self.switch_if_battery_low(State.Charge, State.Acquisition)
                         logger.debug("State is Safe, triggering transition to Charge")
-                        await self.trigger_state_transition(State.Communication)
+                        await self.trigger_state_transition(State.Charge)
                     case State.Communication:
                         await self.switch_if_battery_low(
                             State.Charge, State.Acquisition
@@ -366,11 +366,24 @@ class StatePlanner(BaseModel):
             async with session.get(con.IMAGE_ENDPOINT) as response:
                 if response.status == 200:
                     logger.debug("Received image")
+
+                    # Extract exact image timestamp
+                    img_timestamp=response.headers.get("image-timestamp")
+                    parsed_img_timestamp = datetime.datetime.fromisoformat(img_timestamp)
+
+                    # Calculate the difference between the img and the last telemetry
+                    difference_in_seconds = (parsed_img_timestamp - self.current_telemetry.timestamp).total_seconds()
+
+
                     image_path = con.IMAGE_LOCATION.format(
                         angle=self.current_telemetry.angle,
-                        cor_x=self.current_telemetry.width_x,
-                        cor_y=self.current_telemetry.height_y,
-                        time=datetime.datetime.now(),
+
+                        cor_x=round(self.current_telemetry.width_x +
+                                (difference_in_seconds * self.current_telemetry.vx * self.current_telemetry.simulation_speed)),
+                        cor_y=round(self.current_telemetry.height_y +
+                                (difference_in_seconds * self.current_telemetry.vy * self.current_telemetry.simulation_speed)),
+
+                        time=img_timestamp, # or should it be parsed_img_timestamp?
                     )
                     async with async_open(image_path, "wb") as afp:
                         await afp.write(await response.content.read())
@@ -396,7 +409,7 @@ async def get_observations() -> None:
         async with session.get(con.OBSERVATION_ENDPOINT) as response:
             if response.status == 200:
                 json_response = await response.json()
-                logger.info("Received observations")
+                #logger.info("Received observations")
                 # pprint(json_response, indent=4, sort_dicts=True)
                 await state_planner.update_telemetry(Telemetry(**json_response))
             else:
@@ -406,7 +419,7 @@ async def get_observations() -> None:
 async def run_get_observations() -> None:
     await get_observations()
     while True:
-        logger.info("Submitted observations request")
+        # logger.info("Submitted observations request")
         observe_task = Timer(
             timeout=con.OBSERVATION_REFRESH_RATE, callback=get_observations
         ).get_task()
@@ -422,7 +435,7 @@ async def get_announcements() -> None:
                 if response.status == 200:
                     async for line in response.content:
                         clean_line = line.decode("utf-8").strip()
-                        logger.info(f"Received announcement: {clean_line}")
+                        # logger.info(f"Received announcement: {clean_line}")
                 else:
                     logger.warning(f"Failed to get announcements: {response.status}")
     except TimeoutError:
@@ -494,7 +507,7 @@ def start_event_loop() -> None:
     loop.create_task(run_get_observations())
     loop.create_task(run_get_announcements())
 
-    loop.create_task(run_read_images())
+    # loop.create_task(run_read_images())
 
     loop.run_forever()
 

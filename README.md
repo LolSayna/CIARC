@@ -48,6 +48,52 @@ Or refer to `make docker-compose-up` in the Makefile.
 
 - TODO
 
+## Usefule API cmds
+Reset
+```
+curl -X 'GET' \
+  'http://10.100.10.11:33000/reset' \
+  -H 'accept: application/json'
+```
+Observe
+```
+curl -X 'GET' \
+  'http://10.100.10.11:33000/observation' \
+  -H 'accept: application/json'
+```
+Simulation
+```
+curl -X 'PUT' \
+  'http://10.100.10.11:33000/simulation?is_network_simulation=false&user_speed_multiplier=20' \
+  -H 'accept: application/json'
+```
+First state
+```
+curl -X 'PUT' \
+  'http://10.100.10.11:33000/control' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "vel_x": 4.35,
+  "vel_y": 5.49,
+  "camera_angle": "narrow",
+  "state": "charge"
+}'
+```
+Second
+```
+curl -X 'PUT' \
+  'http://10.100.10.11:33000/control' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "vel_x": 4.35,
+  "vel_y": 5.49,
+  "camera_angle": "narrow",
+  "state": "acquisition"
+}'
+```
+
 ## License
 
 Distributed under the terms of the [MIT license][license],
