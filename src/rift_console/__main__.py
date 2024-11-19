@@ -72,7 +72,7 @@ def run_server() -> None:
     click.echo("Starting Flask development server on port 8000...")
 
     thread = threading.Thread(target=call_telemetry)
-    thread.start()
+    #thread.start()
 
     app.run(port=8000, debug=True)
 

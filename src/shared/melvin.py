@@ -86,12 +86,13 @@ class Melvin():
             self.older_pos = self.old_pos
             self.old_pos = (self.width_x, self.height_y)
         
+        """
         print(self.timestamp)
         print(self.last_timestamp)
         print(self.old_pos)
         print(self.older_pos)
         print(self.oldest_pos)
-
+        """
         # print(data)
         return "updated Telemetry"
     
