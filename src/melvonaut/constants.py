@@ -3,6 +3,7 @@ System constant values
 
 :author: Jonathan Decker
 """
+# TODO zum teil into shared moven
 
 LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 TELEMETRY_LOCATION = "logs/melvonaut/telemetry_melvonaut.json"

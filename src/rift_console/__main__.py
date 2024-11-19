@@ -1,37 +1,13 @@
 """Command-line interface."""
 
 import click
-import datetime
-from enum import StrEnum
 from flask import Flask, render_template
+from shared.constants import *
+from shared.melvin import *
 
-class State(StrEnum):
-    Deployment = "deployment"
-    Acquisition = "acquisition"
-    Charge = "charge"
-    Safe = "safe"
-    Communication = "communication"
-    Transition = "transition"
-    Unknown = "none"
-
-class Melvin():
-    active_time: float
-    battery: float
-    distance_covered: float
-    fuel: float
-    height_y: float
-    images_taken: int
-    max_battery: float
-    objectives_done: int
-    objectives_points: int
-    simulation_speed: int
-    state: State
-    timestamp: datetime.datetime
-    vx: float
-    vy: float
-    width_x: float
 
 app = Flask(__name__)
+melvin = Melvin()
 
 @app.route("/")
 def index() -> str:
@@ -44,6 +20,10 @@ def hello_world() -> str:
     """Simple Hello World endpoint."""
     return "Hello, World from Rift Console's Flask Server!"
 
+
+def update_telemtry():
+    melvin.active_time += 5
+    return
 
 
 
