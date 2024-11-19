@@ -1,6 +1,8 @@
 
 import datetime
 from enum import StrEnum
+import requests
+from shared.constants import *
 
 class State(StrEnum):
     Deployment = "deployment"
@@ -16,6 +18,7 @@ class Melvin():
     battery: float
     distance_covered: float
     fuel: float
+    width_x: float
     height_y: float
     images_taken: int
     max_battery: float
@@ -26,4 +29,28 @@ class Melvin():
     timestamp: datetime.datetime
     vx: float
     vy: float
-    width_x: float
+    def __init__(self):
+        self.fuel = 100
+        self.battery = 100
+        self.sate = State.Unknown
+        self.active_time = -1
+    
+        self.width_x = -1
+        self.height_y = -1
+
+    def update_telemtry(self):
+        try:
+            response  = requests.get(OBSERVATION_ENDPOINT)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            data = f"Error fetching data: {e}"
+
+        self.active_time = data['active_time']
+        self.battery = data['battery']
+        self.fuel = data['fuel']
+        self.state = data['state']
+        self.width_x = data['width_x']
+        self.height_y = data['height_y']
+
+        return "updated Telemetry"

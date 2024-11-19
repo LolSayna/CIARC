@@ -1,7 +1,7 @@
 """Command-line interface."""
 
 import click
-from flask import Flask, render_template
+from flask import *
 from shared.constants import *
 from shared.melvin import *
 
@@ -9,10 +9,13 @@ from shared.melvin import *
 app = Flask(__name__)
 melvin = Melvin()
 
-@app.route("/")
+app.secret_key = 'your_secure_random_secret_key'
+
+@app.route("/", methods=['GET'])
 def index() -> str:
     """index"""
-    return render_template('console.html', energy=50, fuel=75)
+    print(melvin.update_telemtry())
+    return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, fuel=melvin.fuel)
 
 
 @app.route("/hello")
@@ -21,8 +24,18 @@ def hello_world() -> str:
     return "Hello, World from Rift Console's Flask Server!"
 
 
-def update_telemtry():
-    melvin.active_time += 5
+@app.route('/exec', methods=['POST'])
+def execute_function():
+    # Call your Python function here
+    button()
+    # Provide feedback to the user
+    flash('Updated Telemtry!')
+    return redirect(url_for('index'))
+
+
+def button():
+    print("TSET")
+    print(melvin.update_telemtry())
     return
 
 

@@ -15,9 +15,9 @@
       <h1 class="display-3 text-center">Rift-Console</h1>
     </div>
     <div class="container mt-5">
-      <h2 class="text-center">Energy</h2>
+      <h2 class="text-center">Battery</h2>
       <div class="progress mt-4">
-        <div class="progress-bar"="progressbar" style="width: {{energy}}%;" aria-valuenow="{{energy}}" aria-valuemin="0" aria-valuemax="100">{{energy}}%</div>
+        <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}%</div>
       </div>
     </div>
     <div class="container mt-5">
@@ -26,11 +26,30 @@
         <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}%</div>
       </div>
     </div>
+    <div class="container mt-5">
+      <h2 class="text-center">Pos: {{width_x}} + {{height_y}}</h2>
+    </div>
 
     <div class="text-center mt-4">
         <button type="button" class="btn btn-primary">Observe</button>
         <button type="button" class="btn btn-danger">Reset</button>
     </div>
+    
+    <div class="container mt-5">
+      <div class="text-center mt-4">
+        <form action="{{ url_for('execute_function') }}" method="post">
+          <button type="submit" class="btn btn-success">Update Telemtry</button>
+        </form>
+      </div>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-info mt-4">
+            {{ messages[0] }}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
     <!-- Bootstrap JS and dependencies (if needed) -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
