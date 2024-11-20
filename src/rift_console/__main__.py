@@ -20,12 +20,15 @@ def index() -> str:
     melvin.update_telemetry()
 
     return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, fuel=melvin.fuel,
+                           vx = melvin.vx, vy=melvin.vy,
                            simulation_speed=melvin.simulation_speed, timestamp=melvin.timestamp,
                            old_x=melvin.old_pos[0], old_y=melvin.old_pos[1],
                            older_x=melvin.older_pos[0], older_y=melvin.older_pos[1],
-                           oldest_x=melvin.oldest_pos[0], oldest_y=melvin.oldest_pos[1],)
+                           oldest_x=melvin.oldest_pos[0], oldest_y=melvin.oldest_pos[1],
+                           state=melvin.sate, pre_transition_state=melvin.pre_transition_state, planed_transition_state = melvin.planed_transition_state)
 
 
+# TODO need help, to autorefresh
 # ja das mit dem Threading ist irgendwie doch nicht so einfach :P
 def call_telemetry():
     while True:
@@ -47,6 +50,18 @@ def slider_button():
     slider_value = request.form.get('speed', default=20, type=int)
     print(slider_value)
     melvin.change_simulationspeed(slider_value)
+
+    return redirect(url_for('index'))
+
+# State Changer
+@app.route('/state_changer', methods=['POST'])
+def state_buttons():
+    
+    state = request.form.get('state', default=State.Unknown, type=str)
+
+    print("State to: " + State(state) + str(type(state)) + str(type(State(state))))
+
+    melvin.change_state(State(state))
 
     return redirect(url_for('index'))
 
@@ -74,6 +89,9 @@ def run_server() -> None:
     thread = threading.Thread(target=call_telemetry)
     #thread.start()
 
+
+    # used to disable network simulation at start time
+    melvin.change_simulationspeed(1)
     app.run(port=8000, debug=True)
 
 

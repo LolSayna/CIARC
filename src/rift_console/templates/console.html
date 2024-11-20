@@ -59,7 +59,7 @@
           left: {{width_x / 100}}px;
       }
 
-      /* To display past and future pos */
+      /* To display past and future pos on map */
       .point {
         position: absolute;
         width: 5px;
@@ -85,7 +85,6 @@
         left: {{(oldest_x / 100) - 3}}px;
       }
     
-
     </style>
   </head>
 
@@ -112,9 +111,16 @@
             <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}%</div>
           </div>
           <h3 class="spacer">Sim_speed: {{simulation_speed}}</h3>
-          <h3 class="spacer">width_x: {{width_x}}</h3>
-          <h3 class="spacer">height_y: {{height_y}}</h3>
+          <h3 class="spacer">Position (x,y): {{width_x}}, {{height_y}}</h3>
+          <h3 class="spacer">Velocity (x,y): {{vx}}, {{vy}} </h3>
           <h3 class="spacer">timestamp: {{timestamp}}</h3>
+          <h3 class="spacer">State: {{state}}</h3>
+
+          <!-- Requires image to be placed in static/images/-->
+          <!-- Icons are from https://wiki.factorio.com/Alerts -->
+          <img src="{{ url_for('static', filename='images/' + pre_transition_state + '.png') }}" alt="pre_transition_state">
+          <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="State Image">
+          <img src="{{ url_for('static', filename='images/' + planed_transition_state + '.png') }}" alt="planed_transition_state">
           
           <!-- expand here -->
 
@@ -156,6 +162,14 @@
             <input type="range" id="speedSlider" name="speed" min="1" max="20" value="20">
             <br>
             <button type="submit" class="btn btn-primary">Change Simulation Speed</button>
+          </form>
+
+          <div class="spacer"></div>
+          <h3>Change State</h3>
+          <form action="{{ url_for('state_buttons') }}" method="post">
+              <button type="submit" class="btn btn-primary" name="state" value="acquisition">Acquisition</button>
+              <button type="submit" class="btn btn-primary" name="state" value="charge">Charge</button>
+              <button type="submit" class="btn btn-primary" name="state" value="communication">Comms</button>
           </form>
 
           <!-- expand here -->
