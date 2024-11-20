@@ -8,110 +8,48 @@ import os
 import re
 import signal
 import sys
-from collections.abc import Callable
-from enum import StrEnum
 
-# from pprint import pprint
-from typing import Any, Awaitable, Optional, AsyncIterable
+from typing import Any, Optional, AsyncIterable
 
 import aiohttp
 import click
 from aiofile import async_open
 from loguru import logger
 import uvloop
-# wofür wird das BaseModel benutzt?
-from pydantic import BaseModel, ConfigDict
+
+from pydantic import BaseModel
 from PIL import Image
 
-import melvonaut.constants as con
-
+import shared.constants as con
+from shared.models import (
+    State,
+    MELVINTasks,
+    MelvinImage,
+    Timer,
+    CameraAngle,
+    BaseTelemetry,
+)
 
 ##### LOGGING #####
 logger.remove()
 logger.add(sink=sys.stderr, level="DEBUG", backtrace=True, diagnose=True)
 logger.add(
-    sink=con.LOG_LOCATION,
+    sink=con.MEL_LOG_LOCATION,
     rotation="00:00",
     level="DEBUG",
     backtrace=True,
     diagnose=True,
 )
 
-
-##### ENUMS #####
-# melvin satellite modes
-class State(StrEnum):
-    Deployment = "deployment"
-    Acquisition = "acquisition"
-    Charge = "charge"
-    Safe = "safe"
-    Communication = "communication"
-    Transition = "transition"
-    Unknown = "none"
-# melvin lenses
-class Angle(StrEnum):
-    Wide = "wide"
-    Narrow = "narrow"
-    Normal = "normal"
-    Unknown = "unknown"
-# part of melvins state machine
-class MELVINTasks(StrEnum):
-    Mapping = "mapping"
-    Emergencies = "emergencies"
-    events = "events"
-    idle = "idle"
-# helper for images??
-class MelvinImage(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    image: Image.Image
-    angle: Angle
-    cor_x: float
-    cor_y: float
-    time: datetime.datetime
-
-
 ##### Global Variables #####
 loop = uvloop.new_event_loop()
 current_telemetry = None
-state_planner = None
+
 
 ##### TELEMETRY #####
-class Telemetry(BaseModel):
-
-    # helper enum for Telemetry
-    class AreaCovered(BaseModel):
-        narrow: float
-        normal: float
-        wide: float
-    # helper enum for Telemetry
-    class DataVolume(BaseModel):
-        data_volume_received: int
-        data_volume_sent: int
-
-    model_config = ConfigDict(use_enum_values=True)
-
-    active_time: float
-    angle: Angle
-    area_covered: AreaCovered
-    battery: float
-    data_volume: DataVolume
-    distance_covered: float
-    fuel: float
-    height_y: float
-    images_taken: int
-    max_battery: float
-    objectives_done: int
-    objectives_points: int
-    simulation_speed: int
-    state: State
-    timestamp: datetime.datetime
-    vx: float
-    vy: float
-    width_x: float
-
+class MelTelemetry(BaseTelemetry):
     async def store_observation(self) -> None:
-        # logger.info("Storing observation")
+        logger.debug("Storing observation")
         try:
             async with async_open(con.TELEMETRY_LOCATION, "r") as afp:
                 raw_telemetry = await afp.read()
@@ -126,43 +64,18 @@ class Telemetry(BaseModel):
         json_telemetry = json.dumps(dict_telemetry, indent=4, sort_keys=True)
 
         async with async_open(con.TELEMETRY_LOCATION, "w") as afp:
-            # logger.debug(f"Writing to {con.TELEMETRY_LOCATION}")
+            logger.debug(f"Writing to {con.TELEMETRY_LOCATION}")
             await afp.write(str(json_telemetry))
-        # logger.debug("Observation stored")
+        logger.debug("Observation stored")
 
     def model_post_init(self, __context__: Any) -> None:
         loop.create_task(self.store_observation())
 
 
-##### Timer #####
-class Timer(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    _timeout: int
-    _callback: Callable[[], Awaitable[Any]]
-    _task: asyncio.Task[None]
-
-    def __init__(self, timeout: int, callback: Callable[[], Awaitable[Any]]):
-        super().__init__()
-        self._timeout = timeout
-        self._callback = callback
-        self._task = asyncio.create_task(self._job())
-
-    async def _job(self) -> None:
-        await asyncio.sleep(self._timeout)
-        await self._callback()
-
-    def cancel(self) -> None:
-        self._task.cancel()
-
-    def get_task(self) -> asyncio.Task[None]:
-        return self._task
-
-
 ##### State machine #####
 class StatePlanner(BaseModel):
-    current_telemetry: Optional[Telemetry] = None
-    previous_telemetry: Optional[Telemetry] = None
+    current_telemetry: Optional[MelTelemetry] = None
+    previous_telemetry: Optional[MelTelemetry] = None
 
     previous_state: Optional[State] = None
     state_change_time: datetime.datetime = datetime.datetime.now()
@@ -172,6 +85,8 @@ class StatePlanner(BaseModel):
     target_state: Optional[State] = None
 
     melvin_task: MELVINTasks = MELVINTasks.Mapping
+
+    _bugged_safe_state = False
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:
@@ -213,10 +128,18 @@ class StatePlanner(BaseModel):
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot initiate transition.")
             return
+        if self.current_telemetry.state is State.Transition:
+            logger.debug("Already in transition state, not starting transition.")
+            return
+        if new_state == self.get_current_state():
+            logger.debug(f"State is already {new_state}, not starting transition.")
+            return
         request_body = {
             "state": new_state,
-            "vel_x": self.current_telemetry.vx,
-            "vel_y": self.current_telemetry.vy,
+            # "vel_x": self.current_telemetry.vx,
+            # "vel_y": self.current_telemetry.vy,
+            "vel_x": con.TARGET_SPEED_X,
+            "vel_y": con.TARGET_SPEED_Y,
             "camera_angle": self.current_telemetry.angle,
         }
         async with aiohttp.ClientSession() as session:
@@ -296,9 +219,18 @@ class StatePlanner(BaseModel):
                             await self.trigger_state_transition(State.Acquisition)
                     case State.Safe:
                         # Transitioning directly to Acquisition is somehow bugged when safe was triggered due to empty battery
-                        # await self.switch_if_battery_low(State.Charge, State.Acquisition)
-                        logger.debug("State is Safe, triggering transition to Charge")
-                        await self.trigger_state_transition(State.Charge)
+                        if self._bugged_safe_state:
+                            logger.debug(
+                                "State is Safe, triggering transition to Acquisition as it might be bugged"
+                            )
+                            await self.trigger_state_transition(State.Acquisition)
+                            self._bugged_safe_state = False
+                        else:
+                            logger.debug(
+                                "State is Safe, triggering transition to Charge"
+                            )
+                            await self.trigger_state_transition(State.Charge)
+                            self._bugged_safe_state = True
                     case State.Communication:
                         await self.switch_if_battery_low(
                             State.Charge, State.Acquisition
@@ -317,7 +249,7 @@ class StatePlanner(BaseModel):
             case MELVINTasks.idle:
                 pass
 
-    async def update_telemetry(self, new_telemetry: Telemetry) -> None:
+    async def update_telemetry(self, new_telemetry: MelTelemetry) -> None:
         self.previous_telemetry = self.current_telemetry
         self.current_telemetry = new_telemetry
 
@@ -368,22 +300,41 @@ class StatePlanner(BaseModel):
                     logger.debug("Received image")
 
                     # Extract exact image timestamp
-                    img_timestamp=response.headers.get("image-timestamp")
-                    parsed_img_timestamp = datetime.datetime.fromisoformat(img_timestamp)
+                    img_timestamp = response.headers.get("image-timestamp")
+                    if img_timestamp is None:
+                        logger.warning(
+                            "Image timestamp not found in headers, substituting with current time"
+                        )
+                        parsed_img_timestamp = datetime.datetime.now()
+                    else:
+                        parsed_img_timestamp = datetime.datetime.fromisoformat(
+                            img_timestamp
+                        )
 
                     # Calculate the difference between the img and the last telemetry
-                    difference_in_seconds = (parsed_img_timestamp - self.current_telemetry.timestamp).total_seconds()
-
+                    difference_in_seconds = (
+                        parsed_img_timestamp - self.current_telemetry.timestamp
+                    ).total_seconds()
 
                     image_path = con.IMAGE_LOCATION.format(
                         angle=self.current_telemetry.angle,
-
-                        cor_x=round(self.current_telemetry.width_x +
-                                (difference_in_seconds * self.current_telemetry.vx * self.current_telemetry.simulation_speed)),
-                        cor_y=round(self.current_telemetry.height_y +
-                                (difference_in_seconds * self.current_telemetry.vy * self.current_telemetry.simulation_speed)),
-
-                        time=img_timestamp, # or should it be parsed_img_timestamp?
+                        cor_x=round(
+                            self.current_telemetry.width_x
+                            + (
+                                difference_in_seconds
+                                * self.current_telemetry.vx
+                                * self.current_telemetry.simulation_speed
+                            )
+                        ),
+                        cor_y=round(
+                            self.current_telemetry.height_y
+                            + (
+                                difference_in_seconds
+                                * self.current_telemetry.vy
+                                * self.current_telemetry.simulation_speed
+                            )
+                        ),
+                        time=img_timestamp,  # or should it be parsed_img_timestamp?
                     )
                     async with async_open(image_path, "wb") as afp:
                         await afp.write(await response.content.read())
@@ -400,7 +351,7 @@ class StatePlanner(BaseModel):
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()
             await asyncio.gather(image_task)
 
-# remove once we have classes
+
 state_planner = StatePlanner()
 
 
@@ -409,9 +360,9 @@ async def get_observations() -> None:
         async with session.get(con.OBSERVATION_ENDPOINT) as response:
             if response.status == 200:
                 json_response = await response.json()
-                #logger.info("Received observations")
+                logger.debug("Received observations")
                 # pprint(json_response, indent=4, sort_dicts=True)
-                await state_planner.update_telemetry(Telemetry(**json_response))
+                await state_planner.update_telemetry(MelTelemetry(**json_response))
             else:
                 logger.warning(f"Failed to get observations: {response.status}")
 
@@ -419,7 +370,7 @@ async def get_observations() -> None:
 async def run_get_observations() -> None:
     await get_observations()
     while True:
-        # logger.info("Submitted observations request")
+        logger.debug("Submitted observations request")
         observe_task = Timer(
             timeout=con.OBSERVATION_REFRESH_RATE, callback=get_observations
         ).get_task()
@@ -434,8 +385,8 @@ async def get_announcements() -> None:
             ) as response:
                 if response.status == 200:
                     async for line in response.content:
-                        clean_line = line.decode("utf-8").strip()
-                        # logger.info(f"Received announcement: {clean_line}")
+                        clean_line = line.decode("utf-8").strip().replace("data:", "")
+                        logger.info(f"Received announcement: {clean_line}")
                 else:
                     logger.warning(f"Failed to get announcements: {response.status}")
     except TimeoutError:
@@ -447,7 +398,6 @@ async def run_get_announcements() -> None:
     while True:
         await asyncio.gather(get_announcements())
         logger.info("Restarted announcements subscription")
-
 
 
 async def read_images() -> AsyncIterable[MelvinImage]:
@@ -478,7 +428,7 @@ async def read_images() -> AsyncIterable[MelvinImage]:
                 continue
             match = re.match(pattern, filename)
             if match:
-                angle = Angle(match.group(1))
+                angle = CameraAngle(match.group(1))
                 cor_x = float(match.group(2))
                 cor_y = float(match.group(3))
                 time = datetime.datetime.strptime(match.group(4), "%Y-%m-%d_%H-%M-%S")

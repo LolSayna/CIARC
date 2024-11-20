@@ -23,9 +23,11 @@ Changelog = "https://github.com/Lolsayna/CIARC/-/blob/main/CHANGELOG"
 [tool.poetry.dependencies]
 python = "^3.12"
 click = ">=8.0.1"
+requests = "^2.32.3"
+types-requests = "^2.32.0.20241016"
+loguru = "^0.7.2"
 
 [tool.poetry.group.melvonaut.dependencies]
-loguru = "^0.7.2"
 uvloop = "^0.21.0"
 aiohttp = "^3.11.2"
 pydantic = "^2.9.2"

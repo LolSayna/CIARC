@@ -45,6 +45,9 @@ lint: ## check style
 	ruff format ./src ./tests
 	ruff check ./src ./tests --fix
 
+mypy: ## check types
+	mypy src
+
 test: ## run tests quickly with the default Python
 	pytest
 

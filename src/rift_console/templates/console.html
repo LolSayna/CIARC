@@ -28,7 +28,7 @@
       }
 
       /* Container for a world map */
-      /* TODO - warum klebt der manchmal an der rechten Kante 
+      /* TODO - warum klebt der manchmal an der rechten Kante
         und ist nicht zentriert?*/
       #map-container {
           position: relative;
@@ -49,13 +49,13 @@
           width: 12px;
           height: 2px;
           top: {{height_y / 100}}px;
-          left: {{(width_x / 100) - 5}}px; 
+          left: {{(width_x / 100) - 5}}px;
       }
 
       .vertical {
           height: 12px;
           width: 2px;
-          top: {{(height_y / 100) - 5}}px; 
+          top: {{(height_y / 100) - 5}}px;
           left: {{width_x / 100}}px;
       }
 
@@ -131,7 +131,7 @@
           <h4 class="spacer">Battery</h4>
           <div class="progress mt-4">
             <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}%</div>
-          </div>          
+          </div>
           <h4 class="spacer">Max Battery</h4>
           <div class="progress mt-4">
             <div class="progress-bar"="progressbar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">{{max_battery}}%</div>
@@ -150,7 +150,7 @@
             <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="State Image">
             <div class="arrow"></div>
             <img src="{{ url_for('static', filename='images/' + planed_transition_state + '.png') }}" alt="planed_transition_state" class="smaller_img">
-          
+
           </div>
           <!-- expand here -->
 
@@ -168,7 +168,7 @@
             <div class="point point_paster"></div>
             <div class="point point_pastest"></div>
           </div>
-        
+
           <!-- expand here -->
 
         </div>
@@ -203,7 +203,7 @@
           </form>
 
           <!-- expand here -->
-           
+
         </div>
       </div>
     </div>
