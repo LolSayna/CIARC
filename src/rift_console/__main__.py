@@ -7,10 +7,18 @@ from shared.melvin import *
 
 import threading
 import time
+import logging
 
 
 app = Flask(__name__)
 melvin = Melvin()
+
+# TODO-s
+# - Autorefresh (maybe javascript)
+# - Map schöner machen
+# - Elemente kleiner machen
+# - restliche API endpoints
+
 
 # Main Page
 @app.route("/", methods=['GET'])
@@ -19,7 +27,7 @@ def index() -> str:
     # when refreshing pull updated telemetry
     melvin.update_telemetry()
 
-    return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, fuel=melvin.fuel,
+    return render_template('console.html', width_x=melvin.width_x, height_y=melvin.height_y, battery=melvin.battery, max_battery=melvin.max_battery, fuel=melvin.fuel,
                            vx = melvin.vx, vy=melvin.vy,
                            simulation_speed=melvin.simulation_speed, timestamp=melvin.timestamp,
                            old_x=melvin.old_pos[0], old_y=melvin.old_pos[1],
@@ -58,8 +66,6 @@ def slider_button():
 def state_buttons():
     
     state = request.form.get('state', default=State.Unknown, type=str)
-
-    print("State to: " + State(state) + str(type(state)) + str(type(State(state))))
 
     melvin.change_state(State(state))
 

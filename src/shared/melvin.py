@@ -57,6 +57,7 @@ class Melvin():
         self.vx = -1
         self.vy = -1
         self.simulation_speed = 1
+        self.max_battery = 100
 
         self.old_pos = (-1,-1)
         self.older_pos = (-1,-1)
@@ -89,7 +90,7 @@ class Melvin():
             return
 
         # TODO check if data is valid
-        print(data)
+        #print(data)
 
         self.active_time = data['active_time']
         self.battery = data['battery']
@@ -102,6 +103,7 @@ class Melvin():
         self.simulation_speed = data['simulation_speed']
         self.timestamp = datetime.datetime.fromisoformat(data['timestamp'])
         self.angle = data['angle']
+        self.max_battery = data['max_battery']
 
         # if the last timestamp is longer then 10s ago shift arroun
         if (self.timestamp - self.last_timestamp).total_seconds() > 10:
@@ -110,10 +112,18 @@ class Melvin():
             self.older_pos = self.old_pos
             self.old_pos = (self.width_x, self.height_y)
         
+
+        # TODO fix bug with error state
+        # if next state is safe mode, store last valid state
+        # if self.state == State.Transition and self.sate != State.Safe and data['state'] == State.Safe:
+        #    self.pre_transition_state = self.sate
+        
         self.sate = data['state']
+
         if self.state != State.Transition:
             self.planed_transition_state = State.Unknown
-        #    self.pre_transition_state = self.state
+
+
         """
         print(self.timestamp)
         print(self.last_timestamp)
@@ -121,7 +131,7 @@ class Melvin():
         print(self.older_pos)
         print(self.oldest_pos)
         """
-        print("done")
+
         return "updated Telemetry"
     
 
@@ -162,6 +172,6 @@ class Melvin():
             data = f"HTTP Error in change_state(): {e}"
 
         self.planed_transition_state = target_state
-        print("Changed to: " + target_state)
+        print("Changing to: " + target_state)
         self.update_telemetry()
         return

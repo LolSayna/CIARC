@@ -19,7 +19,7 @@
       }
       /* creates some padding */
       .spacer {
-            margin-top: 30px;
+            margin-top: 20px;
       }
 
       /* makes input files Xpx wide*/
@@ -84,7 +84,29 @@
         top: {{(oldest_y / 100) - 3}}px;
         left: {{(oldest_x / 100) - 3}}px;
       }
-    
+
+      .button-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+      }
+
+      .arrow {
+          width: 0;
+          height: 0;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-bottom: 10px solid #007bff; /* Matches the button color */
+          margin: 0 10px;
+          transform: rotate(90deg);
+      }
+
+      /* Larger State icon in the middle */
+      .smaller_img {
+          width: 48px;
+          height: auto;
+      }
     </style>
   </head>
 
@@ -93,7 +115,7 @@
 
     <!-- Display title at top -->
     <div class="container mt-5">
-      <h1 class="display-3 text-center">Rift-Console</h1>
+      <h2 class="display-3 text-center">Rift-Console</h2>
     </div>
 
     <!-- 3 Main elements next to each other-->
@@ -102,13 +124,17 @@
 
         <!-- First Block: melvins status-->
         <div class="col-md-4 column">
-          <h2>Fuel</h2>
+          <h4>Fuel</h4>
           <div class="progress mt-4">
             <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}%</div>
           </div>
-          <h2 class="spacer">Battery</h2>
+          <h4 class="spacer">Battery</h4>
           <div class="progress mt-4">
             <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}%</div>
+          </div>          
+          <h4 class="spacer">Max Battery</h4>
+          <div class="progress mt-4">
+            <div class="progress-bar"="progressbar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">{{max_battery}}%</div>
           </div>
           <h3 class="spacer">Sim_speed: {{simulation_speed}}</h3>
           <h3 class="spacer">Position (x,y): {{width_x}}, {{height_y}}</h3>
@@ -118,10 +144,14 @@
 
           <!-- Requires image to be placed in static/images/-->
           <!-- Icons are from https://wiki.factorio.com/Alerts -->
-          <img src="{{ url_for('static', filename='images/' + pre_transition_state + '.png') }}" alt="pre_transition_state">
-          <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="State Image">
-          <img src="{{ url_for('static', filename='images/' + planed_transition_state + '.png') }}" alt="planed_transition_state">
+          <div class="button-container">
+            <img src="{{ url_for('static', filename='images/' + pre_transition_state + '.png') }}" alt="pre_transition_state" class="smaller_img">
+            <div class="arrow"></div>
+            <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="State Image">
+            <div class="arrow"></div>
+            <img src="{{ url_for('static', filename='images/' + planed_transition_state + '.png') }}" alt="planed_transition_state" class="smaller_img">
           
+          </div>
           <!-- expand here -->
 
         </div>
@@ -167,9 +197,9 @@
           <div class="spacer"></div>
           <h3>Change State</h3>
           <form action="{{ url_for('state_buttons') }}" method="post">
-              <button type="submit" class="btn btn-primary" name="state" value="acquisition">Acquisition</button>
-              <button type="submit" class="btn btn-primary" name="state" value="charge">Charge</button>
-              <button type="submit" class="btn btn-primary" name="state" value="communication">Comms</button>
+                <button type="submit" class="btn btn-primary" name="state" value="acquisition">Acquisition</button>
+                <button type="submit" class="btn btn-primary" name="state" value="charge">Charge</button>
+                <button type="submit" class="btn btn-primary" name="state" value="communication">Comms</button>
           </form>
 
           <!-- expand here -->
