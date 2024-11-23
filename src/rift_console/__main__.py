@@ -14,7 +14,7 @@ from werkzeug.wrappers.response import Response
 # shared imports
 import shared.constants as con
 from shared.models import State, Telemetry, CameraAngle
-import rift_console.useapi as myAPI
+import rift_console.drsApi as drsApi
 
 # TODO-s
 # - Autorefresh (maybe javascript)
@@ -56,6 +56,9 @@ class RiftTelemetry(Telemetry):
     last_timestamp: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
     pre_transition_state: State = State.Unknown
     planed_transition_state: State = State.Unknown
+
+    # manually managed by drsAPI.change_simulation_speed()
+    is_network_simulation_active: bool = True
 
     def reset(self) -> None:
         with requests.Session() as s:
@@ -173,6 +176,7 @@ def index() -> str:
         vx=melvin.vx,
         vy=melvin.vy,
         simulation_speed=melvin.simulation_speed,
+        is_network_simulated=melvin.is_network_simulation_active,
         timestamp=melvin.timestamp,
         old_x=melvin.old_pos[0],
         old_y=melvin.old_pos[1],
@@ -191,14 +195,28 @@ def index() -> str:
 def call_telemetry() -> None:
     while True:
         print("Updating Telemtry")
+
+        # TODO use javascript for autorefresh, add a alive light or something to show when connection failed
         melvin.update_telemetry()
         time.sleep(3)
 
 
-# /NAME wird nicht weiter verwendet, func name muss in html matchen
-@app.route("/telemetry", methods=["POST"])
-def refresh_button() -> Response:
-    # just refresh the page
+# Wrapper for all Simulation Manipulation buttons
+@app.route("/sim_manip_buttons", methods=["POST"])
+def sim_manip_buttons() -> Response:
+    # read which button was pressed
+    button = request.form.get("button", type=str)
+    match button:
+        case "refresh":
+            pass
+        case "reset":
+            melvin.reset()
+        case "save":
+            drsApi.save_backup()
+        case "load":
+            drsApi.load_backup()
+
+    # afterwards refresh page (which includes updating telemetry)
     return redirect(url_for("index"))
 
 
@@ -206,8 +224,13 @@ def refresh_button() -> Response:
 @app.route("/slider", methods=["POST"])
 def slider_button() -> Response:
     slider_value = request.form.get("speed", default=20, type=int)
-    print(slider_value)
-    myAPI.change_simulation_speed(slider_value)
+    is_network_simulation = "enableSim" in request.form
+    logger.error(f"{slider_value} , {is_network_simulation}")
+    drsApi.change_simulation_speed(
+        melvin=melvin,
+        is_network_simulation=is_network_simulation,
+        user_speed_multiplier=slider_value,
+    )
 
     return redirect(url_for("index"))
 
@@ -219,13 +242,6 @@ def state_buttons() -> Response:
 
     melvin.change_state(State(state))
 
-    return redirect(url_for("index"))
-
-
-# Reset
-@app.route("/reset", methods=["POST"])
-def reset_button() -> Response:
-    melvin.reset()
     return redirect(url_for("index"))
 
 
@@ -245,7 +261,9 @@ def run_server() -> None:
     # thread.start()
 
     # used to disable network simulation at start time
-    myAPI.change_simulation_speed(1)
+    drsApi.change_simulation_speed(
+        melvin=melvin, is_network_simulation=False, user_speed_multiplier=1
+    )
     app.run(port=8000, debug=True)
 
 

@@ -11,6 +11,11 @@
 
     <!-- CSS -->
     <style>
+
+      h2 {
+        font-size: medium;
+      }
+
       h3 {
         font-size: smaller;
       }
@@ -23,7 +28,7 @@
       }
       /* creates some padding */
       .spacer {
-            margin-top: 20px;
+            margin-top: 10px;
       }
 
       /* makes input files Xpx wide*/
@@ -140,7 +145,7 @@
           <div class="progress mt-4">
             <div class="progress-bar"="progressbar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">{{max_battery}}%</div>
           </div>
-          <h3 class="spacer">Sim_speed: {{simulation_speed}}</h3>
+          <h3 class="spacer">Sim_speed: {{simulation_speed}}     is_network_simulated: {{is_network_simulated}}</h3>
           <h3 class="spacer">Position (x,y): {{width_x}}, {{height_y}}</h3>
           <h3 class="spacer">Velocity (x,y): {{vx}}, {{vy}} </h3>
           <h3 class="spacer">timestamp: {{timestamp}}</h3>
@@ -180,24 +185,28 @@
         <!-- Thrid Block: Clicky Dinge (and more)-->
         <div class="col-md-4 column">
 
-          <h3>Clicky Dinge</h3>
-          <form action="{{ url_for('refresh_button') }}" method="post">
-            <button type="submit" class="btn btn-success">Refresh</button>
-          </form>
+          <div class="row" style="background-color: lightgrey;">
+            <h2>Simulation Manipulation</h2>
 
-          <div class="spacer"></div>
-          <form action="{{ url_for('reset_button') }}" method="post">
-            <button type="submit" class="btn btn-danger">Reset Sim</button>
-          </form>
+            <form action="{{ url_for('sim_manip_buttons') }}" method="post">
+              <button type="submit" class="btn btn-success" name="button" value="refresh">Refresh</button>
+              <button type="submit" class="btn btn-danger" name="button" value="reset">Reset Sim</button>
+              <button type="submit" class="btn btn-danger" name="button" value="save">Save State</button>
+              <button type="submit" class="btn btn-danger" name="button" value="load">Load State</button>
+            </form>
 
-          <div class="spacer"></div>
-          <form action="{{ url_for('slider_button') }}" method="post">
-            <label for="speedSlider">Sim Speed Mult: </label>
-            <input type="range" id="speedSlider" name="speed" min="1" max="20" value="20">
-            <br>
-            <button type="submit" class="btn btn-primary">Change Simulation Speed</button>
-          </form>
+            <div class="spacer"></div>
+            <form action="{{ url_for('slider_button') }}" method="post">
+              <label for="speedSlider">Speed Mult</label>
+              <input type="range" id="speedSlider" name="speed" min="1" max="20" value="20"> 
+              <input type="checkbox" id="enableSim" name="enableSim">
+              <label for="enableSim">Simulate Network?</label>
+              <br>
+              <button type="submit" class="btn btn-primary">Change Simulation</button>
+            </form>
+          </div>
 
+          
           <div class="spacer"></div>
           <h3>Change State</h3>
           <form action="{{ url_for('state_buttons') }}" method="post">
@@ -206,6 +215,7 @@
                 <button type="submit" class="btn btn-primary" name="state" value="communication">Comms</button>
           </form>
 
+          
           <!-- expand here -->
 
         </div>
