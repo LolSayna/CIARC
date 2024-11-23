@@ -5,8 +5,10 @@ from typing import Callable, Awaitable, Any
 
 from PIL import Image
 from pydantic import BaseModel, ConfigDict
+from typing import Optional
 
 
+# was kann das?
 class Timer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -31,6 +33,7 @@ class Timer(BaseModel):
         return self._task
 
 
+# Our custom programs/missions/states in which we can place Melvin
 class MELVINTasks(StrEnum):
     Mapping = "mapping"
     Emergencies = "emergencies"
@@ -38,6 +41,7 @@ class MELVINTasks(StrEnum):
     idle = "idle"
 
 
+# From User Manual
 class State(StrEnum):
     Deployment = "deployment"
     Acquisition = "acquisition"
@@ -48,6 +52,7 @@ class State(StrEnum):
     Unknown = "none"
 
 
+# From User Manual
 class CameraAngle(StrEnum):
     Wide = "wide"
     Narrow = "narrow"
@@ -60,11 +65,12 @@ class MelvinImage(BaseModel):
 
     image: Image.Image
     angle: CameraAngle
-    cor_x: float
-    cor_y: float
+    cor_x: int
+    cor_y: int
     time: datetime.datetime
 
 
+# based on /observation API endpoint
 class BaseTelemetry(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
@@ -79,28 +85,30 @@ class BaseTelemetry(BaseModel):
 
     active_time: float
     angle: CameraAngle
-    area_covered: AreaCovered
+    area_covered: Optional[AreaCovered] = None
     battery: float
-    data_volume: DataVolume
-    distance_covered: float
+    data_volume: Optional[DataVolume] = None
+    distance_covered: Optional[float] = None
     fuel: float
-    width_x: float
-    height_y: float
-    images_taken: int
+    width_x: int
+    height_y: int
+    images_taken: Optional[int] = None
     max_battery: float
-    objectives_done: int
-    objectives_points: int
+    objectives_done: Optional[int] = None
+    objectives_points: Optional[int] = None
     simulation_speed: int
     state: State
-    timestamp: datetime.datetime
+    timestamp: Optional[datetime.datetime] = None
     vx: float
     vy: float
 
 
+# more Telemetry, used in Riftconsole to display map
+# TODO only temporary so far
 class Telemetry(BaseTelemetry):
-    old_pos: tuple[float, float]
-    older_pos: tuple[float, float]
-    oldest_pos: tuple[float, float]
+    old_pos: tuple[int, int]
+    older_pos: tuple[int, int]
+    oldest_pos: tuple[int, int]
     last_timestamp: datetime.datetime
 
     pre_transition_state: State

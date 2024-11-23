@@ -166,3 +166,6 @@ cython_debug/
 .idea/
 letsencrypt/
 .http-pass
+
+# since large processed/stiched images are stored there
+media

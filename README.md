@@ -44,6 +44,9 @@ The rift-console can be deployed as a docker container.
 Use the `docker-compose up --build -d` command to start it.
 Or refer to `make docker-compose-up` in the Makefile.
 
+
+Inside `poetry shell` run `make myps` to check for type errors or run `make lint` to check linting before commiting.
+
 ## Usage
 
 - TODO

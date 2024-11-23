@@ -2,20 +2,30 @@
 
 import datetime
 import sys
+import time
+import requests  # type: ignore
 
 import click
-from flask import Flask, render_template, redirect, url_for, request
-from werkzeug.wrappers.response import Response
-import shared.constants as con
-from shared.models import State, Telemetry, CameraAngle
 from loguru import logger
 
-import time
-import requests
+from flask import Flask, render_template, redirect, url_for, request
+from werkzeug.wrappers.response import Response
+
+# shared imports
+import shared.constants as con
+from shared.models import State, Telemetry, CameraAngle
+import rift_console.useapi as myAPI
+
+# TODO-s
+# - Autorefresh (maybe javascript)
+# - Map schöner machen
+# - Elemente kleiner machen
+# - restliche API endpoints
+
 
 ##### LOGGING #####
 logger.remove()
-logger.add(sink=sys.stderr, level="DEBUG", backtrace=True, diagnose=True)
+logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
 logger.add(
     sink=con.RIFT_LOG_LOCATION,
     rotation="00:00",
@@ -25,45 +35,27 @@ logger.add(
 )
 
 
-def change_simulation_speed(user_speed_multiplier: int) -> None:
-    params = {
-        "is_network_simulation": "false",
-        "user_speed_multiplier": str(user_speed_multiplier),
-    }
-    with requests.Session() as s:
-        r = s.put(con.SIMULATION_ENDPOINT, params=params)
-    if r.status_code == 200:
-        logger.info(f"Changed simulation speed to {user_speed_multiplier}")
-    else:
-        logger.warning(f"Simulation Speed change to {user_speed_multiplier} failed")
-        logger.debug(r)
-
-    return
-
-
+# not sure of ich das mit den Klassen so mag wie es jetzt ist TODO
 class RiftTelemetry(Telemetry):
-    # Rather init the values to None then possible making incorrect assumptions.
+    fuel: float = 100.0
+    battery: float = 100
+    state: State = State.Unknown
+    active_time: float = -1
+    angle: CameraAngle = CameraAngle.Unknown
 
-    def __init__(self) -> None:
-        self.fuel = 100
-        self.battery = 100
-        self.sate = State.Unknown
-        self.active_time = -1
-        self.angle = CameraAngle.Unknown
+    width_x: int = -1
+    height_y: int = -1
+    vx: float = -1
+    vy: float = -1
+    simulation_speed: int = 1
+    max_battery: float = 100
 
-        self.width_x = -1
-        self.height_y = -1
-        self.vx = -1
-        self.vy = -1
-        self.simulation_speed = 1
-        self.max_battery = 100
-
-        self.old_pos = (-1, -1)
-        self.older_pos = (-1, -1)
-        self.oldest_pos = (-1, -1)
-        self.last_timestamp = datetime.datetime.now(datetime.timezone.utc)
-        self.pre_transition_state = State.Unknown
-        self.planed_transition_state = State.Unknown
+    old_pos: tuple[int, int] = (-1, -1)
+    older_pos: tuple[int, int] = (-1, -1)
+    oldest_pos: tuple[int, int] = (-1, -1)
+    last_timestamp: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
+    pre_transition_state: State = State.Unknown
+    planed_transition_state: State = State.Unknown
 
     def reset(self) -> None:
         with requests.Session() as s:
@@ -116,10 +108,10 @@ class RiftTelemetry(Telemetry):
 
         # TODO fix bug with error state
         # if next state is safe mode, store last valid state
-        # if self.state == State.Transition and self.sate != State.Safe and data['state'] == State.Safe:
-        #    self.pre_transition_state = self.sate
+        # if self.state == State.Transition and self.state != State.Safe and data['state'] == State.Safe:
+        #    self.pre_transition_state = self.state
 
-        self.sate = data["state"]
+        self.state = data["state"]
 
         if self.state != State.Transition:
             self.planed_transition_state = State.Unknown
@@ -164,12 +156,6 @@ class RiftTelemetry(Telemetry):
 app = Flask(__name__)
 melvin = RiftTelemetry()
 
-# TODO-s
-# - Autorefresh (maybe javascript)
-# - Map schöner machen
-# - Elemente kleiner machen
-# - restliche API endpoints
-
 
 # Main Page
 @app.route("/", methods=["GET"])
@@ -194,7 +180,7 @@ def index() -> str:
         older_y=melvin.older_pos[1],
         oldest_x=melvin.oldest_pos[0],
         oldest_y=melvin.oldest_pos[1],
-        state=melvin.sate,
+        state=melvin.state,
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
     )
@@ -221,7 +207,7 @@ def refresh_button() -> Response:
 def slider_button() -> Response:
     slider_value = request.form.get("speed", default=20, type=int)
     print(slider_value)
-    change_simulation_speed(slider_value)
+    myAPI.change_simulation_speed(slider_value)
 
     return redirect(url_for("index"))
 
@@ -259,7 +245,7 @@ def run_server() -> None:
     # thread.start()
 
     # used to disable network simulation at start time
-    change_simulation_speed(1)
+    myAPI.change_simulation_speed(1)
     app.run(port=8000, debug=True)
 
 

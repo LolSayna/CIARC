@@ -429,8 +429,8 @@ async def read_images() -> AsyncIterable[MelvinImage]:
             match = re.match(pattern, filename)
             if match:
                 angle = CameraAngle(match.group(1))
-                cor_x = float(match.group(2))
-                cor_y = float(match.group(3))
+                cor_x = int(match.group(2))
+                cor_y = int(match.group(3))
                 time = datetime.datetime.strptime(match.group(4), "%Y-%m-%d_%H-%M-%S")
                 yield MelvinImage(
                     image=image, angle=angle, cor_x=cor_x, cor_y=cor_y, time=time
