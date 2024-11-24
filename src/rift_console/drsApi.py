@@ -1,15 +1,19 @@
 from loguru import logger
-import requests  # type: ignore
+import requests
 
 import shared.constants as con
+from rift_console.__main__ import RiftTelemetry
+
 
 ### ALL METHODS SO FAR ONLY WORK IF NETWORK SIMULATION IS DISABLED ###
 # TODO file aufteilung von Riftconsole???
 
 
 # /SIMULATION
-def change_simulation_speed -> None(
-    melvin, is_network_simulation: bool = False, user_speed_multiplier: int = 1
+def change_simulation_speed(
+    melvin: RiftTelemetry,
+    is_network_simulation: bool = False,
+    user_speed_multiplier: int = 1,
 ) -> None:
     params = {
         "is_network_simulation": str(is_network_simulation).lower(),

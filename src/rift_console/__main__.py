@@ -3,7 +3,7 @@
 import datetime
 import sys
 import time
-import requests  # type: ignore
+import requests
 
 import click
 from loguru import logger

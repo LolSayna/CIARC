@@ -16,9 +16,10 @@ import click
 from aiofile import async_open
 from loguru import logger
 import uvloop
-
 from pydantic import BaseModel
 from PIL import Image
+import aiodebug.log_slow_callbacks  # type: ignore
+
 
 import shared.constants as con
 from shared.models import (
@@ -44,6 +45,7 @@ logger.add(
 ##### Global Variables #####
 loop = uvloop.new_event_loop()
 current_telemetry = None
+aiodebug.log_slow_callbacks.enable(0.05)
 
 
 ##### TELEMETRY #####
@@ -58,7 +60,10 @@ class MelTelemetry(BaseTelemetry):
             logger.debug(f"{con.TELEMETRY_LOCATION} does not exist.")
             dict_telemetry = {}
 
-        timestamp = self.timestamp.isoformat()
+        if self.timestamp:
+            timestamp = self.timestamp.isoformat()
+        else:
+            timestamp = datetime.datetime.now().isoformat()
         new_telemetry_entry = self.model_dump(exclude={"timestamp"})
         dict_telemetry[timestamp] = new_telemetry_entry
         json_telemetry = json.dumps(dict_telemetry, indent=4, sort_keys=True)
@@ -85,8 +90,6 @@ class StatePlanner(BaseModel):
     target_state: Optional[State] = None
 
     melvin_task: MELVINTasks = MELVINTasks.Mapping
-
-    _bugged_safe_state = False
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:
@@ -218,19 +221,15 @@ class StatePlanner(BaseModel):
                         ):
                             await self.trigger_state_transition(State.Acquisition)
                     case State.Safe:
-                        # Transitioning directly to Acquisition is somehow bugged when safe was triggered due to empty battery
-                        if self._bugged_safe_state:
-                            logger.debug(
-                                "State is Safe, triggering transition to Acquisition as it might be bugged"
-                            )
+                        if self.current_telemetry.battery >= (
+                            self.current_telemetry.max_battery * 0.5
+                        ):
                             await self.trigger_state_transition(State.Acquisition)
-                            self._bugged_safe_state = False
                         else:
-                            logger.debug(
-                                "State is Safe, triggering transition to Charge"
-                            )
                             await self.trigger_state_transition(State.Charge)
-                            self._bugged_safe_state = True
+                        await self.switch_if_battery_low(
+                            State.Charge, State.Acquisition
+                        )
                     case State.Communication:
                         await self.switch_if_battery_low(
                             State.Charge, State.Acquisition
@@ -312,9 +311,14 @@ class StatePlanner(BaseModel):
                         )
 
                     # Calculate the difference between the img and the last telemetry
-                    difference_in_seconds = (
-                        parsed_img_timestamp - self.current_telemetry.timestamp
-                    ).total_seconds()
+                    if self.current_telemetry.timestamp:
+                        difference_in_seconds = (
+                            parsed_img_timestamp - self.current_telemetry.timestamp
+                        ).total_seconds()
+                    else:
+                        difference_in_seconds = (
+                            parsed_img_timestamp - datetime.datetime.now()
+                        ).total_seconds()
 
                     image_path = con.IMAGE_LOCATION.format(
                         angle=self.current_telemetry.angle,
