@@ -1,9 +1,9 @@
 """Command-line interface."""
 
-import datetime
 import sys
 import time
 import requests
+import datetime
 
 import click
 from loguru import logger
@@ -13,8 +13,9 @@ from werkzeug.wrappers.response import Response
 
 # shared imports
 import shared.constants as con
-from shared.models import State, Telemetry, CameraAngle
+from shared.models import State, CameraAngle
 import rift_console.drsApi as drsApi
+import rift_console.RiftTelemetry
 
 # TODO-s
 # - Autorefresh (maybe javascript)
@@ -35,136 +36,15 @@ logger.add(
 )
 
 
-# not sure of ich das mit den Klassen so mag wie es jetzt ist TODO
-class RiftTelemetry(Telemetry):
-    fuel: float = 100.0
-    battery: float = 100
-    state: State = State.Unknown
-    active_time: float = -1
-    angle: CameraAngle = CameraAngle.Unknown
-
-    width_x: int = -1
-    height_y: int = -1
-    vx: float = -1
-    vy: float = -1
-    simulation_speed: int = 1
-    max_battery: float = 100
-
-    old_pos: tuple[int, int] = (-1, -1)
-    older_pos: tuple[int, int] = (-1, -1)
-    oldest_pos: tuple[int, int] = (-1, -1)
-    last_timestamp: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
-    pre_transition_state: State = State.Unknown
-    planed_transition_state: State = State.Unknown
-
-    # manually managed by drsAPI.change_simulation_speed()
-    is_network_simulation_active: bool = True
-
-    def reset(self) -> None:
-        with requests.Session() as s:
-            r = s.get(con.RESET_ENDPOINT)
-
-        if r.status_code == 200:
-            logger.info("Reset successful")
-        else:
-            logger.warning("Reset failed")
-            logger.debug(r)
-
-        self.update_telemetry()
-
-    def update_telemetry(self) -> None:
-        # print("A")
-        with requests.Session() as s:
-            r = s.get(con.OBSERVATION_ENDPOINT)
-
-        if r.status_code == 200:
-            logger.debug("Observation successful")
-        else:
-            logger.warning("Observation failed")
-            logger.debug(r)
-            return
-
-        data = r.json()
-
-        # TODO check if data is valid
-        # print(data)
-
-        self.active_time = data["active_time"]
-        self.battery = data["battery"]
-        self.fuel = data["fuel"]
-        self.state = data["state"]
-        self.width_x = data["width_x"]
-        self.height_y = data["height_y"]
-        self.vx = data["vx"]
-        self.vy = data["vy"]
-        self.simulation_speed = data["simulation_speed"]
-        self.timestamp = datetime.datetime.fromisoformat(data["timestamp"])
-        self.angle = data["angle"]
-        self.max_battery = data["max_battery"]
-
-        # if the last timestamp is longer then 10s ago shift around
-        if (self.timestamp - self.last_timestamp).total_seconds() > 10:
-            self.last_timestamp = self.timestamp
-            self.oldest_pos = self.older_pos
-            self.older_pos = self.old_pos
-            self.old_pos = (self.width_x, self.height_y)
-
-        # TODO fix bug with error state
-        # if next state is safe mode, store last valid state
-        # if self.state == State.Transition and self.state != State.Safe and data['state'] == State.Safe:
-        #    self.pre_transition_state = self.state
-
-        self.state = data["state"]
-
-        if self.state != State.Transition:
-            self.planed_transition_state = State.Unknown
-
-        """
-        print(self.timestamp)
-        print(self.last_timestamp)
-        print(self.old_pos)
-        print(self.older_pos)
-        print(self.oldest_pos)
-        """
-
-        return
-
-    # only change the state, nothing else
-    def change_state(self, target_state: State) -> None:
-        body = {
-            "vel_x": self.vx,
-            "vel_y": self.vy,
-            "camera_angle": self.angle,
-            "state": str(target_state),
-        }
-
-        self.pre_transition_state = self.state
-
-        with requests.Session() as s:
-            r = s.put(con.CONTROL_ENDPOINT, json=body)
-
-        if r.status_code == 200:
-            logger.debug("Control successful")
-        else:
-            logger.warning("Control failed")
-            logger.debug(r)
-            return
-
-        self.planed_transition_state = target_state
-        print("Changing to: " + target_state)
-        self.update_telemetry()
-        return
-
-
 app = Flask(__name__)
-melvin = RiftTelemetry()
+melvin = rift_console.RiftTelemetry.RiftTelemetry()
 
 
 # Main Page
 @app.route("/", methods=["GET"])
 def index() -> str:
     # when refreshing pull updated telemetry
-    melvin.update_telemetry()
+    drsApi.update_telemetry(melvin)
 
     return render_template(
         "console.html",
@@ -175,9 +55,17 @@ def index() -> str:
         fuel=melvin.fuel,
         vx=melvin.vx,
         vy=melvin.vy,
+        target_vx=melvin.target_vx,
+        target_vy=melvin.target_vy,
+        angle=melvin.angle,
         simulation_speed=melvin.simulation_speed,
         is_network_simulated=melvin.is_network_simulation_active,
-        timestamp=melvin.timestamp,
+        timestamp=melvin.timestamp.strftime(
+            "%Y-%m-%d %H:%M:%S.%f"
+        ),  # timezone doesnt change, so it can be exclude from output
+        timedelta=(
+            datetime.datetime.now(datetime.timezone.utc) - melvin.timestamp
+        ).total_seconds(),
         old_x=melvin.old_pos[0],
         old_y=melvin.old_pos[1],
         older_x=melvin.older_pos[0],
@@ -187,9 +75,11 @@ def index() -> str:
         state=melvin.state,
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
+        last_backup_time=melvin.last_backup_time,
     )
 
 
+"""
 # TODO need help, to autorefresh
 # ja das mit dem Threading ist irgendwie doch nicht so einfach :P
 def call_telemetry() -> None:
@@ -197,8 +87,9 @@ def call_telemetry() -> None:
         print("Updating Telemtry")
 
         # TODO use javascript for autorefresh, add a alive light or something to show when connection failed
-        melvin.update_telemetry()
+        drsApi.update_telemetry(melvin)
         time.sleep(3)
+"""
 
 
 # Wrapper for all Simulation Manipulation buttons
@@ -210,9 +101,9 @@ def sim_manip_buttons() -> Response:
         case "refresh":
             pass
         case "reset":
-            melvin.reset()
+            drsApi.reset(melvin)
         case "save":
-            drsApi.save_backup()
+            drsApi.save_backup(melvin)
         case "load":
             drsApi.load_backup()
 
@@ -225,7 +116,7 @@ def sim_manip_buttons() -> Response:
 def slider_button() -> Response:
     slider_value = request.form.get("speed", default=20, type=int)
     is_network_simulation = "enableSim" in request.form
-    logger.error(f"{slider_value} , {is_network_simulation}")
+
     drsApi.change_simulation_speed(
         melvin=melvin,
         is_network_simulation=is_network_simulation,
@@ -240,7 +131,22 @@ def slider_button() -> Response:
 def state_buttons() -> Response:
     state = request.form.get("state", default=State.Unknown, type=State)
 
-    melvin.change_state(State(state))
+    lens = melvin.angle
+    vx = melvin.vx
+    vy = melvin.vy
+
+    # noch nicht so happy mit dem if here TODO
+    if melvin.state == State.Acquisition and state == State.Acquisition:
+        lens = CameraAngle(request.form["options"])
+        vx = request.form.get("vx", default=3, type=int)
+        vy = request.form.get("vy", default=3, type=int)
+        melvin.target_vx = vx
+        melvin.target_vy = vy
+        logger.info(f"Used Control API to change: vx: {vx}, vy: {vy}, lens: {lens}")
+
+    drsApi.control(
+        melvin=melvin, vel_x=vx, vel_y=vy, cameraAngle=lens, target_state=State(state)
+    )
 
     return redirect(url_for("index"))
 

@@ -133,7 +133,7 @@
 
         <!-- First Block: melvins status-->
         <div class="col-md-4 column">
-          <h4 style="font-size:small">Fuel</h4>
+          <h4>Fuel</h4>
           <div class="progress mt-4">
             <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}%</div>
           </div>
@@ -148,8 +148,18 @@
           <h3 class="spacer">Sim_speed: {{simulation_speed}}     is_network_simulated: {{is_network_simulated}}</h3>
           <h3 class="spacer">Position (x,y): {{width_x}}, {{height_y}}</h3>
           <h3 class="spacer">Velocity (x,y): {{vx}}, {{vy}} </h3>
-          <h3 class="spacer">timestamp: {{timestamp}}</h3>
-          <h3 class="spacer">State: {{state}}</h3>
+          <h3 class="spacer">Target Velocity (x,y): {{target_vx}}, {{target_vy}} </h3>
+          <h3 class="spacer">Timestamp: {{timestamp}}</h3>
+          <h3 class="spacer">Last Update: {{timedelta}}s ago</h3>
+          <h3 class="spacer">Camera Lens: {{angle}}</h3>
+          <h3 class="spacer">Current State: {{state}}</h3>
+
+          <!-- expand here -->
+
+        </div>
+
+        <!-- Second Block: map (and more)-->
+        <div class="col-md-4 column">
 
           <!-- Requires image to be placed in static/images/-->
           <!-- Icons are from https://wiki.factorio.com/Alerts -->
@@ -161,12 +171,7 @@
             <img src="{{ url_for('static', filename='images/' + planed_transition_state + '.png') }}" alt="planed_transition_state" class="smaller_img">
 
           </div>
-          <!-- expand here -->
-
-        </div>
-
-        <!-- Second Block: map (and more)-->
-        <div class="col-md-4 column">
+          <div class="spacer"></div>
 
           <div id="map-container">
             <div class="line horizontal"></div>
@@ -186,13 +191,13 @@
         <div class="col-md-4 column">
 
           <div class="row" style="background-color: lightgrey;">
-            <h2>Simulation Manipulation</h2>
+            <h4>Simulation Manipulation</h4>
 
             <form action="{{ url_for('sim_manip_buttons') }}" method="post">
               <button type="submit" class="btn btn-success" name="button" value="refresh">Refresh</button>
               <button type="submit" class="btn btn-danger" name="button" value="reset">Reset Sim</button>
               <button type="submit" class="btn btn-danger" name="button" value="save">Save State</button>
-              <button type="submit" class="btn btn-danger" name="button" value="load">Load State</button>
+              <button type="submit" class="btn btn-danger" name="button" value="load">Load State (&#x23F0; {{last_backup_time}})</button>
             </form>
 
             <div class="spacer"></div>
@@ -208,11 +213,21 @@
 
           
           <div class="spacer"></div>
-          <h3>Change State</h3>
+          <h4>Change State</h4>
           <form action="{{ url_for('state_buttons') }}" method="post">
                 <button type="submit" class="btn btn-primary" name="state" value="acquisition">Acquisition</button>
                 <button type="submit" class="btn btn-primary" name="state" value="charge">Charge</button>
                 <button type="submit" class="btn btn-primary" name="state" value="communication">Comms</button>
+                <h5>&#x26A0;&#xFE0F;NEED ACQUISITION STATE, click ACQUISITION to change!&#x26A0;&#xFE0F;</h5>
+                <select name='options'>
+                  <option value="narrow" {% if angle == 'narrow' %}selected{% endif %}>Narrow Lens</option>
+                  <option value="normal" {% if angle == 'normal' %}selected{% endif %}>Normal Lens</option>
+                  <option value="wide" {% if angle == 'wide' %}selected{% endif %}>Wide Lens</option>
+              </select>
+              <label for="vx">Velocity x</label>
+              <input type="range" id="vx" name="vx" min="0" max="70" value="3"> 
+              <label for="vy">Velocity y</label>
+              <input type="range" id="vy" name="vy" min="0" max="70" value="3"> 
           </form>
 
           
