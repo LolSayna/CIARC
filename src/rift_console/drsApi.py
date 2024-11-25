@@ -10,7 +10,6 @@ import datetime
 import shared.constants as con
 from rift_console.RiftTelemetry import RiftTelemetry
 from shared.models import State, CameraAngle
->>>>>>> 811916b (moved RiftTelemetry to seperat file, added velocity change)
 
 ### ALL METHODS SO FAR ONLY WORK IF NETWORK SIMULATION IS DISABLED ###
 # TODO file aufteilung von Riftconsole???
