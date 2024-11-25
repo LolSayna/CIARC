@@ -2,7 +2,6 @@ from loguru import logger
 import requests
 
 import shared.constants as con
-from rift_console.__main__ import RiftTelemetry
 
 import requests  # type: ignore
 import datetime
