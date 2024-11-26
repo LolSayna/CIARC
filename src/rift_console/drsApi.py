@@ -3,10 +3,8 @@ import requests
 
 import shared.constants as con
 
-import requests  # type: ignore
 import datetime
 
-import shared.constants as con
 from rift_console.RiftTelemetry import RiftTelemetry
 from shared.models import State, CameraAngle
 

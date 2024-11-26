@@ -1,9 +1,16 @@
-"""Command-line interface."""
+"""
+Melvonaut
+
+
+
+:author: Jonathan Decker
+"""
 
 import asyncio
 import datetime
 import io
 import json
+import math
 import os
 import re
 import signal
@@ -50,6 +57,8 @@ aiodebug.log_slow_callbacks.enable(0.05)
 
 ##### TELEMETRY #####
 class MelTelemetry(BaseTelemetry):
+    timestamp: datetime.datetime
+
     async def store_observation(self) -> None:
         logger.debug("Storing observation")
         try:
@@ -73,6 +82,7 @@ class MelTelemetry(BaseTelemetry):
             await afp.write(str(json_telemetry))
         logger.debug("Observation stored")
 
+
     def model_post_init(self, __context__: Any) -> None:
         loop.create_task(self.store_observation())
 
@@ -90,6 +100,8 @@ class StatePlanner(BaseModel):
     target_state: Optional[State] = None
 
     melvin_task: MELVINTasks = MELVINTasks.Mapping
+
+    _accelerating: bool = False
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:
@@ -113,7 +125,7 @@ class StatePlanner(BaseModel):
         if self.get_current_state() is State.Transition:
             logger.debug("Not in transition state, returning 0")
             return datetime.timedelta(0)
-        elif self.previous_state is State.Safe:
+        elif self.previous_state == State.Safe:
             total_time = datetime.timedelta(
                 seconds=con.STATE_TRANSITION_FROM_SAFE_TIME
                 / self.get_simulation_speed()
@@ -125,13 +137,75 @@ class StatePlanner(BaseModel):
             )
             return total_time - self.get_time_since_state_change()
 
+    def calc_current_location(self) -> tuple[float, float]:
+        if self.current_telemetry is None:
+            return 0.0, 0.0
+        time_since_observation = (
+            datetime.datetime.now() - self.current_telemetry.timestamp
+        ).total_seconds()
+        current_x = (
+            self.current_telemetry.width_x
+            + self.current_telemetry.vx * time_since_observation
+        )
+        current_y = (
+            self.current_telemetry.height_y
+            + self.current_telemetry.vy * time_since_observation
+        )
+        return current_x, current_y
+
+    async def trigger_velocity_change(self, new_vel_x: float, new_vel_y: float) -> None:
+        if self.current_telemetry is None:
+            logger.warning("No telemetry data available. Cannot set velocity.")
+            return
+        if (
+            new_vel_x == self.current_telemetry.vx
+            and new_vel_y == self.current_telemetry.vy
+        ):
+            self._accelerating = False
+            logger.info("Target velocity already set. Not changing velocity.")
+            return
+        request_body = {
+            "vel_x": new_vel_x,
+            "vel_y": new_vel_y,
+            "camera_angle": self.current_telemetry.angle,
+            "state": self.get_current_state(),
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.put(con.CONTROL_ENDPOINT, json=request_body) as response:
+                if response.status == 200:
+                    self._accelerating = True
+                    logger.info(f"Velocity set to {new_vel_x}, {new_vel_y}")
+                else:
+                    logger.error(f"Failed to set velocity to {new_vel_x}, {new_vel_y}")
+
+    async def trigger_camera_angle_change(self, new_angle: CameraAngle) -> None:
+        if self.current_telemetry is None:
+            logger.warning("No telemetry data available. Cannot set camera angle.")
+            return
+        if new_angle == self.current_telemetry.angle:
+            logger.info("Target camera angle already set. Not changing angle.")
+            return
+        request_body = {
+            "vel_x": self.current_telemetry.vx,
+            "vel_y": self.current_telemetry.vy,
+            "camera_angle": new_angle,
+            "state": self.get_current_state(),
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.put(con.CONTROL_ENDPOINT, json=request_body) as response:
+                if response.status == 200:
+                    logger.info(f"Camera angle set to {new_angle}")
+                else:
+                    logger.error(f"Failed to set camera angle to {new_angle}")
+
     async def trigger_state_transition(self, new_state: State) -> None:
         if new_state in [State.Transition, State.Unknown, State.Deployment, State.Safe]:
             logger.warning(f"Cannot transition to {new_state}.")
+            return
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot initiate transition.")
             return
-        if self.current_telemetry.state is State.Transition:
+        if self.current_telemetry.state == State.Transition:
             logger.debug("Already in transition state, not starting transition.")
             return
         if new_state == self.get_current_state():
@@ -139,10 +213,8 @@ class StatePlanner(BaseModel):
             return
         request_body = {
             "state": new_state,
-            # "vel_x": self.current_telemetry.vx,
-            # "vel_y": self.current_telemetry.vy,
-            "vel_x": con.TARGET_SPEED_X,
-            "vel_y": con.TARGET_SPEED_Y,
+            "vel_x": self.current_telemetry.vx,
+            "vel_y": self.current_telemetry.vy,
             "camera_angle": self.current_telemetry.angle,
         }
         async with aiohttp.ClientSession() as session:
@@ -168,14 +240,14 @@ class StatePlanner(BaseModel):
             )
             return
         if self.current_telemetry.battery <= con.BATTERY_LOW_THRESHOLD:
-            if self.get_current_state() is state_low_battery:
+            if self.get_current_state() == state_low_battery:
                 return
             logger.debug(
                 f"State is {self.get_current_state()}, Battery is low, triggering transition to {state_low_battery}"
             )
             await self.trigger_state_transition(state_low_battery)
         else:
-            if self.get_current_state() is state_high_battery:
+            if self.get_current_state() == state_high_battery:
                 return
             logger.debug(
                 f"State is {self.get_current_state()}, Battery is high, triggering transition to {state_high_battery}"
@@ -243,9 +315,9 @@ class StatePlanner(BaseModel):
                         logger.warning(f"Unknown state {state}")
             case MELVINTasks.Emergencies:
                 pass
-            case MELVINTasks.events:
+            case MELVINTasks.Events:
                 pass
-            case MELVINTasks.idle:
+            case MELVINTasks.Idle:
                 pass
 
     async def update_telemetry(self, new_telemetry: MelTelemetry) -> None:
@@ -254,38 +326,54 @@ class StatePlanner(BaseModel):
 
         logger.debug(
             f"State: {self.get_current_state()},"
-            f" Battery level: {self.current_telemetry.battery}/{self.current_telemetry.max_battery}"
+            f" Battery level: {self.current_telemetry.battery}/{self.current_telemetry.max_battery},"
+            f" Vel X,Y: {self.current_telemetry.vx}, {self.current_telemetry.vy},"
+            f" Fuel: {self.current_telemetry.fuel}"
         )
 
         if self.previous_telemetry is not None:
-            if self.previous_telemetry.state != self.current_telemetry.state:
+            if self.get_previous_state() != self.get_current_state():
                 logger.info(
-                    f"State changed from {self.previous_telemetry.state} to {self.current_telemetry.state}"
+                    f"State changed from {self.get_previous_state()} to {self.get_current_state()}"
                 )
-                self.previous_state = self.previous_telemetry.state
+                self.previous_state = self.get_previous_state()
                 self.state_change_time = datetime.datetime.now()
-                if self.current_telemetry.state is State.Transition:
-                    if self.submitted_transition_request:
-                        self.submitted_transition_request = False
-                    else:
-                        logger.warning("State transition was externally triggered!")
-                elif (
-                    self.get_previous_state() is State.Transition
-                    and self.get_current_state() is not State.Transition
-                ):
-                    if self.get_current_state() is self.target_state:
-                        logger.debug(
-                            f"Planned state transition to {self.target_state} completed"
+                # Put in here events to do on state change
+                logger.debug(
+                    f"Previous state: {self.previous_state}, Current state: {self.get_current_state()}"
+                )
+                match self.get_current_state():
+                    case State.Transition:
+                        if self.submitted_transition_request:
+                            self.submitted_transition_request = False
+                        else:
+                            logger.warning("State transition was externally triggered!")
+                    case State.Acquisition:
+                        logger.info("Starting control in acquisition state.")
+                        await self.control_acquisition()
+                    case State.Charge:
+                        pass
+                    case State.Safe:
+                        logger.warning("State transitioned to SAFE!")
+                    case State.Communication:
+                        pass
+                    case State.Deployment:
+                        logger.warning("State transitioned to DEPLOYMENT!")
+                    case _:
+                        logger.warning(f"Unknown state {self.get_current_state()}")
+                if self.get_current_state() != State.Acquisition:
+                    self._accelerating = False
+                if self.get_current_state() != State.Transition:
+                    if self.target_state != self.get_current_state():
+                        logger.warning(
+                            f"Planned state transition to {self.target_state} failed, now in {self.get_current_state()}"
                         )
                     else:
-                        logger.warning(
-                            "Planned state transition to {self.target_state} failed, now in {self.current_telemetry.state}"
+                        logger.debug(
+                            f"Planned state transition to {self.target_state} succeeded."
                         )
                     self.target_state = None
 
-                logger.debug(
-                    f"Previous state: {self.previous_telemetry.state}, Current state: {self.current_telemetry.state}"
-                )
             await self.plan_state_switching()
 
     async def get_image(self) -> None:
@@ -296,8 +384,6 @@ class StatePlanner(BaseModel):
         async with aiohttp.ClientSession() as session:
             async with session.get(con.IMAGE_ENDPOINT) as response:
                 if response.status == 200:
-                    logger.debug("Received image")
-
                     # Extract exact image timestamp
                     img_timestamp = response.headers.get("image-timestamp")
                     if img_timestamp is None:
@@ -320,40 +406,92 @@ class StatePlanner(BaseModel):
                             parsed_img_timestamp - datetime.datetime.now()
                         ).total_seconds()
 
+                    cor_x = round(
+                        self.current_telemetry.width_x
+                        + (
+                            difference_in_seconds
+                            * self.current_telemetry.vx
+                            * self.get_simulation_speed()
+                        )
+                    )
+                    cor_y = round(
+                        self.current_telemetry.height_y
+                        + (
+                            difference_in_seconds
+                            * self.current_telemetry.vy
+                            * self.get_simulation_speed()
+                        )
+                    )
                     image_path = con.IMAGE_LOCATION.format(
                         angle=self.current_telemetry.angle,
-                        cor_x=round(
-                            self.current_telemetry.width_x
-                            + (
-                                difference_in_seconds
-                                * self.current_telemetry.vx
-                                * self.current_telemetry.simulation_speed
-                            )
-                        ),
-                        cor_y=round(
-                            self.current_telemetry.height_y
-                            + (
-                                difference_in_seconds
-                                * self.current_telemetry.vy
-                                * self.current_telemetry.simulation_speed
-                            )
-                        ),
+                        cor_x=cor_x,
+                        cor_y=cor_y,
                         time=img_timestamp,  # or should it be parsed_img_timestamp?
                     )
+                    logger.debug(f"Received image at {cor_x}x{cor_y}y")
                     async with async_open(image_path, "wb") as afp:
                         await afp.write(await response.content.read())
                 else:
-                    logger.warning(f"Failed to get image: {response.status}")
+                    logger.debug(f"Failed to get image: {response.status}")
                     logger.debug(f"Response body: {await response.text()}")
 
     async def run_get_image(self) -> None:
         await self.get_image()
-        while self.get_current_state() is State.Acquisition:
-            delay_in_s = round(
-                5 / self.get_simulation_speed()
-            )  # TODO Replace with calculation based on distance traveled
+        while self.get_current_state() == State.Acquisition:
+            if self.current_telemetry is None:
+                logger.warning(
+                    f"No telemetry data available. Waiting {con.OBSERVATION_REFRESH_RATE}s for next image."
+                )
+                image_task = Timer(
+                    timeout=con.OBSERVATION_REFRESH_RATE, callback=self.get_image
+                ).get_task()
+                await asyncio.gather(image_task)
+                continue
+            current_total_vel = self.current_telemetry.vx + self.current_telemetry.vy
+            if self._accelerating:
+                # If accelerating calculate distance based on current speed and acceleration
+                delay_in_s = (
+                    math.sqrt(
+                        current_total_vel**2
+                        + 2 * con.ACCELERATION * con.DISTANCE_BETWEEN_IMAGES
+                    )
+                    - current_total_vel
+                ) / con.ACCELERATION
+            else:
+                # When not accelerating calculate distance based on current speed
+                delay_in_s = float(con.DISTANCE_BETWEEN_IMAGES) / current_total_vel
+            delay_in_s = delay_in_s / self.get_simulation_speed()
+            logger.debug(f"Next image in {delay_in_s}s.")
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()
             await asyncio.gather(image_task)
+
+    async def control_acquisition(self) -> None:
+        match self.melvin_task:
+            case MELVINTasks.Mapping:
+                await self.trigger_camera_angle_change(
+                    con.TARGET_CAMERA_ANGLE_ACQUISITION
+                )
+                match con.TARGET_CAMERA_ANGLE_ACQUISITION:
+                    case CameraAngle.Wide:
+                        await self.trigger_velocity_change(
+                            con.TARGET_SPEED_WIDE_X, con.TARGET_SPEED_WIDE_Y
+                        )
+                    case CameraAngle.Narrow:
+                        await self.trigger_velocity_change(
+                            con.TARGET_SPEED_NARROW_X, con.TARGET_SPEED_NARROW_Y
+                        )
+                    case CameraAngle.Normal:
+                        await self.trigger_velocity_change(
+                            con.TARGET_SPEED_NORMAL_X, con.TARGET_SPEED_NORMAL_Y
+                        )
+                    case _:
+                        pass
+            case MELVINTasks.Emergencies:
+                pass
+            case MELVINTasks.Events:
+                pass
+            case MELVINTasks.Idle:
+                pass
 
 
 state_planner = StatePlanner()
@@ -376,7 +514,8 @@ async def run_get_observations() -> None:
     while True:
         logger.debug("Submitted observations request")
         observe_task = Timer(
-            timeout=con.OBSERVATION_REFRESH_RATE, callback=get_observations
+            timeout=con.OBSERVATION_REFRESH_RATE / state_planner.get_simulation_speed(),
+            callback=get_observations,
         ).get_task()
         await asyncio.gather(observe_task)
 

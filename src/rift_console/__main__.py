@@ -1,7 +1,6 @@
 """Command-line interface."""
 
 import sys
-import time
 import datetime
 
 import click

@@ -12,11 +12,11 @@ from typing import Optional
 class Timer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    _timeout: int
+    _timeout: float
     _callback: Callable[[], Awaitable[Any]]
     _task: asyncio.Task[None]
 
-    def __init__(self, timeout: int, callback: Callable[[], Awaitable[Any]]):
+    def __init__(self, timeout: float, callback: Callable[[], Awaitable[Any]]):
         super().__init__()
         self._timeout = timeout
         self._callback = callback
@@ -37,8 +37,8 @@ class Timer(BaseModel):
 class MELVINTasks(StrEnum):
     Mapping = "mapping"
     Emergencies = "emergencies"
-    events = "events"
-    idle = "idle"
+    Events = "events"
+    Idle = "idle"
 
 
 # From User Manual

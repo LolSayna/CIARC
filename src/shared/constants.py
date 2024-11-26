@@ -1,4 +1,6 @@
 # Folder structure
+from shared.models import CameraAngle
+
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 TELEMETRY_LOCATION = "logs/melvonaut/telemetry_melvonaut.json"
 IMAGE_PATH = "logs/melvonaut/images/"
@@ -27,13 +29,42 @@ STATE_TRANSITION_TIME = 3 * 60  # Seconds for regular state transitions
 STATE_TRANSITION_TO_SAFE_TIME = 1 * 60  # Seconds for state transitions to safe
 STATE_TRANSITION_FROM_SAFE_TIME = 20 * 60  # Seconds for state transitions from safe
 
+ACCELERATION = 0.04
+
 # Our settings, could be changed later
-OBSERVATION_REFRESH_RATE = 5  # Seconds between observation requests
+OBSERVATION_REFRESH_RATE = 0.5  # Seconds between observation requests
 BATTERY_LOW_THRESHOLD = 25
 BATTERY_HIGH_THRESHOLD = 0  # Difference to Max Battery before switching
 
 TARGET_ANGLE_DEG = 23
-TARGET_SPEED_X = 47.117
-TARGET_SPEED_Y = 20.0
+# With total speed over 50, cannot use wide angle camera
+# 49.9 = y + x
+# x = 2.35585 * y
+# 49.9 = 2.35585 * y + y
+# 49.9 = 3.35585 * y
+# y = 49.9 / 3.35585
+# y = 14.87
+# 49.9 - 14.87 = 35.03 = x
+TARGET_SPEED_NORMAL_X = 35.03  # 2.35585 times as much as Y
+TARGET_SPEED_NORMAL_Y = 14.87
+
+# With total speed over 10, cannot use narrow angle camera
+# 9.9 = y + x
+# y = 9.9 / 3.35585
+# y = 2.95
+# 9.9 - 2.95 = 6.95 = x
+TARGET_SPEED_NARROW_X = 6.95
+TARGET_SPEED_NARROW_Y = 2.95
+
+# Total speed can be up to 71
+# 71 = y + x
+# y = 71 / 3.35585
+# y = 21.16
+# 71 - 21.16 = 49.84 = x
+TARGET_SPEED_WIDE_X = 49.84
+TARGET_SPEED_WIDE_Y = 21.16
+
+DISTANCE_BETWEEN_IMAGES = 300  # How many pixel before taking another image
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
 
 RIFT_LOG_LEVEL = "DEBUG"
