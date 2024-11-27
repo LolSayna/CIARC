@@ -40,7 +40,7 @@ from shared.models import (
 
 ##### LOGGING #####
 logger.remove()
-logger.add(sink=sys.stderr, level="DEBUG", backtrace=True, diagnose=True)
+logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
 logger.add(
     sink=con.MEL_LOG_LOCATION,
     rotation="00:00",
@@ -350,7 +350,6 @@ class StatePlanner(BaseModel):
                         logger.info("Starting control in acquisition state.")
                         loop.create_task(self.run_get_image())
                         await self.control_acquisition()
-                        pass
                     case State.Charge:
                         pass
                     case State.Safe:
