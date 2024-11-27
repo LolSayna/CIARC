@@ -423,9 +423,9 @@ class StatePlanner(BaseModel):
                     )
                     image_path = con.IMAGE_LOCATION.format(
                         angle=self.current_telemetry.angle,
+                        time=img_timestamp,
                         cor_x=cor_x,
-                        cor_y=cor_y,
-                        time=img_timestamp,  # or should it be parsed_img_timestamp?
+                        cor_y=cor_y,  # or should it be parsed_img_timestamp?
                     )
                     logger.debug(f"Received image at {cor_x}x{cor_y}y")
                     async with async_open(image_path, "wb") as afp:
@@ -532,6 +532,7 @@ async def get_announcements() -> None:
                 else:
                     logger.warning(f"Failed to get announcements: {response.status}")
     except TimeoutError:
+        # TODO add async sleep
         logger.info("Announcements subscription timed out")
 
 
@@ -598,7 +599,7 @@ def start_event_loop() -> None:
         loop.add_signal_handler(sig, cancel_tasks)
 
     loop.create_task(run_get_observations())
-    # TODO removed for now
+    # TODO removed for now, test later
     #loop.create_task(run_get_announcements())
 
     # loop.create_task(run_read_images())

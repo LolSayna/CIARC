@@ -5,7 +5,7 @@ MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 TELEMETRY_LOCATION = "logs/melvonaut/telemetry_melvonaut.json"
 IMAGE_PATH = "logs/melvonaut/images/"
 IMAGE_LOCATION = (
-    IMAGE_PATH + "image_melvonaut_angle_{angle}_x_{cor_x}_y_{cor_y}_{time}.png"
+    IMAGE_PATH + "image_melvonaut_angle_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
 )
 
 RIFT_LOG_LOCATION = "logs/rift_console/log_rift-console_{time:YYYY-MM-DD_HH}.log"
