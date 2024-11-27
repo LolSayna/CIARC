@@ -33,7 +33,7 @@ ACCELERATION = 0.04
 
 # Our settings, could be changed later
 OBSERVATION_REFRESH_RATE = 0.5  # Seconds between observation requests
-BATTERY_LOW_THRESHOLD = 25
+BATTERY_LOW_THRESHOLD = 10
 BATTERY_HIGH_THRESHOLD = 0  # Difference to Max Battery before switching
 
 TARGET_ANGLE_DEG = 23

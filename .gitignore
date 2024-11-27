@@ -169,3 +169,4 @@ letsencrypt/
 
 # since large processed/stiched images are stored there
 media
+logs/melvonaut/images

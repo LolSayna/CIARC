@@ -82,7 +82,6 @@ class MelTelemetry(BaseTelemetry):
             await afp.write(str(json_telemetry))
         logger.debug("Observation stored")
 
-
     def model_post_init(self, __context__: Any) -> None:
         loop.create_task(self.store_observation())
 
@@ -284,7 +283,6 @@ class StatePlanner(BaseModel):
                         await self.switch_if_battery_low(
                             State.Charge, State.Acquisition
                         )
-                        loop.create_task(self.run_get_image())
                     case State.Charge:
                         if (
                             self.current_telemetry.battery
@@ -350,7 +348,9 @@ class StatePlanner(BaseModel):
                             logger.warning("State transition was externally triggered!")
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
+                        loop.create_task(self.run_get_image())
                         await self.control_acquisition()
+                        pass
                     case State.Charge:
                         pass
                     case State.Safe:
