@@ -164,10 +164,13 @@ def run_server() -> None:
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
 
+    drsApi.update_telemetry(melvin)
     # used to disable network simulation at start time
-    drsApi.change_simulation_speed(
-        melvin=melvin, is_network_simulation=False, user_speed_multiplier=1
-    )
+    if melvin.is_network_simulation_active == True:
+        drsApi.change_simulation_speed( 
+            melvin=melvin, is_network_simulation=False, user_speed_multiplier=melvin.simulation_speed
+        )
+
     app.run(port=8000, debug=True)
 
 

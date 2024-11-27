@@ -535,6 +535,7 @@ async def get_announcements() -> None:
         logger.info("Announcements subscription timed out")
 
 
+# Irgendwie restartet der sich alle 5 sekunden, und glaube überlastet die API
 async def run_get_announcements() -> None:
     logger.info("Started announcements subscription")
     while True:
@@ -597,7 +598,8 @@ def start_event_loop() -> None:
         loop.add_signal_handler(sig, cancel_tasks)
 
     loop.create_task(run_get_observations())
-    loop.create_task(run_get_announcements())
+    # TODO removed for now
+    #loop.create_task(run_get_announcements())
 
     # loop.create_task(run_read_images())
 
