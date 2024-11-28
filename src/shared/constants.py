@@ -3,6 +3,7 @@ from shared.models import CameraAngle
 
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 TELEMETRY_LOCATION = "logs/melvonaut/telemetry_melvonaut.json"
+PANORAMA_PATH = "media/"
 IMAGE_PATH = "logs/melvonaut/images/"
 IMAGE_LOCATION = (
     IMAGE_PATH + "image_melvonaut_angle_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
@@ -28,6 +29,10 @@ BACKUP_ENDPOINT = f"{BASE_URL}backup"
 STATE_TRANSITION_TIME = 3 * 60  # Seconds for regular state transitions
 STATE_TRANSITION_TO_SAFE_TIME = 1 * 60  # Seconds for state transitions to safe
 STATE_TRANSITION_FROM_SAFE_TIME = 20 * 60  # Seconds for state transitions from safe
+
+# world map
+WORLD_X = 21600
+WORLD_Y = 10800
 
 ACCELERATION = 0.04
 
@@ -66,5 +71,7 @@ TARGET_SPEED_WIDE_Y = 21.16
 
 DISTANCE_BETWEEN_IMAGES = 300  # How many pixel before taking another image
 TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
+# TODO calulate this
+IMAGE_OFFSET = 1000
 
 RIFT_LOG_LEVEL = "DEBUG"

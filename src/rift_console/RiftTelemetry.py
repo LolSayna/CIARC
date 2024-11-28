@@ -33,3 +33,6 @@ class RiftTelemetry(Telemetry):
     # manually managed by drsAPI.change_simulation_speed()
     is_network_simulation_active: bool = True
     last_backup_time: Optional[datetime.datetime] = None
+
+    # default value for creating a new folder to store images
+    new_image_folder_name: str = "DATE_MISSING"

@@ -2,6 +2,8 @@
 
 import sys
 import datetime
+import subprocess
+import os
 
 import click
 from loguru import logger
@@ -14,6 +16,7 @@ import shared.constants as con
 from shared.models import State, CameraAngle
 import rift_console.drsApi as drsApi
 import rift_console.RiftTelemetry
+import rift_console.image_processing
 
 # TODO-s
 # - Autorefresh (maybe javascript)
@@ -64,6 +67,7 @@ def index() -> str:
         timedelta=(
             datetime.datetime.now(datetime.timezone.utc) - melvin.timestamp
         ).total_seconds(),
+        new_image_folder_name=melvin.new_image_folder_name,
         old_x=melvin.old_pos[0],
         old_y=melvin.old_pos[1],
         older_x=melvin.older_pos[0],
@@ -88,6 +92,62 @@ def call_telemetry() -> None:
         drsApi.update_telemetry(melvin)
         time.sleep(3)
 """
+
+
+# Wrapper for all Image Stichting and Copying
+@app.route("/image_stitch_button", methods=["POST"])
+def image_stitch_button() -> Response:
+    # USES LOKAL PATHS
+    user_input = request.form.get("source_location")
+    source_path = con.IMAGE_PATH + user_input + "/"
+    result_path = con.PANORAMA_PATH + user_input
+
+    logger.info(f"TRY Stiched Image from {source_path} into {result_path}")
+
+    rift_console.image_processing.automated_processing(
+        image_path=source_path, output_path=result_path
+    )
+
+    logger.info(f"Stiched Image from {source_path} into {result_path}")
+
+    # afterwards refresh page (which includes updating telemetry)
+    return redirect(url_for("index"))
+
+
+# Wrapper for all Image Stichting and Copying
+@app.route("/image_pull_button", methods=["POST"])
+def image_pull_button() -> Response:
+    user_input = request.form.get("target_location")
+    dir_path = con.IMAGE_PATH + user_input
+
+    try:
+        subprocess.run(["mkdir", dir_path], check=True)
+        logger.info(f"image_manip_active created folder: {dir_path}")
+
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"image_manip_buttons could not mkdir: {e}")
+
+    # make sure an ssh config for "console" exists
+    try:
+        subprocess.run(
+            ["scp", "console:/shared/CIARC/logs/melvonaut/images/*.png", dir_path],
+            check=True,
+        )
+        logger.info(f"image_manip_active copied to: {dir_path}")
+
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"image_manip_buttons scp failed: {e}")
+
+    entries = os.listdir(dir_path)
+
+    # Filter out directories and only count files
+    file_count = sum(
+        1 for entry in entries if os.path.isfile(os.path.join(dir_path, entry))
+    )
+    logger.info(f"Copied {file_count} Images")
+
+    # afterwards refresh page (which includes updating telemetry)
+    return redirect(url_for("index"))
 
 
 # Wrapper for all Simulation Manipulation buttons
@@ -166,9 +226,11 @@ def run_server() -> None:
 
     drsApi.update_telemetry(melvin)
     # used to disable network simulation at start time
-    if melvin.is_network_simulation_active == True:
-        drsApi.change_simulation_speed( 
-            melvin=melvin, is_network_simulation=False, user_speed_multiplier=melvin.simulation_speed
+    if melvin.is_network_simulation_active:
+        drsApi.change_simulation_speed(
+            melvin=melvin,
+            is_network_simulation=False,
+            user_speed_multiplier=melvin.simulation_speed,
         )
 
     app.run(port=8000, debug=True)

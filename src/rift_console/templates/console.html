@@ -183,6 +183,22 @@
             <div class="point point_pastest"></div>
           </div>
 
+
+          <h4>Image Manipulation</h4>
+          <form action="{{ url_for('image_pull_button') }}" method="POST">  
+              <label for="user_input">Scp all images to here</label>
+              <input type="text" id="target_location" value={{new_image_folder_name}} name="target_location" required>
+              <button type="submit" class="btn btn-success" name="button" value="pull">Pull</button>
+          </form>
+          <form action="{{ url_for('image_stitch_button') }}" method="POST">  
+            <label for="user_input">Stitch images from here</label>
+            <input type="text" id="source_location" value={{new_image_folder_name}} name="source_location" required>
+            <button type="submit" class="btn btn-success" name="button" value="stitch">Stitch</button>
+        </form>
+      
+          {% if user_input %}
+              <h2>You submitted: {{ user_input }}</h2>
+          {% endif %}
           <!-- expand here -->
 
         </div>

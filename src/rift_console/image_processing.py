@@ -1,55 +1,68 @@
 from PIL import Image
 import os
 
+from shared.models import CameraAngle
 import shared.constants as con
-
-# world map
-world_x = 21600
-world_y = 10800
+from loguru import logger
 
 
-def stitch_images(image_paths: list[str]) -> Image.Image:
-    # Open images
-    images = [Image.open(con.IMAGE_PATH + image_path) for image_path in image_paths]
-
+def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
     # Create a new empty image
-    stitched_image = Image.new("RGBA", (world_x, world_y))
+    stitched_image = Image.new("RGBA", (con.WORLD_X, con.WORLD_Y))
 
-    # Place each image side by side
-    for image, filename in zip(images, image_paths):
-        x = int(filename.split("x_", 1)[1].split("_")[0]) - 300
-        y = int(filename.split("y_", 1)[1].split("_")[0]) - 300
+    for image_name in image_list:
+        with Image.open(image_path + image_name) as img:
+            # read camera angle
+            angle = image_path.split("angle_", 1)[1].split("_")[0]
 
-        print("pasting " + str(x) + " " + str(y))
-        stitched_image.paste(image, (x, y))
+            match angle:
+                case CameraAngle.Narrow:
+                    LENS_SIZE = 600
+                case CameraAngle.Normal:
+                    LENS_SIZE = 800
+                case CameraAngle.Wide:
+                    LENS_SIZE = 1000
+
+            x = int(image_path.split("x_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+            y = int(image_path.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+
+            if LENS_SIZE != 600:
+                img = img.resize((LENS_SIZE, LENS_SIZE), Image.LANCZOS)
+
+            stitched_image.paste(img, (x, y))
 
     return stitched_image
 
 
+# returns all images
 def list_image_files(directory: str) -> list[str]:
-    # List to store files starting with 'image'
     image_files = []
 
-    # Iterate over all files in the specified directory
     for filename in os.listdir(directory):
-        # Check if the filename starts with 'image'
         if filename.startswith("image"):
-            # Add to the list of image files
             image_files.append(filename)
 
     return image_files
 
 
-def main() -> None:
-    # Image file paths
-    image_paths = list_image_files(con.IMAGE_PATH)
-    print(image_paths)
-    # Stitch images
-    panorama = stitch_images(image_paths)
+def automated_processing(image_path: str, output_path: str) -> None:
+    image_list = list_image_files(image_path)
 
-    # Save and show the result
+    logger.info(f"Starting Stiching of {len(image_list)} Images.")
+
+    panorama = stitch_images(image_path=image_path, image_list=image_list)
+
+    panorama.save(output_path + ".png")
+
+
+# for manual testing
+def main() -> None:
+    image_list = list_image_files(con.IMAGE_PATH)
+    logger.info(f"Starting Stiching of {len(image_list)} Images.")
+
+    panorama = stitch_images(image_list)
+
     panorama.save("media/panorama.png")
-    # panorama.show()
 
 
 # for now call this file directly TODO integrieren into console

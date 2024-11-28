@@ -52,6 +52,7 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
     melvin.timestamp = datetime.datetime.fromisoformat(data["timestamp"])
     melvin.angle = data["angle"]
     melvin.max_battery = data["max_battery"]
+    melvin.new_image_folder_name = "Img_" + melvin.timestamp.strftime("%Y-%m-%dT%H:%M")
 
     if melvin.state != State.Acquisition:
         melvin.target_vx = melvin.vx
