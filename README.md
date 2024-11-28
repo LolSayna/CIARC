@@ -43,9 +43,9 @@ Then the commands can be used, make sure to run them in the main project folder.
 The rift-console can be deployed as a docker container.
 Use the `docker-compose up --build -d` command to start it.
 Or refer to `make docker-compose-up` in the Makefile.
+To use the Image Processing, make sure an `.ssh/config` for the entry `console` exists.
 
-
-Inside `poetry shell` run `make myps` to check for type errors or run `make lint` to check linting before commiting.
+Inside `poetry shell` run `make myps` to check for type errors or run `make lint` to check linting before commiting. Use `poetry add NAME` to add librarys.
 
 ## Usage
 

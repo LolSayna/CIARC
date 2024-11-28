@@ -600,7 +600,7 @@ def start_event_loop() -> None:
 
     loop.create_task(run_get_observations())
     # TODO removed for now, test later
-    #loop.create_task(run_get_announcements())
+    # loop.create_task(run_get_announcements())
 
     # loop.create_task(run_read_images())
 
