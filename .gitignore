@@ -170,3 +170,4 @@ letsencrypt/
 # since large processed/stiched images are stored there
 media
 logs/melvonaut/images
+src/rift_console/static/images/preview.png

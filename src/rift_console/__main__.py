@@ -146,6 +146,8 @@ def image_pull_button() -> Response:
     )
     logger.info(f"Copied {file_count} Images")
 
+    melvin.nextStitch_folder_name(user_input)
+
     # afterwards refresh page (which includes updating telemetry)
     return redirect(url_for("index"))
 

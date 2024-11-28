@@ -35,4 +35,6 @@ class RiftTelemetry(Telemetry):
     last_backup_time: Optional[datetime.datetime] = None
 
     # default value for creating a new folder to store images
-    new_image_folder_name: str = "DATE_MISSING"
+    new_image_folder_name: str = "MISSING"
+    # nextStitch_folder_name: str = "DATE_MISSING"
+
