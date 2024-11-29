@@ -60,6 +60,7 @@ nox-poetry = "^1.0.3"
 pytest-cov = "^6.0.0"
 pytest-asyncio = "^0.24.0"
 ruff = "^0.7.3"
+py-spy = "^0.4.0"
 
 [tool.poetry.scripts]
 melvonaut = "melvonaut.__main__:main"

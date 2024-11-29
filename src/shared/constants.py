@@ -2,8 +2,9 @@
 from shared.models import CameraAngle
 
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
-TELEMETRY_LOCATION = "logs/melvonaut/telemetry_melvonaut.json"
 PANORAMA_PATH = "media/"
+TELEMETRY_LOCATION_JSON = "logs/melvonaut/telemetry_melvonaut.json"
+TELEMETRY_LOCATION_CSV = "logs/melvonaut/telemetry_melvonaut.csv"
 IMAGE_PATH = "logs/melvonaut/images/"
 IMAGE_LOCATION = (
     IMAGE_PATH + "image_melvonaut_angle_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
@@ -70,8 +71,10 @@ TARGET_SPEED_WIDE_X = 49.84
 TARGET_SPEED_WIDE_Y = 21.16
 
 DISTANCE_BETWEEN_IMAGES = 300  # How many pixel before taking another image
-TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
+
+# TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
 # TODO calulate this
 IMAGE_OFFSET = 1000
 
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Wide
 RIFT_LOG_LEVEL = "DEBUG"
