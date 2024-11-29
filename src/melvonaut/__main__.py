@@ -471,13 +471,13 @@ class StatePlanner(BaseModel):
                     async with async_open(image_path, "wb") as afp:
 
                         logger.error("S-1.5" + str(psutil.Process(os.getpid()).memory_info().rss))
-                        cnt = await response.content.read()
-
+                        while True:
+                            cnt = await response.content.readany()
+                            if not cnt:
+                                break
+                            await afp.write(cnt)
                         logger.error("S-2" + str(psutil.Process(os.getpid()).memory_info().rss))
-                        await afp.write(cnt)
-                        logger.error("S-3" + str(psutil.Process(os.getpid()).memory_info().rss))
 
-                        logger.error("S3-4" + str(psutil.Process(os.getpid()).memory_info().rss))
                     logger.error("S-5" + str(psutil.Process(os.getpid()).memory_info().rss))
                 else:
                 
