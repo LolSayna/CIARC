@@ -29,6 +29,8 @@ loguru = "^0.7.2"
 aiodebug = "^2.3.0"
 pillow = "^11.0.0"
 psutil = "^6.1.0"
+quart = "^0.19.9"
+quart-flask-patch = "^0.3.0"
 
 [tool.poetry.group.melvonaut.dependencies]
 uvloop = "^0.21.0"

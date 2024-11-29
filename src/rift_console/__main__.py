@@ -8,7 +8,8 @@ import os
 import click
 from loguru import logger
 
-from flask import Flask, render_template, redirect, url_for, request
+import quart_flask_patch
+from quart import Quart, render_template, redirect, url_for, request
 from werkzeug.wrappers.response import Response
 
 # shared imports
@@ -37,17 +38,17 @@ logger.add(
 )
 
 
-app = Flask(__name__)
+app = Quart(__name__)
 melvin = rift_console.RiftTelemetry.RiftTelemetry()
 
 
 # Main Page
 @app.route("/", methods=["GET"])
-def index() -> str:
+async def index() -> str:
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
 
-    return render_template(
+    return await render_template(
         "console.html",
         width_x=melvin.width_x,
         height_y=melvin.height_y,
@@ -96,9 +97,10 @@ def call_telemetry() -> None:
 
 # Wrapper for all Image Stichting and Copying
 @app.route("/image_stitch_button", methods=["POST"])
-def image_stitch_button() -> Response:
+async def image_stitch_button() -> Response:
     # USES LOKAL PATHS
-    user_input = request.form.get("source_location")
+    form = await request.form
+    user_input = form.get("source_location")
     source_path = con.IMAGE_PATH + user_input + "/"
     result_path = con.PANORAMA_PATH + user_input
 
@@ -116,8 +118,9 @@ def image_stitch_button() -> Response:
 
 # Wrapper for all Image Stichting and Copying
 @app.route("/image_pull_button", methods=["POST"])
-def image_pull_button() -> Response:
-    user_input = request.form.get("target_location")
+async def image_pull_button() -> Response:
+    form = await request.form
+    user_input = form.get("target_location")
     dir_path = con.IMAGE_PATH + user_input
 
     try:
@@ -154,9 +157,10 @@ def image_pull_button() -> Response:
 
 # Wrapper for all Simulation Manipulation buttons
 @app.route("/sim_manip_buttons", methods=["POST"])
-def sim_manip_buttons() -> Response:
+async def sim_manip_buttons() -> Response:
     # read which button was pressed
-    button = request.form.get("button", type=str)
+    form = await request.form
+    button = form.get("button", type=str)
     match button:
         case "refresh":
             pass
@@ -173,8 +177,9 @@ def sim_manip_buttons() -> Response:
 
 # Slider
 @app.route("/slider", methods=["POST"])
-def slider_button() -> Response:
-    slider_value = request.form.get("speed", default=20, type=int)
+async def slider_button() -> Response:
+    form = await request.form
+    slider_value = form.get("speed", default=20, type=int)
     is_network_simulation = "enableSim" in request.form
 
     drsApi.change_simulation_speed(
@@ -188,8 +193,9 @@ def slider_button() -> Response:
 
 # State Changer
 @app.route("/state_changer", methods=["POST"])
-def state_buttons() -> Response:
-    state = request.form.get("state", default=State.Unknown, type=State)
+async def state_buttons() -> Response:
+    form = await request.form
+    state = form.get("state", default=State.Unknown, type=State)
 
     lens = melvin.angle
     vx = melvin.vx
@@ -221,12 +227,13 @@ def main() -> None:
 @main.command()
 def run_server() -> None:
     """Run the Flask development server on port 8000."""
-    click.echo("Starting Flask development server on port 8000...")
+    click.echo("Starting Quart development server on port 8000...")
 
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
 
     drsApi.update_telemetry(melvin)
+    click.echo("Updated Telemetry")
     # used to disable network simulation at start time
     if melvin.is_network_simulation_active:
         drsApi.change_simulation_speed(
