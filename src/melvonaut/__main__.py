@@ -7,7 +7,9 @@ Melvonaut
 """
 
 import asyncio
+import concurrent.futures
 import datetime
+import inspect
 import io
 import json
 import math
@@ -16,11 +18,13 @@ import re
 import signal
 import sys
 import csv
+import threading
 from pathlib import Path
 import tracemalloc
 import psutil
 
 from typing import Any, Optional, AsyncIterable
+import resource
 
 import aiohttp
 import click
@@ -31,7 +35,6 @@ from pydantic import BaseModel
 from PIL import Image
 import aiodebug.log_slow_callbacks  # type: ignore
 
-
 import shared.constants as con
 from shared.models import (
     State,
@@ -41,6 +44,11 @@ from shared.models import (
     CameraAngle,
     BaseTelemetry,
 )
+
+if con.TRACING:
+    import tracemalloc
+
+    tracemalloc.start(5)
 
 ##### LOGGING #####
 logger.remove()
@@ -135,6 +143,10 @@ class StatePlanner(BaseModel):
     melvin_task: MELVINTasks = MELVINTasks.Mapping
 
     _accelerating: bool = False
+
+    _run_get_image_task: Optional[asyncio.Task] = None
+
+    _aiohttp_session: Optional[aiohttp.ClientSession] = None
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:
@@ -353,6 +365,7 @@ class StatePlanner(BaseModel):
                 pass
 
     async def update_telemetry(self, new_telemetry: MelTelemetry) -> None:
+
         self.previous_telemetry = self.current_telemetry
         self.current_telemetry = new_telemetry
 
@@ -363,6 +376,13 @@ class StatePlanner(BaseModel):
             f" Fuel: {self.current_telemetry.fuel}"
         )
 
+        #if self.get_current_state() == State.Acquisition:
+        #    await self.get_image()
+        logger.debug(f"Threads: {threading.active_count()}")
+        #for thread in threading.enumerate():
+        #    frame = sys._current_frames()[thread.ident]
+        #    logger.warning(f"{inspect.getframeinfo(frame).filename}.{inspect.getframeinfo(frame).function}:{inspect.getframeinfo(frame).lineno}")
+
         if self.previous_telemetry is not None:
             if self.get_previous_state() != self.get_current_state():
                 logger.info(
@@ -371,11 +391,22 @@ class StatePlanner(BaseModel):
                 self.previous_state = self.get_previous_state()
                 self.state_change_time = datetime.datetime.now()
                 # Put in here events to do on state change
+                if con.TRACING:
+                    if self.previous_state == State.Transition:
+                        snapshot1 = tracemalloc.take_snapshot()
+                        stats = snapshot1.statistics("traceback")
+                        for stat in stats:
+                            logger.warning("%s memory blocks: %.1f KiB" % (stat.count, stat.size / 1024))
+                            for line in stat.traceback.format():
+                                logger.warning(line)
+
                 logger.debug(
                     f"Previous state: {self.previous_state}, Current state: {self.get_current_state()}"
                 )
                 match self.get_current_state():
                     case State.Transition:
+                        #if self._run_get_image_task:
+                        #    self._run_get_image_task.cancel()
                         if self.submitted_transition_request:
                             self.submitted_transition_request = False
                         else:
@@ -415,6 +446,8 @@ class StatePlanner(BaseModel):
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot get image.")
             return
+        if not self._aiohttp_session:
+            self._aiohttp_session = aiohttp.ClientSession()
 
         async with aiohttp.ClientSession() as session:
             async with session.get(con.IMAGE_ENDPOINT) as response:
@@ -432,15 +465,15 @@ class StatePlanner(BaseModel):
                             img_timestamp
                         )
 
-                    # Calculate the difference between the img and the last telemetry
-                    if self.current_telemetry.timestamp:
-                        difference_in_seconds = (
-                            parsed_img_timestamp - self.current_telemetry.timestamp
-                        ).total_seconds()
-                    else:
-                        difference_in_seconds = (
-                            parsed_img_timestamp - datetime.datetime.now()
-                        ).total_seconds()
+        # Calculate the difference between the img and the last telemetry
+        if self.current_telemetry.timestamp:
+            difference_in_seconds = (
+                parsed_img_timestamp - self.current_telemetry.timestamp
+            ).total_seconds()
+        else:
+            difference_in_seconds = (
+                parsed_img_timestamp - datetime.datetime.now()
+            ).total_seconds()
 
                     cor_x = round(
                         self.current_telemetry.width_x
@@ -556,14 +589,17 @@ state_planner = StatePlanner()
 
 async def get_observations() -> None:
     async with aiohttp.ClientSession() as session:
-        async with session.get(con.OBSERVATION_ENDPOINT) as response:
-            if response.status == 200:
-                json_response = await response.json()
-                logger.debug("Received observations")
-                # pprint(json_response, indent=4, sort_dicts=True)
-                await state_planner.update_telemetry(MelTelemetry(**json_response))
-            else:
-                logger.warning(f"Failed to get observations: {response.status}")
+        try:
+            async with session.get(con.OBSERVATION_ENDPOINT) as response:
+                if response.status == 200:
+                    json_response = await response.json()
+                    logger.debug("Received observations")
+                    # pprint(json_response, indent=4, sort_dicts=True)
+                    await state_planner.update_telemetry(MelTelemetry(**json_response))
+                else:
+                    logger.warning(f"Failed to get observations: {response.status}")
+        except aiohttp.client_exceptions.ConnectTimeoutError:
+            logger.warning("Observations endpoint timeouted.")
 
 
 async def run_get_observations() -> None:
@@ -655,6 +691,8 @@ def cancel_tasks() -> None:
 def start_event_loop() -> None:
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, cancel_tasks)
+
+    loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=1))
 
     loop.create_task(run_get_observations())
     # TODO removed for now, test later

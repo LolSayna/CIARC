@@ -77,4 +77,6 @@ DISTANCE_BETWEEN_IMAGES = 300  # How many pixel before taking another image
 IMAGE_OFFSET = 1000
 
 TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Wide
-RIFT_LOG_LEVEL = "INFO"
+RIFT_LOG_LEVEL = "DEBUG"
+
+TRACING=False
