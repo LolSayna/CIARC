@@ -22,6 +22,7 @@ import threading
 from pathlib import Path
 import tracemalloc
 import psutil
+import random
 
 from typing import Any, Optional, AsyncIterable
 import resource
@@ -65,6 +66,9 @@ logger.add(
 loop = uvloop.new_event_loop()
 current_telemetry = None
 aiodebug.log_slow_callbacks.enable(0.05)
+
+# create a unique id each time melvonauts start, to allow better image sorting
+melv_id = random.randint(0, 9999)
 
 tracemalloc.start()
 
@@ -475,50 +479,46 @@ class StatePlanner(BaseModel):
                 parsed_img_timestamp - datetime.datetime.now()
             ).total_seconds()
 
-                    cor_x = round(
-                        self.current_telemetry.width_x
-                        + (
-                            difference_in_seconds
-                            * self.current_telemetry.vx
-                            * self.get_simulation_speed()
-                        )
-                    )
-                    cor_y = round(
-                        self.current_telemetry.height_y
-                        + (
-                            difference_in_seconds
-                            * self.current_telemetry.vy
-                            * self.get_simulation_speed()
-                        )
-                    )
-                    image_path = con.IMAGE_LOCATION.format(
-                        angle=self.current_telemetry.angle,
-                        time=img_timestamp,
-                        cor_x=cor_x,
-                        cor_y=cor_y,  # or should it be parsed_img_timestamp?
-                    )
-                    logger.debug(f"Received image at {cor_x}x{cor_y}y")
-                
-                    logger.error("S-1" + str(psutil.Process(os.getpid()).memory_info().rss))
+        cor_x = round(
+            self.current_telemetry.width_x
+            + (
+                difference_in_seconds
+                * self.current_telemetry.vx
+                * self.get_simulation_speed()
+            )
+        )
+        cor_y = round(
+            self.current_telemetry.height_y
+            + (
+                difference_in_seconds
+                * self.current_telemetry.vy
+                * self.get_simulation_speed()
+            )
+        )
+        image_path = con.IMAGE_LOCATION.format(
+            angle=self.current_telemetry.angle,
+            time=img_timestamp,
+            cor_x=cor_x,
+            cor_y=cor_y,  # or should it be parsed_img_timestamp?
+        )
+        logger.debug(f"Received image at {cor_x}x{cor_y}y")
+    
+        logger.error("S-1" + str(psutil.Process(os.getpid()).memory_info().rss))
 
-                    async with async_open(image_path, "wb") as afp:
+        async with async_open(image_path, "wb") as afp:
 
-                        logger.error("S-1.5" + str(psutil.Process(os.getpid()).memory_info().rss))
-                        while True:
-                            cnt = await response.content.readany()
-                            if not cnt:
-                                break
-                            await afp.write(cnt)
-                        logger.error("S-2" + str(psutil.Process(os.getpid()).memory_info().rss))
+            logger.error("S-1.5" + str(psutil.Process(os.getpid()).memory_info().rss))
+            while True:
+                cnt = await response.content.readany()
+                if not cnt:
+                    break
+                await afp.write(cnt)
+            logger.error("S-2" + str(psutil.Process(os.getpid()).memory_info().rss))
 
-                    logger.error("S-5" + str(psutil.Process(os.getpid()).memory_info().rss))
-                else:
-                
-                    logger.error("S???" + str(psutil.Process(os.getpid()).memory_info().rss))
-                    logger.debug(f"Failed to get image: {response.status}")
-                    logger.debug(f"Response body: {await response.text()}")
+            logger.error("S-5" + str(psutil.Process(os.getpid()).memory_info().rss))
             
         logger.error("END get_image:" + str(psutil.Process(os.getpid()).memory_info().rss))
+        
 
     async def run_get_image(self) -> None:
 
