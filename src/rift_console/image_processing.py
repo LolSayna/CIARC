@@ -1,5 +1,6 @@
 from PIL import Image
 import os
+import re
 
 from shared.models import CameraAngle
 import shared.constants as con
@@ -23,8 +24,15 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
                 case CameraAngle.Wide:
                     LENS_SIZE = 1000
 
-            x = int(image_name.split("x_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
-            y = int(image_name.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+            match = re.search(r"_x_(\d+)_y_(\d+)", image_name)
+
+            if match:
+                x = int(match.group(1)) - (int)(LENS_SIZE / 2)
+                y = int(match.group(2)) - (int)(LENS_SIZE / 2)
+            else:
+                print("No match found.")
+            #x = int(image_name.split("x_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+            #y = int(image_name.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
 
             if LENS_SIZE != 600:
                 img = img.resize((LENS_SIZE, LENS_SIZE), Image.LANCZOS)
