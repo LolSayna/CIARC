@@ -147,7 +147,7 @@ class StatePlanner(BaseModel):
 
     _accelerating: bool = False
 
-    _run_get_image_task: Optional[asyncio.Task] = None
+    _run_get_image_task: Optional[asyncio.Task[None]] = None
 
     _aiohttp_session: Optional[aiohttp.ClientSession] = None
 
@@ -467,58 +467,65 @@ class StatePlanner(BaseModel):
                 LENS_SIZE = 1000
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(con.IMAGE_ENDPOINT) as response:
-                if response.status == 200:
-                    # Extract exact image timestamp
-                    img_timestamp = response.headers.get("image-timestamp")
-                    if img_timestamp is None:
+            try:
+                async with session.get(con.IMAGE_ENDPOINT) as response:
+                    if response.status == 200:
+                        # Extract exact image timestamp
+                        img_timestamp = response.headers.get("image-timestamp")
+                        if img_timestamp is None:
+                            logger.error(
+                                "Image timestamp not found in headers, substituting with current time"
+                            )
+                            parsed_img_timestamp = datetime.datetime.now()
+                        else:
+                            parsed_img_timestamp = datetime.datetime.fromisoformat(
+                                img_timestamp
+                            )
+
+                        # Calculate the difference between the img and the last telemetry
+                        difference_in_seconds = (
+                            parsed_img_timestamp - tele_timestamp
+                        ).total_seconds()
+
+                        adj_x = round(
+                            tele_x + (difference_in_seconds * tele_vx * tele_simSpeed)
+                        ) - (LENS_SIZE / 2)
+                        adj_y = round(
+                            tele_y + (difference_in_seconds * tele_vy * tele_simSpeed)
+                        ) - (LENS_SIZE / 2)
+
+                        # TODO check if images are correct!
+                        # TODO might also need modulo for side cases
+                        logger.error(f"T {parsed_img_timestamp} | C {tele_timestamp}")
                         logger.error(
-                            "Image timestamp not found in headers, substituting with current time"
+                            f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}"
                         )
-                        parsed_img_timestamp = datetime.datetime.now()
+
+                        image_path = con.IMAGE_LOCATION.format(
+                            melv_id=melv_id,
+                            angle=tele_angle,
+                            time=parsed_img_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+                            cor_x=int(adj_x),
+                            cor_y=int(adj_y),
+                        )
+
+                        logger.info(
+                            f"Received image at {adj_x}x {adj_y}y with {self.current_telemetry.angle} angle"
+                        )
+
+                        async with async_open(image_path, "wb") as afp:
+                            while True:
+                                cnt = await response.content.readany()
+                                if not cnt:
+                                    break
+                                await afp.write(cnt)
                     else:
-                        parsed_img_timestamp = datetime.datetime.fromisoformat(
-                            img_timestamp
-                        )
-
-                    # Calculate the difference between the img and the last telemetry
-                    difference_in_seconds = (
-                        parsed_img_timestamp - tele_timestamp
-                    ).total_seconds()
-
-                    adj_x = round(
-                        tele_x + (difference_in_seconds * tele_vx * tele_simSpeed)
-                    ) - (LENS_SIZE / 2)
-                    adj_y = round(
-                        tele_y + (difference_in_seconds * tele_vy * tele_simSpeed)
-                    ) - (LENS_SIZE / 2)
-
-                    # TODO check if images are correct!
-                    # TODO might also need modulo for side cases
-                    logger.error(f"T {parsed_img_timestamp} | C {tele_timestamp}")
-                    logger.error(f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}")
-
-                    image_path = con.IMAGE_LOCATION.format(
-                        melv_id=melv_id,
-                        angle=tele_angle,
-                        time=parsed_img_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f"),
-                        cor_x=int(adj_x),
-                        cor_y=int(adj_y),
-                    )
-
-                    logger.info(
-                        f"Received image at {adj_x}x {adj_y}y with {self.current_telemetry.angle} angle"
-                    )
-
-                    async with async_open(image_path, "wb") as afp:
-                        while True:
-                            cnt = await response.content.readany()
-                            if not cnt:
-                                break
-                            await afp.write(cnt)
-                else:
-                    logger.warning(f"Failed to get image: {response.status}")
-                    logger.warning(f"Response body: {await response.text()}")
+                        logger.warning(f"Failed to get image: {response.status}")
+                        logger.warning(f"Response body: {await response.text()}")
+            except aiohttp.client_exceptions.ConnectionTimeoutError:
+                logger.warning("Observations endpoint timeouted.")
+            except asyncio.exceptions.CancelledError:
+                logger.warning("Get image task was cancelled.")
 
     async def run_get_image(self) -> None:
         await self.get_image()
@@ -593,7 +600,7 @@ async def get_observations() -> None:
                     await state_planner.update_telemetry(MelTelemetry(**json_response))
                 else:
                     logger.warning(f"Failed to get observations: {response.status}")
-        except aiohttp.client_exceptions.ConnectTimeoutError:
+        except aiohttp.client_exceptions.ConnectionTimeoutError:
             logger.warning("Observations endpoint timeouted.")
 
 
