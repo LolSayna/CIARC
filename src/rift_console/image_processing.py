@@ -7,6 +7,7 @@ import shared.constants as con
 from loguru import logger
 
 
+# Takes the folder location(including logs/melvonaut/images) and a list of image names
 def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
     # Create a new empty image
     stitched_image = Image.new("RGBA", (con.WORLD_X, con.WORLD_Y))
@@ -31,11 +32,11 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
                 y = int(match.group(2)) - (int)(LENS_SIZE / 2)
             else:
                 print("No match found.")
-            #x = int(image_name.split("x_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
-            #y = int(image_name.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+            # x = int(image_name.split("x_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+            # y = int(image_name.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
 
             if LENS_SIZE != 600:
-                img = img.resize((LENS_SIZE, LENS_SIZE), Image.LANCZOS)
+                img = img.resize((LENS_SIZE, LENS_SIZE), Image.Resampling.LANCZOS)
 
             stitched_image.paste(img, (x, y))
 
@@ -45,7 +46,6 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
 # returns all images
 def list_image_files(directory: str) -> list[str]:
     image_files = []
-    logger.error(directory)
     for filename in os.listdir(directory):
         if filename.startswith("image"):
             image_files.append(filename)
@@ -56,21 +56,20 @@ def list_image_files(directory: str) -> list[str]:
 def automated_processing(image_path: str, output_path: str) -> None:
     image_list = list_image_files(image_path)
 
-    logger.info(f"Starting Stiching of {image_path} with {len(image_list)} Images.")
-
     panorama = stitch_images(image_path=image_path, image_list=image_list)
-    preview = panorama.resize((1080, 540), Image.LANCZOS)
+    preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
 
     preview.save("src/rift_console/static/images/" + "preview.png")
     panorama.save(output_path + ".png")
-    logger.info(f"Created preview + panorma in Stitcher")
+    logger.warning("Created preview + panorma in Stitcher")
+
 
 # for manual testing
 def main() -> None:
     image_list = list_image_files(con.IMAGE_PATH)
-    logger.info(f"Starting Stiching of {len(image_list)} Images.")
+    logger.warning(f"Starting Stiching of {len(image_list)} Images.")
 
-    panorama = stitch_images(image_list)
+    panorama = stitch_images(image_path=con.IMAGE_PATH, image_list=image_list)
 
     panorama.save("media/panorama.png")
 

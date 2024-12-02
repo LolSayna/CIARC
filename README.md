@@ -51,6 +51,16 @@ Inside `poetry shell` run `make myps` to check for type errors or run `make lint
 
 - TODO
 
+
+## Conventions
+### Logging Level
+- Debug: some basic function is executed
+- Info: DEFAULT state - only important transitions
+- Warning: something notworthy/important that should stand out from the logs
+- Error: something that should never have happend
+- CRITICAL: reserved for debugging
+
+
 ## Usefule API cmds
 Reset
 ```

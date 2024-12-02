@@ -17,10 +17,10 @@ def reset(melvin: RiftTelemetry) -> None:
         r = s.get(con.RESET_ENDPOINT)
 
     if r.status_code == 200:
-        logger.info("Reset successful")
+        logger.error("Relaunched Mevlin")
     else:
         logger.warning("Reset failed")
-        logger.debug(r)
+        logger.warning(r)
 
 
 def update_telemetry(melvin: RiftTelemetry) -> None:
@@ -32,7 +32,7 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
         logger.debug("Observation successful")
     else:
         logger.warning("Observation failed")
-        logger.debug(r)
+        logger.warning(r)
         return
 
     data = r.json()
@@ -107,17 +107,16 @@ def control(
         r = s.put(con.CONTROL_ENDPOINT, json=body)
 
     if r.status_code == 200:
-        logger.debug("Control successful")
+        logger.info(
+            f"Changing to: {target_state} w vx: {vel_x} vy: {vel_y} and camera: {cameraAngle}"
+        )
+
     else:
         logger.warning("Control failed")
-        logger.debug(r)
+        logger.warning(r)
         return
 
     melvin.planed_transition_state = target_state
-    logger.info(
-        f"Changing to: {target_state} w vx: {vel_x} vy: {vel_y} and camera: {cameraAngle}"
-    )
-
     return
 
 
@@ -144,7 +143,7 @@ def change_simulation_speed(
         logger.warning(
             f"Simulation Speed change to {user_speed_multiplier} and is_network_simulation_active {is_network_simulation}failed"
         )
-        logger.debug(r)
+        logger.warning(r)
 
     return
 
@@ -155,12 +154,12 @@ def save_backup(melvin: RiftTelemetry) -> None:
         r = s.get(con.BACKUP_ENDPOINT)
     if r.status_code == 200:
         # save last timestamp to see what is currently saved
-        melvin.last_backup_time = datetime.datetime.now().strftime("%H:%M")
+        melvin.last_backup_time = datetime.datetime.now()
 
-        logger.info(f"Saving system state at {melvin.last_backup_time}")
+        logger.warning(f"Saving system state at {melvin.last_backup_time}")
     else:
         logger.warning("Saving system state failed")
-        logger.debug(r)
+        logger.warning(r)
     return
 
 
@@ -169,9 +168,9 @@ def load_backup() -> None:
     with requests.Session() as s:
         r = s.put(con.BACKUP_ENDPOINT)
     if r.status_code == 200:
-        logger.info("Loading system state")
+        logger.warning("Loading system state")
     else:
         logger.warning("Loading system state failed")
-        logger.debug(r)
+        logger.warning(r)
 
     return

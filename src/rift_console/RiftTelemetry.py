@@ -37,4 +37,3 @@ class RiftTelemetry(Telemetry):
     # default value for creating a new folder to store images
     new_image_folder_name: str = "MISSING"
     # nextStitch_folder_name: str = "DATE_MISSING"
-

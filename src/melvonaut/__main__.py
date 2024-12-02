@@ -9,7 +9,6 @@ Melvonaut
 import asyncio
 import concurrent.futures
 import datetime
-import inspect
 import io
 import json
 import math
@@ -25,7 +24,6 @@ import psutil
 import random
 
 from typing import Any, Optional, AsyncIterable
-import resource
 
 import aiohttp
 import click
@@ -71,6 +69,7 @@ aiodebug.log_slow_callbacks.enable(0.05)
 melv_id = random.randint(0, 9999)
 
 tracemalloc.start()
+
 
 ##### TELEMETRY #####
 class MelTelemetry(BaseTelemetry):
@@ -369,7 +368,6 @@ class StatePlanner(BaseModel):
                 pass
 
     async def update_telemetry(self, new_telemetry: MelTelemetry) -> None:
-
         self.previous_telemetry = self.current_telemetry
         self.current_telemetry = new_telemetry
 
@@ -380,10 +378,10 @@ class StatePlanner(BaseModel):
             f" Fuel: {self.current_telemetry.fuel}"
         )
 
-        #if self.get_current_state() == State.Acquisition:
+        # if self.get_current_state() == State.Acquisition:
         #    await self.get_image()
         logger.debug(f"Threads: {threading.active_count()}")
-        #for thread in threading.enumerate():
+        # for thread in threading.enumerate():
         #    frame = sys._current_frames()[thread.ident]
         #    logger.warning(f"{inspect.getframeinfo(frame).filename}.{inspect.getframeinfo(frame).function}:{inspect.getframeinfo(frame).lineno}")
 
@@ -400,7 +398,10 @@ class StatePlanner(BaseModel):
                         snapshot1 = tracemalloc.take_snapshot()
                         stats = snapshot1.statistics("traceback")
                         for stat in stats:
-                            logger.warning("%s memory blocks: %.1f KiB" % (stat.count, stat.size / 1024))
+                            logger.warning(
+                                "%s memory blocks: %.1f KiB"
+                                % (stat.count, stat.size / 1024)
+                            )
                             for line in stat.traceback.format():
                                 logger.warning(line)
 
@@ -409,7 +410,7 @@ class StatePlanner(BaseModel):
                 )
                 match self.get_current_state():
                     case State.Transition:
-                        #if self._run_get_image_task:
+                        # if self._run_get_image_task:
                         #    self._run_get_image_task.cancel()
                         if self.submitted_transition_request:
                             self.submitted_transition_request = False
@@ -445,8 +446,9 @@ class StatePlanner(BaseModel):
             await self.plan_state_switching()
 
     async def get_image(self) -> None:
-
-        logger.error("START get_image" + str(psutil.Process(os.getpid()).memory_info().rss))
+        logger.error(
+            "START get_image" + str(psutil.Process(os.getpid()).memory_info().rss)
+        )
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot get image.")
             return
@@ -455,7 +457,6 @@ class StatePlanner(BaseModel):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(con.IMAGE_ENDPOINT) as response:
-
                 if response.status == 200:
                     # Extract exact image timestamp
                     img_timestamp = response.headers.get("image-timestamp")
@@ -468,64 +469,70 @@ class StatePlanner(BaseModel):
                         parsed_img_timestamp = datetime.datetime.fromisoformat(
                             img_timestamp
                         )
+                    # Calculate the difference between the img and the last telemetry
+                    if self.current_telemetry.timestamp:
+                        difference_in_seconds = (
+                            parsed_img_timestamp - self.current_telemetry.timestamp
+                        ).total_seconds()
+                    else:
+                        difference_in_seconds = (
+                            parsed_img_timestamp - datetime.datetime.now()
+                        ).total_seconds()
 
-        # Calculate the difference between the img and the last telemetry
-        if self.current_telemetry.timestamp:
-            difference_in_seconds = (
-                parsed_img_timestamp - self.current_telemetry.timestamp
-            ).total_seconds()
-        else:
-            difference_in_seconds = (
-                parsed_img_timestamp - datetime.datetime.now()
-            ).total_seconds()
+                    cor_x = round(
+                        self.current_telemetry.width_x
+                        + (
+                            difference_in_seconds
+                            * self.current_telemetry.vx
+                            * self.get_simulation_speed()
+                        )
+                    )
+                    cor_y = round(
+                        self.current_telemetry.height_y
+                        + (
+                            difference_in_seconds
+                            * self.current_telemetry.vy
+                            * self.get_simulation_speed()
+                        )
+                    )
+                    image_path = con.IMAGE_LOCATION.format(
+                        angle=self.current_telemetry.angle,
+                        time=img_timestamp,
+                        cor_x=cor_x,
+                        cor_y=cor_y,  # or should it be parsed_img_timestamp?
+                    )
+                    logger.debug(f"Received image at {cor_x}x{cor_y}y")
 
-        cor_x = round(
-            self.current_telemetry.width_x
-            + (
-                difference_in_seconds
-                * self.current_telemetry.vx
-                * self.get_simulation_speed()
-            )
+                    logger.error(
+                        "S-1" + str(psutil.Process(os.getpid()).memory_info().rss)
+                    )
+
+                    async with async_open(image_path, "wb") as afp:
+                        logger.error(
+                            "S-1.5" + str(psutil.Process(os.getpid()).memory_info().rss)
+                        )
+                        while True:
+                            cnt = await response.content.readany()
+                            if not cnt:
+                                break
+                            await afp.write(cnt)
+                else:
+                    logger.warning(
+                        "S???" + str(psutil.Process(os.getpid()).memory_info().rss)
+                    )
+                    logger.warning(f"Failed to get image: {response.status}")
+                    logger.warning(f"Response body: {await response.text()}")
+
+        logger.error(
+            "END get_image:" + str(psutil.Process(os.getpid()).memory_info().rss)
         )
-        cor_y = round(
-            self.current_telemetry.height_y
-            + (
-                difference_in_seconds
-                * self.current_telemetry.vy
-                * self.get_simulation_speed()
-            )
-        )
-        image_path = con.IMAGE_LOCATION.format(
-            angle=self.current_telemetry.angle,
-            time=img_timestamp,
-            cor_x=cor_x,
-            cor_y=cor_y,  # or should it be parsed_img_timestamp?
-        )
-        logger.debug(f"Received image at {cor_x}x{cor_y}y")
-    
-        logger.error("S-1" + str(psutil.Process(os.getpid()).memory_info().rss))
-
-        async with async_open(image_path, "wb") as afp:
-
-            logger.error("S-1.5" + str(psutil.Process(os.getpid()).memory_info().rss))
-            while True:
-                cnt = await response.content.readany()
-                if not cnt:
-                    break
-                await afp.write(cnt)
-            logger.error("S-2" + str(psutil.Process(os.getpid()).memory_info().rss))
-
-            logger.error("S-5" + str(psutil.Process(os.getpid()).memory_info().rss))
-            
-        logger.error("END get_image:" + str(psutil.Process(os.getpid()).memory_info().rss))
-        
 
     async def run_get_image(self) -> None:
-
-        logger.error("Run_get_image" + str(psutil.Process(os.getpid()).memory_info().rss))
+        logger.error(
+            "Run_get_image" + str(psutil.Process(os.getpid()).memory_info().rss)
+        )
         await self.get_image()
         while self.get_current_state() == State.Acquisition:
-
             if self.current_telemetry is None:
                 logger.warning(
                     f"No telemetry data available. Waiting {con.OBSERVATION_REFRESH_RATE}s for next image."
@@ -552,7 +559,7 @@ class StatePlanner(BaseModel):
             logger.debug(f"Next image in {delay_in_s}s.")
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()
             await asyncio.gather(image_task)
-        
+
         logger.error("end: " + str(psutil.Process(os.getpid()).memory_info().rss))
 
     async def control_acquisition(self) -> None:

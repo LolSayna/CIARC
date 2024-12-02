@@ -8,7 +8,6 @@ import os
 import click
 from loguru import logger
 
-import quart_flask_patch
 from quart import Quart, render_template, redirect, url_for, request
 from werkzeug.wrappers.response import Response
 
@@ -48,6 +47,23 @@ async def index() -> str:
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
 
+    if melvin.timestamp is not None:
+        formatted_timestamp = str(
+            melvin.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+        )  # timezone doesnt change, so it can be exclude from output
+
+        formatted_timedelta = str(
+            (
+                datetime.datetime.now(datetime.timezone.utc) - melvin.timestamp
+            ).total_seconds()
+        )
+
+        formatted_last_backup_time = str(melvin.timestamp.strftime("%H:%M"))
+    else:
+        formatted_timestamp = "No timestamp available"
+        formatted_timedelta = "No timestamp available"
+        formatted_last_backup_time = "Unkown"
+
     return await render_template(
         "console.html",
         width_x=melvin.width_x,
@@ -62,12 +78,8 @@ async def index() -> str:
         angle=melvin.angle,
         simulation_speed=melvin.simulation_speed,
         is_network_simulated=melvin.is_network_simulation_active,
-        timestamp=melvin.timestamp.strftime(
-            "%Y-%m-%d %H:%M:%S.%f"
-        ),  # timezone doesnt change, so it can be exclude from output
-        timedelta=(
-            datetime.datetime.now(datetime.timezone.utc) - melvin.timestamp
-        ).total_seconds(),
+        timestamp=formatted_timestamp,
+        timedelta=formatted_timedelta,
         new_image_folder_name=melvin.new_image_folder_name,
         old_x=melvin.old_pos[0],
         old_y=melvin.old_pos[1],
@@ -78,7 +90,7 @@ async def index() -> str:
         state=melvin.state,
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
-        last_backup_time=melvin.last_backup_time,
+        last_backup_time=formatted_last_backup_time,
     )
 
 
@@ -101,16 +113,14 @@ async def image_stitch_button() -> Response:
     # USES LOKAL PATHS
     form = await request.form
     user_input = form.get("source_location")
-    source_path = con.IMAGE_PATH + user_input + "/"
-    result_path = con.PANORAMA_PATH + user_input
+    source_path = con.IMAGE_PATH + str(user_input) + "/"
+    result_path = con.PANORAMA_PATH + str(user_input)
 
-    logger.info(f"TRY Stiched Image from {source_path} into {result_path}")
-
+    # logging inside image_processing
     rift_console.image_processing.automated_processing(
         image_path=source_path, output_path=result_path
     )
-
-    logger.info(f"Stiched Image from {source_path} into {result_path}")
+    # logging inside image_processing
 
     # afterwards refresh page (which includes updating telemetry)
     return redirect(url_for("index"))
@@ -121,11 +131,11 @@ async def image_stitch_button() -> Response:
 async def image_pull_button() -> Response:
     form = await request.form
     user_input = form.get("target_location")
-    dir_path = con.IMAGE_PATH + user_input
+    dir_path = con.IMAGE_PATH + str(user_input)
 
     try:
         subprocess.run(["mkdir", dir_path], check=True)
-        logger.info(f"image_manip_active created folder: {dir_path}")
+        logger.debug(f"image_manip_active created folder: {dir_path}")
 
     except subprocess.CalledProcessError as e:
         logger.warning(f"image_manip_buttons could not mkdir: {e}")
@@ -136,7 +146,7 @@ async def image_pull_button() -> Response:
             ["scp", "console:/shared/CIARC/logs/melvonaut/images/*.png", dir_path],
             check=True,
         )
-        logger.info(f"image_manip_active copied to: {dir_path}")
+        logger.debug(f"image_manip_active copied to: {dir_path}")
 
     except subprocess.CalledProcessError as e:
         logger.warning(f"image_manip_buttons scp failed: {e}")
@@ -147,7 +157,7 @@ async def image_pull_button() -> Response:
     file_count = sum(
         1 for entry in entries if os.path.isfile(os.path.join(dir_path, entry))
     )
-    logger.info(f"Copied {file_count} Images")
+    logger.warning(f"Copied {file_count} Images from console.")
 
     # afterwards refresh page (which includes updating telemetry)
     return redirect(url_for("index"))
@@ -174,11 +184,11 @@ async def sim_manip_buttons() -> Response:
 
 
 # Slider
-@app.route("/slider", methods=["POST"])
+@app.route("/slider_button", methods=["POST"])
 async def slider_button() -> Response:
     form = await request.form
     slider_value = form.get("speed", default=20, type=int)
-    is_network_simulation = "enableSim" in request.form
+    is_network_simulation = "enableSim" in form
 
     drsApi.change_simulation_speed(
         melvin=melvin,
@@ -201,12 +211,11 @@ async def state_buttons() -> Response:
 
     # noch nicht so happy mit dem if here TODO
     if melvin.state == State.Acquisition and state == State.Acquisition:
-        lens = CameraAngle(request.form["options"])
-        vx = request.form.get("vx", default=3, type=int)
-        vy = request.form.get("vy", default=3, type=int)
+        lens = CameraAngle(str(form.get("options")))
+        vx = form.get("vx", default=3, type=int)
+        vy = form.get("vy", default=3, type=int)
         melvin.target_vx = vx
         melvin.target_vy = vy
-        logger.info(f"Used Control API to change: vx: {vx}, vy: {vy}, lens: {lens}")
 
     drsApi.control(
         melvin=melvin, vel_x=vx, vel_y=vy, cameraAngle=lens, target_state=State(state)
