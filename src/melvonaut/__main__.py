@@ -42,6 +42,8 @@ from shared.models import (
     Timer,
     CameraAngle,
     BaseTelemetry,
+    limited_log,
+    limited_log_debug,
 )
 
 if con.TRACING:
@@ -313,17 +315,14 @@ class StatePlanner(BaseModel):
             case MELVINTasks.Mapping:
                 match state:
                     case State.Transition:
-                        logger.info(
-                            f"State is Transition to {self.target_state}, waiting for transition to complete"
-                        )
                         logger.debug(
                             f"Time since state change: {self.get_time_since_state_change()}"
                         )
                         expected_time_to_complete = (
                             self.calc_transition_remaining_time()
                         )
-                        logger.info(
-                            f"Expected time to complete state transition: {expected_time_to_complete}"
+                        limited_log(
+                            f"State is Transition to {self.target_state}, waiting for transition to complete.\nExpected time to complete state transition: {expected_time_to_complete}"
                         )
                         logger.debug(
                             f"Previous state: {self.get_previous_state()}, Current state: {self.get_current_state()}"
@@ -446,9 +445,6 @@ class StatePlanner(BaseModel):
             await self.plan_state_switching()
 
     async def get_image(self) -> None:
-        logger.error(
-            "START get_image" + str(psutil.Process(os.getpid()).memory_info().rss)
-        )
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot get image.")
             return
@@ -503,34 +499,18 @@ class StatePlanner(BaseModel):
                     )
                     logger.debug(f"Received image at {cor_x}x{cor_y}y")
 
-                    logger.error(
-                        "S-1" + str(psutil.Process(os.getpid()).memory_info().rss)
-                    )
-
                     async with async_open(image_path, "wb") as afp:
-                        logger.error(
-                            "S-1.5" + str(psutil.Process(os.getpid()).memory_info().rss)
-                        )
                         while True:
                             cnt = await response.content.readany()
                             if not cnt:
                                 break
                             await afp.write(cnt)
                 else:
-                    logger.warning(
-                        "S???" + str(psutil.Process(os.getpid()).memory_info().rss)
-                    )
                     logger.warning(f"Failed to get image: {response.status}")
                     logger.warning(f"Response body: {await response.text()}")
 
-        logger.error(
-            "END get_image:" + str(psutil.Process(os.getpid()).memory_info().rss)
-        )
 
     async def run_get_image(self) -> None:
-        logger.error(
-            "Run_get_image" + str(psutil.Process(os.getpid()).memory_info().rss)
-        )
         await self.get_image()
         while self.get_current_state() == State.Acquisition:
             if self.current_telemetry is None:
