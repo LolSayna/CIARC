@@ -20,7 +20,6 @@ import csv
 import threading
 from pathlib import Path
 import tracemalloc
-import psutil
 import random
 
 from typing import Any, Optional, AsyncIterable
@@ -43,7 +42,6 @@ from shared.models import (
     CameraAngle,
     BaseTelemetry,
     limited_log,
-    limited_log_debug,
 )
 
 if con.TRACING:
@@ -451,13 +449,30 @@ class StatePlanner(BaseModel):
         if not self._aiohttp_session:
             self._aiohttp_session = aiohttp.ClientSession()
 
+        # save the current telemetry values, so they dont get overwritten by a later update
+        tele_timestamp = self.current_telemetry.timestamp
+        tele_x = self.current_telemetry.width_x
+        tele_y = self.current_telemetry.height_y
+        tele_vx = self.current_telemetry.vx
+        tele_vy = self.current_telemetry.vy
+        tele_simSpeed = self.get_simulation_speed()
+        tele_angle = self.current_telemetry.angle
+
+        match self.current_telemetry.angle:
+            case CameraAngle.Narrow:
+                LENS_SIZE = 600
+            case CameraAngle.Normal:
+                LENS_SIZE = 800
+            case CameraAngle.Wide:
+                LENS_SIZE = 1000
+
         async with aiohttp.ClientSession() as session:
             async with session.get(con.IMAGE_ENDPOINT) as response:
                 if response.status == 200:
                     # Extract exact image timestamp
                     img_timestamp = response.headers.get("image-timestamp")
                     if img_timestamp is None:
-                        logger.warning(
+                        logger.error(
                             "Image timestamp not found in headers, substituting with current time"
                         )
                         parsed_img_timestamp = datetime.datetime.now()
@@ -465,39 +480,35 @@ class StatePlanner(BaseModel):
                         parsed_img_timestamp = datetime.datetime.fromisoformat(
                             img_timestamp
                         )
-                    # Calculate the difference between the img and the last telemetry
-                    if self.current_telemetry.timestamp:
-                        difference_in_seconds = (
-                            parsed_img_timestamp - self.current_telemetry.timestamp
-                        ).total_seconds()
-                    else:
-                        difference_in_seconds = (
-                            parsed_img_timestamp - datetime.datetime.now()
-                        ).total_seconds()
 
-                    cor_x = round(
-                        self.current_telemetry.width_x
-                        + (
-                            difference_in_seconds
-                            * self.current_telemetry.vx
-                            * self.get_simulation_speed()
-                        )
-                    )
-                    cor_y = round(
-                        self.current_telemetry.height_y
-                        + (
-                            difference_in_seconds
-                            * self.current_telemetry.vy
-                            * self.get_simulation_speed()
-                        )
-                    )
+                    # Calculate the difference between the img and the last telemetry
+                    difference_in_seconds = (
+                        parsed_img_timestamp - tele_timestamp
+                    ).total_seconds()
+
+                    adj_x = round(
+                        tele_x + (difference_in_seconds * tele_vx * tele_simSpeed)
+                    ) - (LENS_SIZE / 2)
+                    adj_y = round(
+                        tele_y + (difference_in_seconds * tele_vy * tele_simSpeed)
+                    ) - (LENS_SIZE / 2)
+
+                    # TODO check if images are correct!
+                    # TODO might also need modulo for side cases
+                    logger.error(f"T {parsed_img_timestamp} | C {tele_timestamp}")
+                    logger.error(f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}")
+
                     image_path = con.IMAGE_LOCATION.format(
-                        angle=self.current_telemetry.angle,
-                        time=img_timestamp,
-                        cor_x=cor_x,
-                        cor_y=cor_y,  # or should it be parsed_img_timestamp?
+                        melv_id=melv_id,
+                        angle=tele_angle,
+                        time=parsed_img_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+                        cor_x=int(adj_x),
+                        cor_y=int(adj_y),
                     )
-                    logger.debug(f"Received image at {cor_x}x{cor_y}y")
+
+                    logger.info(
+                        f"Received image at {adj_x}x {adj_y}y with {self.current_telemetry.angle} angle"
+                    )
 
                     async with async_open(image_path, "wb") as afp:
                         while True:
@@ -508,7 +519,6 @@ class StatePlanner(BaseModel):
                 else:
                     logger.warning(f"Failed to get image: {response.status}")
                     logger.warning(f"Response body: {await response.text()}")
-
 
     async def run_get_image(self) -> None:
         await self.get_image()
@@ -539,8 +549,6 @@ class StatePlanner(BaseModel):
             logger.debug(f"Next image in {delay_in_s}s.")
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()
             await asyncio.gather(image_task)
-
-        logger.error("end: " + str(psutil.Process(os.getpid()).memory_info().rss))
 
     async def control_acquisition(self) -> None:
         match self.melvin_task:

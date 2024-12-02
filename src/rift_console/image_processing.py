@@ -15,7 +15,7 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
     for image_name in image_list:
         with Image.open(image_path + image_name) as img:
             # read camera angle
-            angle = image_name.split("angle_", 1)[1].split("_")[0]
+            angle = image_name.split("_")[2]
 
             match angle:
                 case CameraAngle.Narrow:
@@ -28,11 +28,12 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
             match = re.search(r"_x_(\d+)_y_(\d+)", image_name)
 
             if match:
-                x = int(match.group(1)) - (int)(LENS_SIZE / 2)
-                y = int(match.group(2)) - (int)(LENS_SIZE / 2)
+                x = int(match.group(1))
+                y = int(match.group(2))
             else:
-                print("No match found.")
-            # x = int(image_name.split("x_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+                logger.error(f"!!!Coordinate reading failed for {image_name}")
+                return stitched_image
+            # x = int(image_name.split(zx_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
             # y = int(image_name.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
 
             if LENS_SIZE != 600:

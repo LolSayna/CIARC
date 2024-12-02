@@ -10,13 +10,14 @@ from typing import Optional
 
 from loguru import logger
 
-# habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung 
+
+# habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
 # mypy: ignore-errors
-def log_rate_limiter(interval_seconds: int) -> function:
-    def decorator(func) -> function:
+def log_rate_limiter(interval_seconds: int):
+    def decorator(func):
         last_log_time = [0]  # Use a list to allow modification of non-local state
 
-        def wrapper(*args, **kwargs) -> function:
+        def wrapper(*args, **kwargs):
             nonlocal last_log_time
             current_time = time.time()
             if current_time - last_log_time[0] >= interval_seconds:
@@ -24,16 +25,22 @@ def log_rate_limiter(interval_seconds: int) -> function:
                 last_log_time[0] = current_time
 
         return wrapper
+
     return decorator
+
+
 # mypy: ignore-errors
+
 
 @log_rate_limiter(3)  # Apply a 10-second rate limiter
 def limited_log(message: str) -> None:
     logger.info(message)
 
+
 @log_rate_limiter(1)  # Apply a 10-second rate limiter
 def limited_log_debug(message: str) -> None:
     logger.debug(message)
+
 
 # was kann das?
 class Timer(BaseModel):
