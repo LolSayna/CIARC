@@ -8,44 +8,46 @@ import shared.constants as con
 from loguru import logger
 import datetime
 
+
+### HELPER FUNCTIONS
+
+# generate spiral pattern (0,0), (0,1), (1,0), (1,1), ...
 def spiral_traverse(n):
-    if n <= 0:
-        return []
-
-    # Initialize the grid with None
-    grid = [[None] * n for _ in range(n)]
+    # The possible directions we can move: right, up, left, down
+    directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
     
-    result = []
- 
-    # Define the boundaries of the grid
-    top, bottom = 0, n - 1
-    left, right = 0, n - 1
+    # Start at the origin
+    x, y = 0, 0
+    # The initial direction is to the right
+    direction_index = 0
+    
+    # This will hold the path of the spiral
+    spiral = [(x, y)]
+    
+    # Number of steps we take before changing direction
+    steps = 1
+    
+    while len(spiral) < n:
+        for _ in range(2):
+            for _ in range(steps):
+                if len(spiral) < n:
+                    # Move in the current direction
+                    dx, dy = directions[direction_index]
+                    x += dx
+                    y += dy
+                    # Add the new position to the spiral
+                    spiral.append((x, y))
+                else:
+                    break
+            # Change direction clockwise
+            direction_index = (direction_index + 1) % 4
+        # After moving two directions, we increase the number of steps
+        steps += 1
+    
+    return spiral
 
-    while top <= bottom and left <= right:
-        # Traverse from left to right on the top row
-        for i in range(left, right + 1):
-            result.append((top, i))
-        top += 1
 
-        # Traverse from top to bottom on the right column
-        for i in range(top, bottom + 1):
-            result.append((i, right))
-        right -= 1
-
-        if top <= bottom:
-            # Traverse from right to left on the bottom row
-            for i in range(right, left - 1, -1):
-                result.append((bottom, i))
-            bottom -= 1
-
-        if left <= right:
-            # Traverse from bottom to top on the left column
-            for i in range(bottom, top - 1, -1):
-                result.append((i, left))
-            left += 1
-
-    return result
-
+# abs of multiple values
 def tuple_abs_sum(t):
     return sum(abs(x) for x in t)
 
@@ -84,27 +86,47 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
 
             # try to find optimal position
             # also add progess bar
-            """TODO
-            matched_part_of_stiched_image = stitched_image.crop((x, y, x + LENS_SIZE + 5, y + LENS_SIZE + 5))
+
+            n = 80
+            d = 4
+
+            spiral_coordinates = sorted(spiral_traverse(n), key=tuple_abs_sum)
+
+            matched_part_of_stiched_image = stitched_image.crop((x - d, y - d, x + LENS_SIZE + d, y + LENS_SIZE + d))
+
+            img_grey = img.convert(mode="L")
+            stiched_grey = matched_part_of_stiched_image.convert(mode="L")
 
 
-            stitched_image.show()
-            img.show()
-            matched_part_of_stiched_image.show()
-            time.sleep(15)
+            pixels = stiched_grey.getdata()
 
-            first = False
-            if first:
-                # Example: Traversing a 3x3 grid in a spiral pattern
-                n = 5
-                spiral_coordinates = sorted(spiral_traverse(n), key=tuple_abs_sum)
+            empty_pixels = sum(1 for pixel in pixels if pixel == (0)) 
+
+            best_coord = (0, 0)
+            matches = 0
+            
+            if empty_pixels/len(pixels) < 0.5:  # probiere nur zu matches falls mehr als die Häflte der Pixel gefüllt
+
+                logger.error(f"{image_name} with emtpy pixels percantage: {empty_pixels/len(pixels)}")
+
                 for coord in spiral_coordinates:
-                    matching = count_matching(img=img, existing_img=matched_part_of_stiched_image, LENS_SIZE=LENS_SIZE, offset=coord)
-                    
-                    logger.error(f"Matched pixels: {matching} for offset {coord}")
-            first = True
-            """
-            stitched_image.paste(img, (x, y))
+                    matching = count_matching(img=img_grey, existing_img=stiched_grey, LENS_SIZE=LENS_SIZE, offset=coord)
+                    if matching > matches:
+                        best_coord = coord
+                        matches = matching
+
+                logger.error(f"Best was {best_coord} with matches: {matches} and percantage: {matches/len(pixels)}")
+            # Example: Traversing a 3x3 grid in a spiral pattern
+
+            #for coord in spiral_coordinates:
+
+            # TODO add check to filter low matches out
+            stitched_image.paste(img, (x + best_coord[0], y + best_coord[1]))
+            
+            #img.show()
+            #matched_part_of_stiched_image.show()
+            #stitched_image.show()
+            #time.sleep(15)
 
     return stitched_image
 
@@ -112,12 +134,10 @@ def count_matching(img: Image, existing_img: Image, LENS_SIZE: int, offset: tupl
     matching = 0
     for x_local in range(LENS_SIZE):
         for y_local in range(LENS_SIZE):
-            #logger.error(f"offset: {offset} {x_local} {y_local} {offset[0]} {offset[1]}")
             p1 = img.getpixel((x_local, y_local))
             p2 = existing_img.getpixel((x_local + offset[0], y_local + offset[1]))
 
-            if p2 != (0,0,0,0)  :
-                logger.error(f"{p1} {p2} {p1==p2}")
+            #logger.error(f"offset: {offset} {x_local} {y_local} {offset[0]} {offset[1]} {p1} {p2}")
             if p1 == p2:
                 matching += 1
 
@@ -166,12 +186,19 @@ def automated_processing(image_path: str, output_path: str) -> None:
 
 # for manual testing
 def main() -> None:
-    image_list = list_image_files(con.IMAGE_PATH)
-    logger.warning(f"Starting Stiching of {len(image_list)} Images.")
+    image_path = con.IMAGE_PATH + "/t" + "/"
+    output_path = con.PANORAMA_PATH + "/t"
 
-    panorama = stitch_images(image_path=con.IMAGE_PATH, image_list=image_list)
+    image_list = list_image_files(image_path)
 
-    panorama.save("media/panorama.png")
+    logger.warning(f"Starting stitching of {len(image_list)} image with path: {image_path}")
+
+    panorama = stitch_images(image_path=image_path, image_list=image_list)
+    preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
+
+    preview.save("src/rift_console/static/images/" + "preview.png")
+    panorama.save(output_path + ".png")
+    logger.warning("Created preview + panorma in Stitcher")
 
 
 # for now call this file directly TODO integrieren into console
