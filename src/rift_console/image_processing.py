@@ -2,6 +2,8 @@ from PIL import Image
 import os
 import re
 import time
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 from shared.models import CameraAngle
 import shared.constants as con
@@ -87,11 +89,16 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
             # try to find optimal position
             # also add progess bar
 
-            n = 80
-            d = 4
+            # try position in a square arround the center
+            # values 7x7 Grid: d = 3, n = 28
+            # 9x9 Grid: d = 4 n = 80
+            # 11x11 Grid, d = 5 n = 120
+            square_size = 11
+            n = square_size*square_size
+            d = int((square_size-1)/2)
 
             spiral_coordinates = sorted(spiral_traverse(n), key=tuple_abs_sum)
-
+            
             matched_part_of_stiched_image = stitched_image.crop((x - d, y - d, x + LENS_SIZE + d, y + LENS_SIZE + d))
 
             img_grey = img.convert(mode="L")
@@ -101,26 +108,47 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
             pixels = stiched_grey.getdata()
 
             empty_pixels = sum(1 for pixel in pixels if pixel == (0)) 
+            full_pixels = len(pixels) - empty_pixels
 
             best_coord = (0, 0)
             matches = 0
-            
+            num_workers = 10 # 1 for single core
+
+            logger.warning(f"Stitching: {image_name}\n#Pixels: {len(pixels)}\t\tFull: {full_pixels}\t\tEmtpy: {empty_pixels}")
+                        
             if empty_pixels/len(pixels) < 0.5:  # probiere nur zu matches falls mehr als die Häflte der Pixel gefüllt
 
-                logger.error(f"{image_name} with emtpy pixels percantage: {empty_pixels/len(pixels)}")
+                # single core
+                if num_workers == 1:
+                    for coord in spiral_coordinates:
+                        offset, matching = count_matching(img=img_grey, existing_img=stiched_grey, LENS_SIZE=LENS_SIZE, offset=coord)
+                        if matching > matches:
+                            best_coord = offset
+                            matches = matching
+                # multi core
+                else:
+                    count_part = partial(count_matching, img=img_grey, existing_img=stiched_grey, LENS_SIZE=LENS_SIZE)
 
-                for coord in spiral_coordinates:
-                    matching = count_matching(img=img_grey, existing_img=stiched_grey, LENS_SIZE=LENS_SIZE, offset=coord)
-                    if matching > matches:
-                        best_coord = coord
-                        matches = matching
+                    with ProcessPoolExecutor(max_workers=num_workers) as executor:
 
-                logger.error(f"Best was {best_coord} with matches: {matches} and percantage: {matches/len(pixels)}")
-            # Example: Traversing a 3x3 grid in a spiral pattern
+                        # Map the tasks (coordinates) to the executor
+                        results = executor.map(count_part, spiral_coordinates)
+                    
+                    for offset, matching in results:
+                        if matching > matches:
+                            logger.debug(f"New best: offset: {offset}\t\t#Matched {matching} with %: {matches/(full_pixels+1)}")
+                            best_coord = offset
+                            matches = matching
 
-            #for coord in spiral_coordinates:
+                # check if it worked
+                if matches/(full_pixels+1) < 0.5:
+                    logger.info(f"Reset offset to (0,0) since no good match was found")
+                    best_coord = (0, 0)
+                    matches = 0
 
-            # TODO add check to filter low matches out
+
+            logger.warning(f"Best was {best_coord}\t\twith %: {matches/(full_pixels+1)}\n\n")
+
             stitched_image.paste(img, (x + best_coord[0], y + best_coord[1]))
             
             #img.show()
@@ -130,7 +158,7 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
 
     return stitched_image
 
-def count_matching(img: Image, existing_img: Image, LENS_SIZE: int, offset: tuple[int, int]) -> int:
+def count_matching(offset: tuple[int, int], img: Image, existing_img: Image, LENS_SIZE: int) -> int:
     matching = 0
     for x_local in range(LENS_SIZE):
         for y_local in range(LENS_SIZE):
@@ -141,7 +169,7 @@ def count_matching(img: Image, existing_img: Image, LENS_SIZE: int, offset: tupl
             if p1 == p2:
                 matching += 1
 
-    return matching
+    return offset, matching
 
 # returns all images
 def list_image_files(directory: str) -> list[str]:
@@ -171,6 +199,7 @@ def list_image_files(directory: str) -> list[str]:
     return image_files
 
 
+# TODO add parameter to add new stiches onto an exisiting map
 def automated_processing(image_path: str, output_path: str) -> None:
     image_list = list_image_files(image_path)
 

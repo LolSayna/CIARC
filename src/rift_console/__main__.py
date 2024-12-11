@@ -105,7 +105,7 @@ def call_telemetry() -> None:
         drsApi.update_telemetry(melvin)
         time.sleep(3)
 """
-
+# TODO add better file handling structures, auto enter last copyed file name into stitching
 
 # Wrapper for all Image Stichting and Copying
 @app.route("/image_stitch_button", methods=["POST"])
