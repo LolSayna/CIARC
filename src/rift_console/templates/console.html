@@ -8,6 +8,19 @@
 
     <!-- Tab name-->
     <title>Rift-Console</title>
+    <script>
+      function updateNumber() {
+          fetch('/update')
+              .then(response => response.json())
+              .then(data => {
+                  document.getElementById('number').textContent = data.number;
+              })
+              .catch(error => console.error('Error fetching number:', error));
+      }
+
+      // Update number every second
+      setInterval(updateNumber, 1000);
+    </script>
 
     <!-- CSS -->
     <style>
@@ -153,6 +166,7 @@
           <h3 class="spacer">Last Update: {{timedelta}}s ago</h3>
           <h3 class="spacer">Camera Lens: {{angle}}</h3>
           <h3 class="spacer">Current State: {{state}}</h3>
+          <h3>Javascript update demo: <span id="number">0</span></h3>
 
           <!-- expand here -->
 

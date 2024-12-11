@@ -4,11 +4,12 @@ import sys
 import datetime
 import subprocess
 import os
+import random
 
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, url_for, request
+from quart import Quart, render_template, redirect, url_for, request, jsonify
 from werkzeug.wrappers.response import Response
 
 # shared imports
@@ -92,6 +93,12 @@ async def index() -> str:
         planed_transition_state=melvin.planed_transition_state,
         last_backup_time=formatted_last_backup_time,
     )
+
+@app.route('/update')
+def update():
+    # This function will return a new random number for demonstration purposes.
+    new_number = random.randint(0, 100)
+    return jsonify({'number': new_number})
 
 
 """
