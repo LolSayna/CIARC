@@ -74,3 +74,11 @@ TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Wide
 RIFT_LOG_LEVEL = "INFO"
 
 TRACING = False
+
+
+## For image processing
+NUMBER_OF_WORKER_THREADS = 10       # use 1 for single core
+SEARCH_GRID_SIDE_LENGTH = 11        # should be uneven
+
+# save the curent panaoma each X images
+SAVE_PANAORMA_STEP = 5
