@@ -1,113 +1,95 @@
 from PIL import Image
 import os
-import re
 import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from typing import Optional
 
-from shared.models import CameraAngle
+from rift_console.image_helper import generate_spiral_walk, parse_image_name
 import shared.constants as con
 from loguru import logger
 import datetime
+import re
 
 
-### HELPER FUNCTIONS
+def count_matching_pixels(offset: tuple[int, int], first_img: Image, second_img: Image, max_offset: int) -> tuple[int, int]:
+    """ Counts how many pixels are equal between the two images for a given offset
 
-# generate spiral pattern (0,0), (0,1), (1,0), (1,1), ...
-def spiral_traverse(n):
-    # The possible directions we can move: right, up, left, down
-    directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
-    
-    # Start at the origin
-    x, y = 0, 0
-    # The initial direction is to the right
-    direction_index = 0
-    
-    # This will hold the path of the spiral
-    spiral = [(x, y)]
-    
-    # Number of steps we take before changing direction
-    steps = 1
-    
-    while len(spiral) < n:
-        for _ in range(2):
-            for _ in range(steps):
-                if len(spiral) < n:
-                    # Move in the current direction
-                    dx, dy = directions[direction_index]
-                    x += dx
-                    y += dy
-                    # Add the new position to the spiral
-                    spiral.append((x, y))
-                else:
-                    break
-            # Change direction clockwise
-            direction_index = (direction_index + 1) % 4
-        # After moving two directions, we increase the number of steps
-        steps += 1
-    
-    return spiral
+    Args:
+        offset (tuple[int, int]): shift of one image
+        img (Image): first image
+        existing_img (Image): second (larger to allow shift) image
 
+    Returns:
+        tuple[int, int]: used offset and number of matching pixels
+    """
 
-# abs of multiple values
-def tuple_abs_sum(t):
-    return sum(abs(x) for x in t)
+    matching = 0
+    for x_local in range(first_img.size[0]):
+        for y_local in range(second_img.size[1]):
+            p1 = first_img.getpixel((x_local, y_local))
+            p2 = second_img.getpixel((x_local + offset[0] + max_offset, y_local + offset[1] + max_offset))
+
+            #logger.error(f"offset: {offset} {x_local} {y_local} {offset[0]} {offset[1]} {p1} {p2}")
+            if p1 == p2:
+                matching += 1
+
+    return offset, matching
 
 
 # Takes the folder location(including logs/melvonaut/images) and a list of image names
-def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
-    # Create a new empty image
-    stitched_image = Image.new("RGBA", (con.WORLD_X, con.WORLD_Y))
+def stitch_images(image_path: str, images: list[str], panorama = None) -> Image.Image:
+    """ Main stitching algorithm
+    TODO add existing img
 
-    for image_name in image_list:
+    Args:
+        image_path (str): _description_
+        images (list[str]): _description_
+        panorama
+
+    Returns:
+        Image.Image: _description_
+    """
+    # create new panorama if it does not exist
+    if panorama is None:
+        panorama = Image.new("RGBA", (con.WORLD_X, con.WORLD_Y))
+
+    # iterate images
+    for image_name in images:
         with Image.open(image_path + image_name) as img:
-            # read camera angle
-            angle = image_name.split("_")[2]
 
-            match angle:
-                case CameraAngle.Narrow:
-                    LENS_SIZE = 600
-                case CameraAngle.Normal:
-                    LENS_SIZE = 800
-                case CameraAngle.Wide:
-                    LENS_SIZE = 1000
+            logger.info(f"Parsing {image_name} {img.size} {img.mode}")
 
-            match = re.search(r"_x_(-?\d+)_y_(-?\d+)", image_name)
+            img = img.convert("RGBA")
 
-            if match:
-                x = int(match.group(1))
-                y = int(match.group(2))
-            else:
-                logger.error(f"!!!Coordinate reading failed for {image_name}")
-                return stitched_image
-            # x = int(image_name.split(zx_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
-            # y = int(image_name.split("y_", 1)[1].split("_")[0]) - (int)(LENS_SIZE / 2)
+            # extract image name
+            lens_size, x, y = parse_image_name(image_name)
 
-            if LENS_SIZE != 600:
-                img = img.resize((LENS_SIZE, LENS_SIZE), Image.Resampling.LANCZOS)
-
-            # try to find optimal position
-            # also add progess bar
+            # possible resize
+            if lens_size != 600:
+                img = img.resize((lens_size, lens_size), Image.Resampling.LANCZOS)
 
             # try position in a square arround the center
-            # values 7x7 Grid: d = 3, n = 28
-            # 9x9 Grid: d = 4 n = 80
-            # 11x11 Grid, d = 5 n = 120
-            square_size = 11
-            n = square_size*square_size
-            d = int((square_size-1)/2)
+            # values 7x7 Grid: d = 3, n = 28   9x9 Grid: d = 4 n = 80   11x11 Grid, d = 5 n = 120
+            search_grid_side_length = 11
+            spiral_coordinates = generate_spiral_walk(search_grid_side_length * search_grid_side_length)
 
-            spiral_coordinates = sorted(spiral_traverse(n), key=tuple_abs_sum)
+            max_offset = int((search_grid_side_length - 1) / 2)
+
+            existing_stitch = panorama.crop((x - max_offset, y - max_offset, x + lens_size + max_offset, y + lens_size + max_offset))
+
+            # convert to greyscale
+            #img_grey = img.convert(mode="L")
+            #existing_stitch_grey = existing_stitch.convert(mode="L")
+
+            #img.show()
+            #existing_stitch.show()
+            #time.sleep(100)
+
+            pixels = img.getdata()
             
-            matched_part_of_stiched_image = stitched_image.crop((x - d, y - d, x + LENS_SIZE + d, y + LENS_SIZE + d))
-
-            img_grey = img.convert(mode="L")
-            stiched_grey = matched_part_of_stiched_image.convert(mode="L")
-
-
-            pixels = stiched_grey.getdata()
-
-            empty_pixels = sum(1 for pixel in pixels if pixel == (0)) 
+            # warum klapt das net?
+            empty_pixels = sum(1 for pixel in pixels if pixel == (0, 0, 0, 0)) 
             full_pixels = len(pixels) - empty_pixels
 
             best_coord = (0, 0)
@@ -116,29 +98,27 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
 
             logger.warning(f"Stitching: {image_name}\n#Pixels: {len(pixels)}\t\tFull: {full_pixels}\t\tEmtpy: {empty_pixels}")
                         
+            """
+            logger.error(f"img: {img.size}")
+            img.show()
+            img_grey.show()
+            matched_part_of_stiched_image.show()
+            time.sleep(10)
+"""
             if empty_pixels/len(pixels) < 0.5:  # probiere nur zu matches falls mehr als die Häflte der Pixel gefüllt
 
-                # single core
-                if num_workers == 1:
-                    for coord in spiral_coordinates:
-                        offset, matching = count_matching(img=img_grey, existing_img=stiched_grey, LENS_SIZE=LENS_SIZE, offset=coord)
-                        if matching > matches:
-                            best_coord = offset
-                            matches = matching
-                # multi core
-                else:
-                    count_part = partial(count_matching, img=img_grey, existing_img=stiched_grey, LENS_SIZE=LENS_SIZE)
+                count_part = partial(count_matching_pixels, first_img=img, second_img=existing_stitch, max_offset=max_offset)
 
-                    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+                with ProcessPoolExecutor(max_workers=num_workers) as executor:
 
-                        # Map the tasks (coordinates) to the executor
-                        results = executor.map(count_part, spiral_coordinates)
-                    
-                    for offset, matching in results:
-                        if matching > matches:
-                            logger.debug(f"New best: offset: {offset}\t\t#Matched {matching} with %: {matches/(full_pixels+1)}")
-                            best_coord = offset
-                            matches = matching
+                    # Map the tasks (coordinates) to the executor
+                    results = executor.map(count_part, spiral_coordinates)
+
+                for offset, matching in results:
+                    if matching > matches:
+                        logger.debug(f"New best: offset: {offset}\t\t#Matched {matching} with %: {matches/(full_pixels+1)}")
+                        best_coord = offset
+                        matches = matching
 
                 # check if it worked
                 if matches/(full_pixels+1) < 0.5:
@@ -149,27 +129,14 @@ def stitch_images(image_path: str, image_list: list[str]) -> Image.Image:
 
             logger.warning(f"Best was {best_coord}\t\twith %: {matches/(full_pixels+1)}\n\n")
 
-            stitched_image.paste(img, (x + best_coord[0], y + best_coord[1]))
+            panorama.paste(img, (x + best_coord[0], y + best_coord[1]))
             
             #img.show()
             #matched_part_of_stiched_image.show()
             #stitched_image.show()
             #time.sleep(15)
 
-    return stitched_image
-
-def count_matching(offset: tuple[int, int], img: Image, existing_img: Image, LENS_SIZE: int) -> int:
-    matching = 0
-    for x_local in range(LENS_SIZE):
-        for y_local in range(LENS_SIZE):
-            p1 = img.getpixel((x_local, y_local))
-            p2 = existing_img.getpixel((x_local + offset[0], y_local + offset[1]))
-
-            #logger.error(f"offset: {offset} {x_local} {y_local} {offset[0]} {offset[1]} {p1} {p2}")
-            if p1 == p2:
-                matching += 1
-
-    return offset, matching
+    return panorama
 
 # returns all images
 def list_image_files(directory: str) -> list[str]:
@@ -205,7 +172,7 @@ def automated_processing(image_path: str, output_path: str) -> None:
 
     logger.warning(f"Starting stitching of {len(image_list)} image with path: {image_path}")
 
-    panorama = stitch_images(image_path=image_path, image_list=image_list)
+    panorama = stitch_images(image_path=image_path, images=image_list)
     preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
 
     preview.save("src/rift_console/static/images/" + "preview.png")
@@ -222,7 +189,7 @@ def main() -> None:
 
     logger.warning(f"Starting stitching of {len(image_list)} image with path: {image_path}")
 
-    panorama = stitch_images(image_path=image_path, image_list=image_list)
+    panorama = stitch_images(image_path=image_path, images=image_list)
     preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
 
     preview.save("src/rift_console/static/images/" + "preview.png")
