@@ -90,6 +90,7 @@ def stitch_images(image_path: str, image_name_list: list[str], panorama = None) 
             best_match_count = 0
             best_offset = (0, 0)
 
+            # TODO next goal would to move in only one direction in which the matches get better
             if con.DO_IMAGE_NUDGING_SEARCH:
                 # probiere nur zu match_count falls mehr als die Häflte der Pixel gefüllt
                 if empty_pixel/total_pixel < 0.5:

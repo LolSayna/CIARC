@@ -69,7 +69,7 @@ TARGET_SPEED_NARROW_Y = 2.95
 TARGET_SPEED_WIDE_X = 49.84
 TARGET_SPEED_WIDE_Y = 21.16
 
-DISTANCE_BETWEEN_IMAGES = 250  # How many pixel before taking another image
+DISTANCE_BETWEEN_IMAGES = 350  # How many pixel before taking another image
 
 TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Wide
 RIFT_LOG_LEVEL = "INFO"
@@ -79,15 +79,15 @@ TRACING = False
 
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
-DO_IMAGE_NUDGING_SEARCH = False         # if False ignore SEARCH_GRID_SIDE_LENGTH
-SEARCH_GRID_SIDE_LENGTH = 15                    # should be uneven
+DO_IMAGE_NUDGING_SEARCH = True         # if False ignore SEARCH_GRID_SIDE_LENGTH
+SEARCH_GRID_SIDE_LENGTH = 55                    # should be uneven
 
 # should be false, the naming convenction for images changed, for all new images this should be false
-USE_LEGACY_IMAGE_NAMES = True 
-# should be 8, only for old datasets can be 10
-IMAGE_NAME_UNDERSCORE_COUNT = 9
+USE_LEGACY_IMAGE_NAMES = False 
+# should be 8, only for old datasets can be 9
+IMAGE_NAME_UNDERSCORE_COUNT = 8
 # should be 2, only for old datasets can be 3, since files were named differently back then
-IMAGE_ANGLE_POSITION = 3
+IMAGE_ANGLE_POSITION = 2
 
 # save the curent panaoma each X images
 SAVE_PANAORMA_STEP = 1000
