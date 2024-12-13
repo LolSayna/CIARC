@@ -120,12 +120,11 @@ async def image_stitch_button() -> Response:
     # USES LOKAL PATHS
     form = await request.form
     user_input = form.get("source_location")
-    source_path = con.IMAGE_PATH + str(user_input) + "/"
-    result_path = con.PANORAMA_PATH + str(user_input)
+    source_path = con.IMAGE_PATH + str(user_input)
 
     # logging inside image_processing
     rift_console.image_processing.automated_processing(
-        image_path=source_path, output_path=result_path
+        image_path=source_path
     )
     # logging inside image_processing
 

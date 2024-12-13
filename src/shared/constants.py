@@ -1,4 +1,5 @@
 # Folder structure
+from os import cpu_count
 from shared.models import CameraAngle
 
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
@@ -77,8 +78,9 @@ TRACING = False
 
 
 ## For image processing
-NUMBER_OF_WORKER_THREADS = 10       # use 1 for single core
-SEARCH_GRID_SIDE_LENGTH = 11        # should be uneven
+NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
+SEARCH_GRID_SIDE_LENGTH = 15                    # should be uneven
+DO_IMAGE_NUDGING_SEARCH = True
 
 # save the curent panaoma each X images
-SAVE_PANAORMA_STEP = 5
+SAVE_PANAORMA_STEP = 100

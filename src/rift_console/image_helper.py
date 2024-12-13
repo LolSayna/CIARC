@@ -5,6 +5,8 @@ Provides helping functions that are used in image_processing.
 """
 
 import re
+import os
+import datetime
 
 from shared.models import CameraAngle
 
@@ -85,3 +87,36 @@ def parse_image_name(name: str) -> tuple[int, int, int]:
         raise Exception("parse_image_name: could not match x/y coordinates!")
     
     return lens_size, x, y
+
+
+# returns all images
+def find_image_names(directory: str) -> list[str]:
+    """ Traverses the given directory and find + sorts all images in our filename format
+
+    Args:
+        directory (str): path to the folder, needs to include con.IMAGE_PATH
+
+    Returns:
+        list[str]: the name of all images in that folder, sorted by its timestamp from old to now
+    """
+
+    # find all names
+    image_names = []
+    for filename in os.listdir(directory):
+        if filename.startswith("image"):
+            image_names.append(filename)
+
+
+    timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})_"
+
+    # helper function used in sorting
+    def extract_timestamp(s):
+        match = re.search(timestamp_pattern, s)
+        if match:
+            return datetime.datetime.fromisoformat(match.group(1))
+        else:
+            raise Exception(f"find_image_names: did not found timestamp in image name, image_names: {image_names}")
+
+    # sort
+    image_names = sorted(image_names, key=extract_timestamp)
+    return image_names

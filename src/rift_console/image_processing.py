@@ -1,22 +1,17 @@
-from PIL import Image
-import os
 import sys
-import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from typing import Optional
 
-from rift_console.image_helper import generate_spiral_walk, parse_image_name
-import shared.constants as con
 from loguru import logger
-import datetime
-import re
+from PIL import Image
+
+from rift_console.image_helper import generate_spiral_walk, parse_image_name, find_image_names
+import shared.constants as con
 
 ##### LOGGING #####
 logger.remove()
 logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
-
-
 
 def count_matching_pixels(offset: tuple[int, int], first_img: Image, second_img: Image, max_offset: int) -> tuple[int, int]:
     """ Counts how many pixels are equal between the two images for a given offset
@@ -43,7 +38,7 @@ def count_matching_pixels(offset: tuple[int, int], first_img: Image, second_img:
 
 
 # Takes the folder location(including logs/melvonaut/images) and a list of image names
-def stitch_images(image_path: str, images: list[str], panorama = None) -> Image.Image:
+def stitch_images(image_path: str, image_name_list: list[str], panorama = None) -> Image.Image:
     """ Main stitching algorithm
     TODO add existing img
 
@@ -61,7 +56,7 @@ def stitch_images(image_path: str, images: list[str], panorama = None) -> Image.
 
     stiched_image_counter = 0
     # iterate images
-    for image_name in images:
+    for image_name in image_name_list:
         with Image.open(image_path + image_name) as img:
 
             logger.debug(f"Parsing {image_name} {img.size} {img.mode}")
@@ -95,30 +90,31 @@ def stitch_images(image_path: str, images: list[str], panorama = None) -> Image.
             best_match_count = 0
             best_offset = (0, 0)
 
-            # probiere nur zu match_count falls mehr als die Häflte der Pixel gefüllt
-            if empty_pixel/total_pixel < 0.5:
-                
-                # make a func with static params for this image
-                count_part = partial(count_matching_pixels, first_img=img, second_img=existing_stitch, max_offset=max_offset)
+            if con.DO_IMAGE_NUDGING_SEARCH:
+                # probiere nur zu match_count falls mehr als die Häflte der Pixel gefüllt
+                if empty_pixel/total_pixel < 0.5:
+                    
+                    # make a func with static params for this image
+                    count_part = partial(count_matching_pixels, first_img=img, second_img=existing_stitch, max_offset=max_offset)
 
-                with ProcessPoolExecutor(max_workers=con.NUMBER_OF_WORKER_THREADS) as executor:
+                    with ProcessPoolExecutor(max_workers=con.NUMBER_OF_WORKER_THREADS) as executor:
 
-                    # each Thread gets automatically assign a different coordinate from the pool
-                    results = executor.map(count_part, spiral_coordinates)
+                        # each Thread gets automatically assign a different coordinate from the pool
+                        results = executor.map(count_part, spiral_coordinates)
 
-                for offset, matches in results:
-                    if matches > best_match_count:            
-                        logger.debug(f"New best: matches {matches}p ({matches/total_pixel}%), with offset {best_offset}\n")
-                        best_offset = offset
-                        best_match_count = matches
+                    for offset, matches in results:
+                        if matches > best_match_count:            
+                            logger.debug(f"New best: matches {matches}p ({matches/total_pixel}%), with offset {best_offset}\n")
+                            best_offset = offset
+                            best_match_count = matches
 
-                # check if it worked
-                if best_match_count/(set_pixel) < 0.5:
-                    logger.info(f"Reset offset to (0,0) since best_match_count: {best_match_count}p ({best_match_count/total_pixel}%)")
-                    best_offset = (0, 0)
-                    best_match_count = 0
-            else:
-                logger.info(f"Offset (0,0) since existing image set_pixel: {set_pixel} {set_pixel/total_pixel}")
+                    # check if it worked
+                    if best_match_count/(set_pixel) < 0.5:
+                        logger.info(f"Reset offset to (0,0) since best_match_count: {best_match_count}p ({best_match_count/total_pixel}%)")
+                        best_offset = (0, 0)
+                        best_match_count = 0
+                else:
+                    logger.info(f"Offset (0,0) since existing image set_pixel: {set_pixel} {set_pixel/total_pixel}")
 
 
             # need to check math for % here!
@@ -128,69 +124,41 @@ def stitch_images(image_path: str, images: list[str], panorama = None) -> Image.
 
             stiched_image_counter += 1
             if stiched_image_counter % con.SAVE_PANAORMA_STEP == 0:
-                panorama.save(con.PANORAMA_PATH + "step_pan/" + str(stiched_image_counter) + ".png")
+                panorama.save(con.PANORAMA_PATH + str(stiched_image_counter) + ".png")
 
     return panorama
 
-# returns all images
-def list_image_files(directory: str) -> list[str]:
-
-    image_files = []
-    for filename in os.listdir(directory):
-        if filename.startswith("image"):
-            image_files.append(filename)
-
-    # pattern to find timestamp
-    timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})_"
-
-    # Function to extract timestamp from a string
-    def extract_timestamp(s):
-
-        match = re.search(timestamp_pattern, s)
-        if match:
-            timestamp_str = match.group(1)
-            # Parse timestamp string to a datetime object
-            return datetime.datetime.fromisoformat(timestamp_str)
-        else:
-            return None
-
-    # Sort the list of strings based on the extracted timestamp
-    image_files = sorted(image_files, key=extract_timestamp)
-
-    return image_files
-
 
 # TODO add parameter to add new stiches onto an exisiting map
-def automated_processing(image_path: str, output_path: str) -> None:
-    image_list = list_image_files(image_path)
+def automated_processing(image_path: str) -> None:
+    """ Stitches images from the given subfolder onto one big image, which is stored under the same name
 
-    logger.warning(f"Starting stitching of {len(image_list)} image with path: {image_path}")
+    Args:
+        image_path (str): folder location in con.PANORAMA_PATH and name of final panorama
+    """
 
-    panorama = stitch_images(image_path=image_path, images=image_list)
-    preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
+    output_path = con.PANORAMA_PATH + image_path
+    image_path = con.IMAGE_PATH + image_path + "/"
 
-    preview.save("src/rift_console/static/images/" + "preview.png")
+    image_name_list = find_image_names(image_path)
+
+    logger.warning(f"Starting stitching of {len(image_name_list)} image with path: {image_path}")
+
+    panorama = stitch_images(image_path=image_path, image_name_list=image_name_list)
+
+    # preview
+    # TODO change path later
+    # preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
+    # preview.save("src/rift_console/static/images/" + "preview.png")
+
     panorama.save(output_path + ".png")
-    logger.warning("Created preview + panorma in Stitcher")
 
+    logger.warning(f"Done stitching, panorama in {output_path}")
 
-# for manual testing
-def main() -> None:
-    image_path = con.IMAGE_PATH + "t" + "/"
-    output_path = con.PANORAMA_PATH + "t"
-
-    image_list = list_image_files(image_path)
-
-    logger.warning(f"Starting stitching of {len(image_list)} image with path: {image_path}")
-
-    panorama = stitch_images(image_path=image_path, images=image_list)
-    preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
-
-    preview.save("src/rift_console/static/images/" + "preview.png")
-    panorama.save(output_path + ".png")
-    logger.warning("Created preview + panorma in Stitcher")
-
-
-# for now call this file directly TODO integrieren into console
+# test stitching from cli
 if __name__ == "__main__":
-    main()
+    
+    if len(sys.argv) != 2:
+        logger.error("Usage: python3 image_processing.py IMAGE_PATH\nAbgebrochen!")
+        sys.exit(1)
+    automated_processing(sys.argv[1])
