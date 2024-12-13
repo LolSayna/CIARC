@@ -9,6 +9,7 @@ import os
 import datetime
 
 from shared.models import CameraAngle
+import shared.constants as con
 
 def generate_spiral_walk(n: int) -> list[tuple[int, int]]:
     """ Create an spiraling offset pattern arround a central point, e.g. (0,0), (0,1), (1,0), (1,1), ...
@@ -65,11 +66,11 @@ def parse_image_name(name: str) -> tuple[int, int, int]:
     """
     # expected format: 'image_5344_wide_2024-12-11T17:31:27.507376_x_19936_y_4879'
     # with 8 underscores
-    if len(name.split("_")) != 8:
+    if len(name.split("_")) != con.IMAGE_NAME_UNDERSCORE_COUNT:
         raise Exception("parse_image_name: filename has wrong format!")
 
     # used CameraAngle is after second underscore
-    match name.split("_")[2]:
+    match name.split("_")[con.IMAGE_ANGLE_POSITION]:
         case CameraAngle.Narrow:
             lens_size = 600
         case CameraAngle.Normal:
@@ -107,7 +108,7 @@ def find_image_names(directory: str) -> list[str]:
             image_names.append(filename)
 
 
-    timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})_"
+    timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})"
 
     # helper function used in sorting
     def extract_timestamp(s):
@@ -115,7 +116,7 @@ def find_image_names(directory: str) -> list[str]:
         if match:
             return datetime.datetime.fromisoformat(match.group(1))
         else:
-            raise Exception(f"find_image_names: did not found timestamp in image name, image_names: {image_names}")
+            raise Exception(f"find_image_names: did not found timestamp in image names")
 
     # sort
     image_names = sorted(image_names, key=extract_timestamp)

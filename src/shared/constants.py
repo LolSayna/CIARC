@@ -79,8 +79,13 @@ TRACING = False
 
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
+DO_IMAGE_NUDGING_SEARCH = False         # if False ignore SEARCH_GRID_SIDE_LENGTH
 SEARCH_GRID_SIDE_LENGTH = 15                    # should be uneven
-DO_IMAGE_NUDGING_SEARCH = True
+
+# should be 8, only for old datasets can be 10
+IMAGE_NAME_UNDERSCORE_COUNT = 9
+# should be 2, only for old datasets can be 3, since files were named differently back then
+IMAGE_ANGLE_POSITION = 3
 
 # save the curent panaoma each X images
-SAVE_PANAORMA_STEP = 100
+SAVE_PANAORMA_STEP = 1000
