@@ -82,6 +82,8 @@ NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
 DO_IMAGE_NUDGING_SEARCH = False         # if False ignore SEARCH_GRID_SIDE_LENGTH
 SEARCH_GRID_SIDE_LENGTH = 15                    # should be uneven
 
+# should be false, the naming convenction for images changed, for all new images this should be false
+USE_LEGACY_IMAGE_NAMES = True 
 # should be 8, only for old datasets can be 10
 IMAGE_NAME_UNDERSCORE_COUNT = 9
 # should be 2, only for old datasets can be 3, since files were named differently back then

@@ -84,6 +84,11 @@ def parse_image_name(name: str) -> tuple[int, int, int]:
     if match:
         x = int(match.group(1))
         y = int(match.group(2))
+
+        # old images position is not adjusted in melvonaut yet
+        if con.USE_LEGACY_IMAGE_NAMES:
+            x -= (int)(lens_size / 2)
+            y -= (int)(lens_size / 2)
     else:
         raise Exception("parse_image_name: could not match x/y coordinates!")
     
