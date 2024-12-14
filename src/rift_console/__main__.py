@@ -112,6 +112,19 @@ def call_telemetry() -> None:
         drsApi.update_telemetry(melvin)
         time.sleep(3)
 """
+
+
+
+@app.route('/media')
+async def media():
+    # List of image filenames you want to display
+    images = [
+        'media/phase1.png',
+        'media/phase2_part.png',
+    ]
+    return await render_template('media.html', images=images)
+
+
 # TODO add better file handling structures, auto enter last copyed file name into stitching
 
 # Wrapper for all Image Stichting and Copying

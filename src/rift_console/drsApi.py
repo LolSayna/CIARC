@@ -25,8 +25,13 @@ def reset(melvin: RiftTelemetry) -> None:
 
 def update_telemetry(melvin: RiftTelemetry) -> None:
     # print("A")
-    with requests.Session() as s:
-        r = s.get(con.OBSERVATION_ENDPOINT)
+    try:
+        with requests.Session() as s:
+            r = s.get(con.OBSERVATION_ENDPOINT)
+
+    except requests.exceptions.ConnectionError:
+        logger.error("HTTP Connection timed out, Network is unreachable.\n Is VPN activated?")
+        exit()
 
     if r.status_code == 200:
         logger.debug("Observation successful")

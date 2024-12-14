@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Stiched Panorama</title>
+</head>
+<body>
+    <h1>Images</h1>
+    {% for image in images %}
+    <div>
+        <h2>{{image}}</h2>
+        <img src="{{ url_for('static', filename=image) }}" alt="Image {{ loop.index }}" style="max-width: 100%; height: auto;">
+    </div>
+    {% endfor %}
+</body>
+</html>
