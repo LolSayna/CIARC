@@ -79,7 +79,7 @@ TRACING = False
 
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
-DO_IMAGE_NUDGING_SEARCH = True         # if False ignore SEARCH_GRID_SIDE_LENGTH
+DO_IMAGE_NUDGING_SEARCH = False         # if False ignore SEARCH_GRID_SIDE_LENGTH
 SEARCH_GRID_SIDE_LENGTH = 55                    # should be uneven
 
 # should be false, the naming convenction for images changed, for all new images this should be false
