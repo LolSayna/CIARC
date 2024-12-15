@@ -79,8 +79,8 @@ TRACING = False
 
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
-DO_IMAGE_NUDGING_SEARCH = False         # if False ignore SEARCH_GRID_SIDE_LENGTH
-SEARCH_GRID_SIDE_LENGTH = 55                    # should be uneven
+DO_IMAGE_NUDGING_SEARCH = True         # if False ignore SEARCH_GRID_SIDE_LENGTH
+SEARCH_GRID_SIDE_LENGTH = 15                    # should be uneven
 
 # should be false, the naming convenction for images changed, for all new images this should be false
 USE_LEGACY_IMAGE_NAMES = False 
@@ -91,3 +91,14 @@ IMAGE_ANGLE_POSITION = 2
 
 # save the curent panaoma each X images
 SAVE_PANAORMA_STEP = 1000
+
+# see image_processing:count_matching_pixels. Images are (0-255,0-255,0-255), summed up over RGB how 
+# difference two pixels are allowed to be to still count as matching 
+IMAGE_NOISE_FORGIVENESS = 20
+
+# WIP
+# first version sorted images by time, this flag instead sorts by position, starting in the top-right corner
+IMAGE_ITERATION_POSITION_NOT_TIME = True
+# only stiched that many images for better testing
+STITCHING_COUNT_LIMIT = 1000
+

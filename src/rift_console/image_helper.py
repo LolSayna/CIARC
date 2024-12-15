@@ -112,17 +112,31 @@ def find_image_names(directory: str) -> list[str]:
         if filename.startswith("image"):
             image_names.append(filename)
 
-
-    timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})"
-
     # helper function used in sorting
     def extract_timestamp(s):
+        timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})"
+
         match = re.search(timestamp_pattern, s)
         if match:
             return datetime.datetime.fromisoformat(match.group(1))
         else:
             raise Exception(f"find_image_names: did not found timestamp in image names")
 
+    def extract_pos(s):
+        pos_pattern = r"_x_(-?\d+)_y_(-?\d+)"
+
+        match = re.search(pos_pattern, s)
+        if match:
+            x = int(match.group(1))
+            y = int(match.group(2))
+            return x+y
+        else:
+            raise Exception(f"find_image_names: did not found position in image names")
+
+    
     # sort
-    image_names = sorted(image_names, key=extract_timestamp)
+    if con.IMAGE_ITERATION_POSITION_NOT_TIME:
+        image_names = sorted(image_names, key=extract_pos)
+    else:
+        image_names = sorted(image_names, key=extract_timestamp)
     return image_names

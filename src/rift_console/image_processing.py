@@ -1,4 +1,5 @@
 import sys
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from typing import Optional
@@ -31,11 +32,15 @@ def count_matching_pixels(offset: tuple[int, int], first_img: Image, second_img:
             p1 = first_img.getpixel((x_local, y_local))
             p2 = second_img.getpixel((x_local + offset[0] + max_offset, y_local + offset[1] + max_offset))
 
-            if p1 == p2:
+            # logger.error(f"{p1} {p2} {abs(p1[0] - p2[0])} {abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]) + abs(p1[2] - p2[2])}")
+            # only compare R G B and not Alpha. Since there is random noise a slight difference is allowed
+            if abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]) + abs(p1[2] - p2[2]) < con.IMAGE_NOISE_FORGIVENESS:
                 matches += 1
 
     return offset, matches
 
+TMP_OFFSET = 2000
+HALF_OFFSET = 1000
 
 # Takes the folder location(including logs/melvonaut/images) and a list of image names
 def stitch_images(image_path: str, image_name_list: list[str], panorama = None) -> Image.Image:
@@ -52,14 +57,17 @@ def stitch_images(image_path: str, image_name_list: list[str], panorama = None) 
     """
     # create new panorama if it does not exist
     if panorama is None:
-        panorama = Image.new("RGBA", (con.WORLD_X, con.WORLD_Y))
+        panorama = Image.new("RGBA", (con.WORLD_X + TMP_OFFSET, con.WORLD_Y + TMP_OFFSET))
 
-    stiched_image_counter = 0
+    processed_images_counter = 0
+    nudging_failed_counter = 0
+    to_few_pixel_counter = 0
+    max_offset_database = []
+
     # iterate images
     for image_name in image_name_list:
         with Image.open(image_path + image_name) as img:
 
-            logger.debug(f"Parsing {image_name} {img.size} {img.mode}")
             # extract image name
             lens_size, x, y = parse_image_name(image_name)
 
@@ -70,12 +78,15 @@ def stitch_images(image_path: str, image_name_list: list[str], panorama = None) 
                 img = img.resize((lens_size, lens_size), Image.Resampling.LANCZOS)
 
 
+            logger.info(f"Parsing {image_name} {img.size} {img.mode}")
+
+
             # try position in a square arround the center
             # values 7x7 Grid: d = 3, n = 28   9x9 Grid: d = 4 n = 80   11x11 Grid, d = 5 n = 120
             spiral_coordinates = generate_spiral_walk(con.SEARCH_GRID_SIDE_LENGTH * con.SEARCH_GRID_SIDE_LENGTH)
 
             max_offset = int((con.SEARCH_GRID_SIDE_LENGTH - 1) / 2)
-            existing_stitch = panorama.crop((x - max_offset, y - max_offset, x + lens_size + max_offset, y + lens_size + max_offset))
+            existing_stitch = panorama.crop((x - max_offset + HALF_OFFSET, y - max_offset + HALF_OFFSET, x + lens_size + max_offset + HALF_OFFSET, y + lens_size + max_offset + HALF_OFFSET))
 
 
             # check if existing_stich contains something
@@ -89,12 +100,17 @@ def stitch_images(image_path: str, image_name_list: list[str], panorama = None) 
 
             best_match_count = 0
             best_offset = (0, 0)
+            skip = False
 
             # TODO next goal would to move in only one direction in which the matches get better
             if con.DO_IMAGE_NUDGING_SEARCH:
-                # probiere nur zu match_count falls mehr als die Häflte der Pixel gefüllt
-                if empty_pixel/total_pixel < 0.5:
-                    
+                
+                # probiere nur zu match_count falls mehr als 20% aller pixel gefüllt
+                if set_pixel/total_pixel == 0:
+                    logger.warning(f"Emtpy panoarma, image still placed")
+
+                elif set_pixel/total_pixel > 0.2:
+                
                     # make a func with static params for this image
                     count_part = partial(count_matching_pixels, first_img=img, second_img=existing_stitch, max_offset=max_offset)
 
@@ -105,27 +121,47 @@ def stitch_images(image_path: str, image_name_list: list[str], panorama = None) 
 
                     for offset, matches in results:
                         if matches > best_match_count:            
-                            logger.debug(f"New best: matches {matches}p ({matches/total_pixel}%), with offset {best_offset}\n")
+                            logger.info(f"New best: matches {matches}p ({matches/total_pixel}%), with offset {best_offset}\n")
                             best_offset = offset
                             best_match_count = matches
 
                     # check if it worked
                     if best_match_count/(set_pixel) < 0.5:
-                        logger.info(f"Reset offset to (0,0) since best_match_count: {best_match_count}p ({best_match_count/total_pixel}%)")
-                        best_offset = (0, 0)
-                        best_match_count = 0
+                        logger.warning(f"Nudging failed, image skipped, since best_match_count: {best_match_count}p ({best_match_count/total_pixel}%)")
+
+                        skip = True
+                        nudging_failed_counter += 1
+
+                        logger.warning(f"{max(abs(best_offset[0]), abs(best_offset[1]))} {best_offset[0]} {best_offset[1]}")
+                        max_offset_database.append(max(abs(best_offset[0]), abs(best_offset[1])))
                 else:
-                    logger.info(f"Offset (0,0) since existing image set_pixel: {set_pixel} {set_pixel/total_pixel}")
+                    logger.warning(f"Too few pixel on panorama, image skipped, set_pixel%: {set_pixel/total_pixel}")
+                    skip = True
+                    to_few_pixel_counter += 1
+                
+                # need to check math for % here!
+                logger.debug(f"Placed Image best_match_count: {best_match_count}p ({best_match_count/total_pixel}%) with offset: {best_offset}\n")
 
 
-            # need to check math for % here!
-            logger.warning(f"Placed Image best_match_count: {best_match_count}p ({best_match_count/total_pixel}%) with offset: {best_offset}\n")
+            if not skip:
+                panorama.paste(img, (x + best_offset[0] + HALF_OFFSET, y + best_offset[1] + HALF_OFFSET))
 
-            panorama.paste(img, (x + best_offset[0], y + best_offset[1]))#
+            processed_images_counter += 1
+            if processed_images_counter % con.SAVE_PANAORMA_STEP == 0:
+                panorama.save(con.PANORAMA_PATH + str(processed_images_counter) + ".png")
 
-            stiched_image_counter += 1
-            if stiched_image_counter % con.SAVE_PANAORMA_STEP == 0:
-                panorama.save(con.PANORAMA_PATH + str(stiched_image_counter) + ".png")
+
+       # if any(pixel < 255 for pixel in alpha.getdata()):
+        #    return True
+
+        if processed_images_counter >= con.STITCHING_COUNT_LIMIT:
+            logger.warning(f"STITCHING_COUNT_LIMIT reached!")
+            break
+
+    logger.warning(f"\n\nDone stitching of {processed_images_counter} from {len(image_name_list)} given images, nudging_failed_counter: {nudging_failed_counter} , to_few_pixel_counter: {to_few_pixel_counter}\n")
+    
+    for element,count in Counter(max_offset_database).items():
+        logger.warning(f"Max_offset up to {element} occured {count} times")
 
     return panorama
 
@@ -154,7 +190,7 @@ def automated_processing(image_path: str) -> None:
 
     panorama.save(output_path + ".png")
 
-    logger.warning(f"Done stitching, panorama in {output_path}")
+    logger.warning(f"Saved panorama in {output_path}")
 
 # test stitching from cli
 if __name__ == "__main__":
