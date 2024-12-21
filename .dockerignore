@@ -174,3 +174,5 @@ cython_debug/
 trivy_report.json
 letsencrypt/
 .http-pass
+
+logs/
