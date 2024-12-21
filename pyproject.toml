@@ -50,6 +50,9 @@ uvicorn-worker = "^0.2.0"
 quart = "^0.19.9"
 quart-flask-patch = "^0.3.0"
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
 coverage = {extras = ["toml"], version = ">=6.2"}
