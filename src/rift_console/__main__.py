@@ -92,6 +92,7 @@ async def index() -> str:
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
         last_backup_time=formatted_last_backup_time,
+        z_obj_list=melvin.z_obj_list
     )
 
 @app.route('/update')

@@ -88,10 +88,9 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
     print(melvin.older_pos)
     print(melvin.oldest_pos)
     """
-
+    melvin.z_obj_list = []
     # parse objective list
     for obj in objective_list.json()["zoned_objectives"]:
-        logger.warning(obj["start"])
         if type(obj["zone"]) is str:
             zone = None
         else:
@@ -104,9 +103,7 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
             optic_required=CameraAngle(obj["optic_required"]), coverage_required=obj["coverage_required"],
             description=obj["description"], secret=obj["secret"]))
 
-    sortedo = sorted(melvin.z_obj_list, key=lambda event: event.start)
-    for o in sortedo:
-        logger.error(o.start)
+    melvin.z_obj_list = sorted(melvin.z_obj_list, key=lambda event: event.start)
 
     return
 
