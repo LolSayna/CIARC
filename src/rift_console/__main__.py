@@ -122,6 +122,7 @@ async def media():
     images = [
         'media/phase1.png',
         'media/phase2_part.png',
+        'media/phase2_done_v1.png'
     ]
     return await render_template('media.html', images=images)
 
