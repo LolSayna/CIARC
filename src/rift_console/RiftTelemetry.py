@@ -1,5 +1,5 @@
 # shared imports
-from shared.models import State, Telemetry, CameraAngle
+from shared.models import State, Telemetry, CameraAngle, ZonedObjective
 from typing import Optional
 
 import datetime
@@ -37,3 +37,5 @@ class RiftTelemetry(Telemetry):
     # default value for creating a new folder to store images
     new_image_folder_name: str = "MISSING"
     # nextStitch_folder_name: str = "DATE_MISSING"
+
+    z_obj_list: list[ZonedObjective] = []

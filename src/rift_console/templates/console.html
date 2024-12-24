@@ -8,6 +8,7 @@
 
     <!-- Tab name-->
     <title>Rift-Console</title>
+    <h1 id="time">Loading UTC Time...</h1>
     <script>
       function updateNumber() {
           fetch('/update')
@@ -20,6 +21,21 @@
 
       // Update number every second
       setInterval(updateNumber, 1000);
+    </script>
+    <script>
+      function updateTime() {
+          const now = new Date();
+          // Get the current UTC time
+          const isoString = now.toISOString();
+          const formattedString = isoString.slice(0, 16);
+          document.getElementById('time').textContent = `Live UTC: ${formattedString}`;
+      }
+
+      // Initial call to display the time immediately
+      updateTime();
+
+      // Update the time every second
+      setInterval(updateTime, 5000);
     </script>
 
     <!-- CSS -->
