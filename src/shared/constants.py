@@ -79,7 +79,7 @@ TRACING = False
 
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2      # use 1 for single core
-DO_IMAGE_NUDGING_SEARCH = True         # if False ignore SEARCH_GRID_SIDE_LENGTH
+DO_IMAGE_NUDGING_SEARCH = False         # if False ignore SEARCH_GRID_SIDE_LENGTH
 SEARCH_GRID_SIDE_LENGTH = 15                    # should be uneven
 
 # should be false, the naming convenction for images changed, for all new images this should be false
@@ -100,5 +100,5 @@ IMAGE_NOISE_FORGIVENESS = 20
 # first version sorted images by time, this flag instead sorts by position, starting in the top-right corner
 IMAGE_ITERATION_POSITION_NOT_TIME = True
 # only stiched that many images for better testing
-STITCHING_COUNT_LIMIT = 1000
+STITCHING_COUNT_LIMIT = 3000
 

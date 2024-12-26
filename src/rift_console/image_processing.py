@@ -166,6 +166,27 @@ def stitch_images(image_path: str, image_name_list: list[str], panorama = None) 
     return panorama
 
 
+def cut(source: str, target: str) -> None:
+
+    image_path = con.PANORAMA_PATH + source + ".png"
+    output_path = con.PANORAMA_PATH + target + ".png"
+
+    remove_offset = (1000, 1000, con.WORLD_X + 1000, con.WORLD_Y + 1000)
+    coordinates = (7914, 5304, 8514, 5904)
+
+    Image.MAX_IMAGE_PIXELS = 500000000
+
+    logger.warning(image_path)
+    # remove offset
+    with Image.open(image_path) as img:
+        cut_img = img.crop(remove_offset)
+        logger.warning("Removed offset")
+
+    cropped = cut_img.crop(coordinates)
+    cropped.show()
+
+    cropped.save(output_path)
+
 # TODO add parameter to add new stiches onto an exisiting map
 def automated_processing(image_path: str) -> None:
     """ Stitches images from the given subfolder onto one big image, which is stored under the same name
@@ -196,6 +217,12 @@ def automated_processing(image_path: str) -> None:
 if __name__ == "__main__":
     
     if len(sys.argv) != 2:
-        logger.error("Usage: python3 image_processing.py IMAGE_PATH\nAbgebrochen!")
+        #logger.error("Usage: python3 image_processing.py IMAGE_PATH\nAbgebrochen!")
+
+
+        if len(sys.argv) == 3:
+            cut(sys.argv[1], sys.argv[2])
+            sys.exit(0)
         sys.exit(1)
+    
     automated_processing(sys.argv[1])
