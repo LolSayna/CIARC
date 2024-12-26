@@ -92,14 +92,15 @@ async def index() -> str:
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
         last_backup_time=formatted_last_backup_time,
-        z_obj_list=melvin.z_obj_list
+        z_obj_list=melvin.z_obj_list,
     )
 
-@app.route('/update')
+
+@app.route("/update")
 def update():
     # This function will return a new random number for demonstration purposes.
     new_number = random.randint(0, 100)
-    return jsonify({'number': new_number})
+    return jsonify({"number": new_number})
 
 
 """
@@ -115,19 +116,15 @@ def call_telemetry() -> None:
 """
 
 
-
-@app.route('/media')
+@app.route("/media")
 async def media():
     # List of image filenames you want to display
-    images = [
-        'media/phase1.png',
-        'media/phase2_part.png',
-        'media/phase2_done_v1.png'
-    ]
-    return await render_template('media.html', images=images)
+    images = ["media/phase1.png", "media/phase2_part.png", "media/phase2_done_v1.png"]
+    return await render_template("media.html", images=images)
 
 
 # TODO add better file handling structures, auto enter last copyed file name into stitching
+
 
 # Wrapper for all Image Stichting and Copying
 @app.route("/image_stitch_button", methods=["POST"])
@@ -138,9 +135,7 @@ async def image_stitch_button() -> Response:
     source_path = con.IMAGE_PATH + str(user_input)
 
     # logging inside image_processing
-    rift_console.image_processing.automated_processing(
-        image_path=source_path
-    )
+    rift_console.image_processing.automated_processing(image_path=source_path)
     # logging inside image_processing
 
     # afterwards refresh page (which includes updating telemetry)

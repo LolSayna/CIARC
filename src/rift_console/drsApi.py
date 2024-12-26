@@ -31,7 +31,9 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
             objective_list = s.get(con.OBJECTIVE_ENDPOINT)
 
     except requests.exceptions.ConnectionError:
-        logger.error("HTTP Connection timed out, Network is unreachable.\n Is VPN activated?")
+        logger.error(
+            "HTTP Connection timed out, Network is unreachable.\n Is VPN activated?"
+        )
         exit()
 
     if r.status_code == 200 and objective_list.status_code == 200:
@@ -94,14 +96,27 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
         if type(obj["zone"]) is str:
             zone = None
         else:
-            zone = (int(obj["zone"][0]),int(obj["zone"][1]),int(obj["zone"][2]),int(obj["zone"][3]))
+            zone = (
+                int(obj["zone"][0]),
+                int(obj["zone"][1]),
+                int(obj["zone"][2]),
+                int(obj["zone"][3]),
+            )
 
-        melvin.z_obj_list.append(ZonedObjective(
-            id=obj["id"], name=obj["name"], start=datetime.datetime.fromisoformat(obj["start"]),
-            end=datetime.datetime.fromisoformat(obj["end"]), decrease_rate=obj["decrease_rate"],
-            zone=zone, 
-            optic_required=CameraAngle(obj["optic_required"]), coverage_required=obj["coverage_required"],
-            description=obj["description"], secret=obj["secret"]))
+        melvin.z_obj_list.append(
+            ZonedObjective(
+                id=obj["id"],
+                name=obj["name"],
+                start=datetime.datetime.fromisoformat(obj["start"]),
+                end=datetime.datetime.fromisoformat(obj["end"]),
+                decrease_rate=obj["decrease_rate"],
+                zone=zone,
+                optic_required=CameraAngle(obj["optic_required"]),
+                coverage_required=obj["coverage_required"],
+                description=obj["description"],
+                secret=obj["secret"],
+            )
+        )
 
     melvin.z_obj_list = sorted(melvin.z_obj_list, key=lambda event: event.start)
 
