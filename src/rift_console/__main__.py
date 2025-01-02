@@ -135,7 +135,7 @@ async def image_stitch_button() -> Response:
     source_path = con.IMAGE_PATH + str(user_input)
 
     # logging inside image_processing
-    rift_console.image_processing.automated_processing(image_path=source_path)
+    rift_console.image_processing.automated_stitching(local_path=source_path)
     # logging inside image_processing
 
     # afterwards refresh page (which includes updating telemetry)

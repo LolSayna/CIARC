@@ -2,7 +2,6 @@ import sys
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
-# from typing import Optional
 
 from loguru import logger
 from PIL import Image
@@ -17,6 +16,9 @@ import shared.constants as con
 ##### LOGGING #####
 logger.remove()
 logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
+
+# Fix issue with Image size
+Image.MAX_IMAGE_PIXELS = 500000000
 
 
 def count_matching_pixels(
@@ -52,10 +54,6 @@ def count_matching_pixels(
     return offset, matches
 
 
-TMP_OFFSET = 2000
-HALF_OFFSET = 1000
-
-
 # Takes the folder location(including logs/melvonaut/images) and a list of image names
 def stitch_images(
     image_path: str, image_name_list: list[str], panorama=None
@@ -73,8 +71,13 @@ def stitch_images(
     """
     # create new panorama if it does not exist
     if panorama is None:
+        # add 1000 pixels on each side be used by nudging
         panorama = Image.new(
-            "RGBA", (con.WORLD_X + TMP_OFFSET, con.WORLD_Y + TMP_OFFSET)
+            "RGBA",
+            (
+                con.WORLD_X + con.STITCHING_BORDER * 2,
+                con.WORLD_Y + con.STITCHING_BORDER * 2,
+            ),
         )
 
     processed_images_counter = 0
@@ -94,7 +97,8 @@ def stitch_images(
             if lens_size != 600:
                 img = img.resize((lens_size, lens_size), Image.Resampling.LANCZOS)
 
-            logger.info(f"Parsing {image_name} {img.size} {img.mode}")
+            logger.info(f"Parsing {image_name}")
+            logger.debug(f"{img.size} {img.mode}")
 
             # try position in a square arround the center
             # values 7x7 Grid: d = 3, n = 28   9x9 Grid: d = 4 n = 80   11x11 Grid, d = 5 n = 120
@@ -105,10 +109,10 @@ def stitch_images(
             max_offset = int((con.SEARCH_GRID_SIDE_LENGTH - 1) / 2)
             existing_stitch = panorama.crop(
                 (
-                    x - max_offset + HALF_OFFSET,
-                    y - max_offset + HALF_OFFSET,
-                    x + lens_size + max_offset + HALF_OFFSET,
-                    y + lens_size + max_offset + HALF_OFFSET,
+                    x - max_offset + con.STITCHING_BORDER,
+                    y - max_offset + con.STITCHING_BORDER,
+                    x + lens_size + max_offset + con.STITCHING_BORDER,
+                    y + lens_size + max_offset + con.STITCHING_BORDER,
                 )
             )
 
@@ -119,7 +123,7 @@ def stitch_images(
             )
             empty_pixel = total_pixel - set_pixel
 
-            logger.info(
+            logger.debug(
                 f"Existing stich ({existing_stitch.size[0]},{existing_stitch.size[1]}) w. {total_pixel}p "
                 + f"set: {set_pixel} {set_pixel/total_pixel}% and transparent: {empty_pixel} {empty_pixel/total_pixel}%"
             )
@@ -188,15 +192,15 @@ def stitch_images(
                 panorama.paste(
                     img,
                     (
-                        x + best_offset[0] + HALF_OFFSET,
-                        y + best_offset[1] + HALF_OFFSET,
+                        x + best_offset[0] + con.STITCHING_BORDER,
+                        y + best_offset[1] + con.STITCHING_BORDER,
                     ),
                 )
 
             processed_images_counter += 1
             if processed_images_counter % con.SAVE_PANAORMA_STEP == 0:
                 panorama.save(
-                    con.PANORAMA_PATH + str(processed_images_counter) + ".png"
+                    con.PANORAMA_PATH + "step_" + str(processed_images_counter) + ".png"
                 )
 
         # if any(pixel < 255 for pixel in alpha.getdata()):
@@ -209,8 +213,12 @@ def stitch_images(
             break
 
     logger.warning(
-        f"\n\nDone stitching of {processed_images_counter} from {len(image_name_list)} given images, nudging_failed_counter: {nudging_failed_counter} , to_few_pixel_counter: {to_few_pixel_counter}\n"
+        f"\n\nDone stitching of {processed_images_counter} from {len(image_name_list)} given images"
     )
+    if con.DO_IMAGE_NUDGING_SEARCH:
+        logger.warning(
+            f"nudging_failed_counter: {nudging_failed_counter} , to_few_pixel_counter: {to_few_pixel_counter}\n"
+        )
 
     for element, count in Counter(max_offset_database).items():
         logger.warning(f"Max_offset up to {element} occured {count} times")
@@ -218,45 +226,47 @@ def stitch_images(
     return panorama
 
 
-def cut(source: str, target: str) -> None:
+def cut(panorama_path: str, X1: int, Y1: int, X2: int, Y2: int) -> None:
     """Cut a small portion from a bigger Panorama.
 
     Args:
-        source: Filelocation of the given Panoram.
-        target: Location where to save the Cut.
+        panorama_path (str): Name of the file (should include con.PANORAMA_PATH)
+        coordinates: Section that should be cut and saved
     """
-    # Hallo element
-    #
-    image_path = con.PANORAMA_PATH + source + ".png"
-    output_path = con.PANORAMA_PATH + target + ".png"
+    coordinates = (int(X1), int(Y1), int(X2), int(Y2))
+    with Image.open(panorama_path) as panorama:
+        cut_img = panorama.crop(coordinates)
 
-    remove_offset = (1000, 1000, con.WORLD_X + 1000, con.WORLD_Y + 1000)
-    coordinates = (7914, 5304, 8514, 5904)
+    cut_img.show()
+    cut_img.save(panorama_path.replace(".png", "") + "_cut.png")
 
-    Image.MAX_IMAGE_PIXELS = 500000000
+    logger.warning("Saved cut to media/*_cut.png")
 
-    logger.warning(image_path)
-    # remove offset
-    with Image.open(image_path) as img:
-        cut_img = img.crop(remove_offset)
-        logger.warning("Removed offset")
 
-    cropped = cut_img.crop(coordinates)
-    cropped.show()
+def create_thumbnail(panorama_path: str) -> None:
+    """Creates a scaled down panorama from a given panorama and saves it to `src/rift_console/static/images/thumb.png` from where it can be used by html.
 
-    cropped.save(output_path)
+    Args:
+        panorama_path (str): Name of the file (should include con.PANORAMA_PATH)
+    """
+    with Image.open(panorama_path) as panorama:
+        thumb = panorama.resize(
+            (con.SCALED_WORLD_X, con.SCALED_WORLD_Y), Image.Resampling.LANCZOS
+        )
+        thumb.save("src/rift_console/static/images/" + "thumb.png")
+    logger.warning("Saved Thumbnal to src/rift_console/static/images/thumb.png")
 
 
 # TODO add parameter to add new stiches onto an exisiting map
-def automated_processing(image_path: str) -> None:
-    """Stitches images from the given subfolder onto one big image, which is stored under the same name
+def automated_stitching(local_path: str) -> None:
+    """Stitches images from the given path into one big image, which is stored under the same name in con.PANORAMA_PATH.
 
     Args:
-        image_path (str): folder location in con.PANORAMA_PATH and name of final panorama
+        local_path (str): Path of a folder with images that should be stitched.
     """
 
-    output_path = con.PANORAMA_PATH + image_path
-    image_path = con.IMAGE_PATH + image_path + "/"
+    image_path = local_path + "/"
+    output_path = con.PANORAMA_PATH + "stitched"
 
     image_name_list = find_image_names(image_path)
 
@@ -266,26 +276,49 @@ def automated_processing(image_path: str) -> None:
 
     panorama = stitch_images(image_path=image_path, image_name_list=image_name_list)
 
-    # preview
-    # TODO change path later
-    # preview = panorama.resize((1080, 540), Image.Resampling.LANCZOS)
-    # preview.save("src/rift_console/static/images/" + "preview.png")
-
+    remove_offset = (
+        con.STITCHING_BORDER,
+        con.STITCHING_BORDER,
+        con.WORLD_X + con.STITCHING_BORDER,
+        con.WORLD_Y + con.STITCHING_BORDER,
+    )
+    panorama = panorama.crop(remove_offset)
     panorama.save(output_path + ".png")
 
-    logger.warning(f"Saved panorama in {output_path}")
+    logger.warning(f"Saved panorama in {output_path}.png")
 
 
 # For CLI testing
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        logger.error("Usage: python3 image_processing.py IMAGE_PATH\nAbgebrochen!")
-        sys.exit(1)
-    if sys.argv[1] == "cut":
-        cut
-        if len(sys.argv) == 3:
-            cut(sys.argv[1], sys.argv[2])
-            sys.exit(0)
+        print("Usage: python3 src/rift_console/image_processing.py stitch PATH")
+        print("Usage: python3 src/rift_console/image_processing.py thumb PATH")
+        print(
+            "Usage: python3 src/rift_console/image_processing.py cut PATH X1 Y1 X2 Y2"
+        )
+        print("Exiting, wrong number of params!")
         sys.exit(1)
 
-    automated_processing(sys.argv[1])
+    # Stiching
+    if sys.argv[1] == "stitch":
+        if len(sys.argv) == 3:
+            automated_stitching(local_path=sys.argv[2])
+            sys.exit(0)
+        print("Usage: python3 src/rift_console/image_processing.py stitch PATH")
+        sys.exit(1)
+    # Create Thumbnail
+    elif sys.argv[1] == "thumb":
+        if len(sys.argv) == 3:
+            create_thumbnail(panorama_path=sys.argv[2])
+            sys.exit(0)
+        print("Usage: python3 src/rift_console/image_processing.py thumb PATH")
+        sys.exit(1)
+    # Cut
+    elif sys.argv[1] == "cut":
+        if len(sys.argv) == 7:
+            cut(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+            sys.exit(0)
+        print(
+            "Usage: python3 src/rift_console/image_processing.py cut PATH X1 Y1 X2 Y2)"
+        )
+        sys.exit(1)

@@ -33,6 +33,12 @@ STATE_TRANSITION_FROM_SAFE_TIME = 20 * 60  # Seconds for state transitions from 
 # world map
 WORLD_X = 21600
 WORLD_Y = 10800
+# Scaled down version for thumbnail
+SCALED_WORLD_X = 1080
+SCALED_WORLD_Y = 540
+
+# While in Stitching add this border in each direction
+STITCHING_BORDER = 1000
 
 ACCELERATION = 0.04
 
