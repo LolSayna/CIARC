@@ -415,7 +415,19 @@ class StatePlanner(BaseModel):
                             logger.warning("State transition was externally triggered!")
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
-                        loop.create_task(self.run_get_image())
+
+                        # TODO
+                        if (
+                            con.start_time
+                            < datetime.datetime.now(datetime.timezone.utc)
+                            < con.stop_time
+                        ):
+                            loop.create_task(self.run_get_image())
+                        else:
+                            logger.warning(
+                                f"Not in Objective timewindow, no images taken: Current Time={datetime.datetime.now(datetime.timezone.utc)}"
+                            )
+
                         await self.control_acquisition()
                     case State.Charge:
                         pass
@@ -496,8 +508,8 @@ class StatePlanner(BaseModel):
 
                         # TODO check if images are correct!
                         # TODO might also need modulo for side cases
-                        logger.error(f"T {parsed_img_timestamp} | C {tele_timestamp}")
-                        logger.error(
+                        logger.debug(f"T {parsed_img_timestamp} | C {tele_timestamp}")
+                        logger.debug(
                             f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}"
                         )
 

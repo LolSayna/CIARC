@@ -17,9 +17,6 @@ import shared.constants as con
 logger.remove()
 logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
 
-# Fix issue with Image size
-Image.MAX_IMAGE_PIXELS = 500000000
-
 
 def count_matching_pixels(
     offset: tuple[int, int], first_img: Image, second_img: Image, max_offset: int

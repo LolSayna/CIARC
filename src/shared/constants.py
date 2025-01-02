@@ -2,6 +2,8 @@
 from os import cpu_count
 from shared.models import CameraAngle
 
+import datetime
+
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 PANORAMA_PATH = "media/"
 TELEMETRY_LOCATION_JSON = "logs/melvonaut/telemetry_melvonaut.json"
@@ -77,7 +79,6 @@ TARGET_SPEED_WIDE_Y = 21.16
 
 DISTANCE_BETWEEN_IMAGES = 350  # How many pixel before taking another image
 
-TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Wide
 RIFT_LOG_LEVEL = "INFO"
 
 TRACING = False
@@ -107,3 +108,9 @@ IMAGE_NOISE_FORGIVENESS = 20
 IMAGE_ITERATION_POSITION_NOT_TIME = True
 # only stiched that many images for better testing
 STITCHING_COUNT_LIMIT = 3000
+
+## [MANUAL CONTROL]
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.narrow
+# To solve a single objective, set a time window in which melvonaut is active
+start_time = datetime.datetime(2025, 1, 2, 13, 00, tzinfo=datetime.timezone.utc)
+stop_time = datetime.datetime(2025, 1, 3, 12, 00, tzinfo=datetime.timezone.utc)

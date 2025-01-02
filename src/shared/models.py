@@ -10,6 +10,9 @@ from typing import Optional
 
 from loguru import logger
 
+# Fix issue with Image size
+Image.MAX_IMAGE_PIXELS = 500000000
+
 
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
 # mypy: ignore-errors
