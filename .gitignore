@@ -171,5 +171,4 @@ letsencrypt/
 media
 logs/melvonaut/images
 src/rift_console/static/images/preview.png
-src/rift_console/static/images/thumb.png
 *.csv

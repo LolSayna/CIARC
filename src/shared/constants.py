@@ -38,6 +38,7 @@ WORLD_Y = 10800
 # Scaled down version for thumbnail
 SCALED_WORLD_X = 1080
 SCALED_WORLD_Y = 540
+SCALING_FACTOR = 20  # CARE IF SCALED_WORLD ist changed
 
 # While in Stitching add this border in each direction
 STITCHING_BORDER = 1000

@@ -226,6 +226,7 @@ class StatePlanner(BaseModel):
                 else:
                     logger.error(f"Failed to set velocity to {new_vel_x}, {new_vel_y}")
 
+    # TODO only works at the second time
     async def trigger_camera_angle_change(self, new_angle: CameraAngle) -> None:
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot set camera angle.")

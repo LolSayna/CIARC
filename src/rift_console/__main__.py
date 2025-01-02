@@ -93,27 +93,8 @@ async def index() -> str:
         planed_transition_state=melvin.planed_transition_state,
         last_backup_time=formatted_last_backup_time,
         z_obj_list=melvin.z_obj_list,
+        drawnObjectives=melvin.drawnObjectives,
     )
-
-
-@app.route("/update")
-def update():
-    # This function will return a new random number for demonstration purposes.
-    new_number = random.randint(0, 100)
-    return jsonify({"number": new_number})
-
-
-"""
-# TODO need help, to autorefresh
-# ja das mit dem Threading ist irgendwie doch nicht so einfach :P
-def call_telemetry() -> None:
-    while True:
-        print("Updating Telemtry")
-
-        # TODO use javascript for autorefresh, add a alive light or something to show when connection failed
-        drsApi.update_telemetry(melvin)
-        time.sleep(3)
-"""
 
 
 @app.route("/media")

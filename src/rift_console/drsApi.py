@@ -120,6 +120,25 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
 
     melvin.z_obj_list = sorted(melvin.z_obj_list, key=lambda event: event.start)
 
+    melvin.drawnObjectives = []
+    for obj in melvin.z_obj_list:
+        if obj.zone is not None:
+            draw = {
+                "name": obj.name,
+                "start": obj.start.isoformat()[:-3],
+                "end": obj.end.isoformat()[:-3],
+                "zone": [
+                    int(obj.zone[0] / con.SCALING_FACTOR),
+                    int(obj.zone[1] / con.SCALING_FACTOR),
+                    int(obj.zone[2] / con.SCALING_FACTOR),
+                    int(obj.zone[3] / con.SCALING_FACTOR),
+                ],
+            }
+            melvin.drawnObjectives.append(draw)
+            if len(melvin.drawnObjectives) >= 5:
+                break
+
+    logger.error(melvin.drawnObjectives)
     return
 
 

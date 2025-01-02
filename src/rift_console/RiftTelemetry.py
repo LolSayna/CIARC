@@ -39,3 +39,6 @@ class RiftTelemetry(Telemetry):
     # nextStitch_folder_name: str = "DATE_MISSING"
 
     z_obj_list: list[ZonedObjective] = []
+
+    # draw the next 5 objectives with a know location in html
+    drawnObjectives: list[dict] = []

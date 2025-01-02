@@ -8,19 +8,6 @@
 
     <!-- Tab name-->
     <title>Rift-Console</title>
-    <script>
-      function updateNumber() {
-          fetch('/update')
-              .then(response => response.json())
-              .then(data => {
-                  document.getElementById('number').textContent = data.number;
-              })
-              .catch(error => console.error('Error fetching number:', error));
-      }
-
-      // Update number every second
-      setInterval(updateNumber, 1000);
-    </script>
 
     <!-- CSS -->
     <style>
@@ -144,6 +131,13 @@
       th {
           background-color: #f4f4f4;
       }
+
+      /* [NEW MAP]*/
+      canvas {
+        border: 1px solid black;
+        display: block;
+        margin: auto;
+      }
     </style>
   </head>
 
@@ -181,7 +175,6 @@
           <h3 class="spacer">Last Update: {{timedelta}}s ago</h3>
           <h3 class="spacer">Camera Lens: {{angle}}</h3>
           <h3 class="spacer">Current State: {{state}}</h3>
-          <h3>Javascript update demo: <span id="number">0</span></h3>
 
           <!-- expand here -->
 
@@ -214,21 +207,21 @@
 
 
           <h4>Image Manipulation</h4>
-          <form action="{{ url_for('image_pull_button') }}" method="POST">  
+          <form action="{{ url_for('image_pull_button') }}" method="POST">
               <label for="user_input">Scp all images to here</label>
               <input type="text" id="target_location" value={{new_image_folder_name}} name="target_location" required>
               <button type="submit" class="btn btn-success" name="button" value="pull">Pull</button>
           </form>
-          <form action="{{ url_for('image_stitch_button') }}" method="POST">  
+          <form action="{{ url_for('image_stitch_button') }}" method="POST">
             <label for="user_input">Stitch images from here</label>
             <input type="text" id="source_location" value={{new_image_folder_name}} name="source_location" required>
             <button type="submit" class="btn btn-success" name="button" value="stitch">Stitch</button>
         </form>
-      
+
           {% if user_input %}
               <h2>You submitted: {{ user_input }}</h2>
           {% endif %}
-         
+
           <!-- expand here -->
 
         </div>
@@ -249,7 +242,7 @@
             <div class="spacer"></div>
             <form action="{{ url_for('slider_button') }}" method="post">
               <label for="speedSlider">Speed Mult</label>
-              <input type="range" id="speedSlider" name="speed" min="1" max="20" value="20"> 
+              <input type="range" id="speedSlider" name="speed" min="1" max="20" value="20">
               <input type="checkbox" id="enableSim" name="enableSim">
               <label for="enableSim">Simulate Network?</label>
               <br>
@@ -257,7 +250,7 @@
             </form>
           </div>
 
-          
+
           <div class="spacer"></div>
           <h4>Change State</h4>
           <form action="{{ url_for('state_buttons') }}" method="post">
@@ -271,19 +264,79 @@
                   <option value="wide" {% if angle == 'wide' %}selected{% endif %}>Wide Lens</option>
               </select>
               <label for="vx">Velocity x</label>
-              <input type="range" id="vx" name="vx" min="0" max="70" value="3"> 
+              <input type="range" id="vx" name="vx" min="0" max="70" value="3">
               <label for="vy">Velocity y</label>
-              <input type="range" id="vy" name="vy" min="0" max="70" value="3"> 
+              <input type="range" id="vy" name="vy" min="0" max="70" value="3">
           </form>
 
-          
+
           <!-- expand here -->
-  
+
 
         </div>
       </div>
     </div>
-    
+
+
+    <!-- [NEW MAP] -->
+    <h1 style="text-align:center;">World Map</h1>
+    <canvas id="gameMap" width="1024" height="540"></canvas>
+        <script>
+
+        const objective_data = {{ drawnObjectives | safe }};
+
+        const canvas = document.getElementById('gameMap');
+        const ctx = canvas.getContext('2d');
+
+        // Use the thumbnail as background img
+        const backgroundImage = new Image();
+        backgroundImage.src = "{{ url_for('static', filename='images/thumb_grey.png') }}";
+        backgroundImage.onload = function() {
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+            drawObjectiveSquares();
+        };
+
+        // Function to generate a random color with 50% transparancy
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color + '80';
+        }
+        function drawSquare(x1, y1, x2, y2, label) {
+
+console.log(`Drawing square from (${x1}, ${y1}) to (${x2}, ${y2}) with label: ${label}`);
+            const width = x2 - x1;
+            const height = y2 - y1;
+
+            ctx.fillStyle = getRandomColor();
+            ctx.fillRect(x1, y1, width, height);
+
+            ctx.fillStyle = 'green'; // color of the text
+            ctx.font = '18px Arial'; // font and size of the text
+            ctx.textAlign = 'center'; // center the text horizontally
+            ctx.textBaseline = 'bottom'; // align text at the top
+            ctx.fillText(label, x1 + width / 2, y1 - 2);
+        }
+
+
+      function drawObjectiveSquares() {
+        objective_data.forEach(item => {
+          if (Array.isArray(item.zone) && item.zone.length === 4) {
+            const [x1, y1, x2, y2] = item.zone;
+            drawSquare(x1, y1, x2, y2, item.name);
+          } else {
+            console.error('Invalid zone data for item:', JSON.stringify(item));
+          }
+        });
+      }
+
+    </script>
+
+
+    <!-- [OBJECTIVES] -->
     <h1 style="text-align:center;"> Objectives </h1>
     <h2 style="text-align:center;" id="time">Loading UTC Time...</h2>
 
@@ -319,7 +372,7 @@
                   {% endfor %}
               </tbody>
           </table>
-    <!--      
+    <!--
     <img src="{{ url_for('static', filename='images/preview.png') }}" alt="Preview of last map">
     -->
 
@@ -331,7 +384,7 @@
           const now = new Date();
           // Get the current UTC time
           const isoString = now.toISOString();
-          const formattedString = isoString.slice(0, 16);
+          const formattedString = isoString.slice(0, 19);
           document.getElementById('time').textContent = `Live UTC: ${formattedString}`;
       }
 

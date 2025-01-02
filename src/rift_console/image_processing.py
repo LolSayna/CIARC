@@ -241,7 +241,7 @@ def cut(panorama_path: str, X1: int, Y1: int, X2: int, Y2: int) -> None:
 
 
 def create_thumbnail(panorama_path: str) -> None:
-    """Creates a scaled down panorama from a given panorama and saves it to `src/rift_console/static/images/thumb.png` from where it can be used by html.
+    """Creates a scaled down panorama and a greyscale one from a given panorama and saves it to `src/rift_console/static/images/thumb.png` from where it can be used by html.
 
     Args:
         panorama_path (str): Name of the file (should include con.PANORAMA_PATH)
@@ -251,7 +251,11 @@ def create_thumbnail(panorama_path: str) -> None:
             (con.SCALED_WORLD_X, con.SCALED_WORLD_Y), Image.Resampling.LANCZOS
         )
         thumb.save("src/rift_console/static/images/" + "thumb.png")
-    logger.warning("Saved Thumbnal to src/rift_console/static/images/thumb.png")
+        thumb = thumb.convert("L")
+        thumb.save("src/rift_console/static/images/" + "thumb_grey.png")
+    logger.warning(
+        "Saved Thumbnail to src/rift_console/static/images/thumb.png and thumb_grey.png"
+    )
 
 
 # TODO add parameter to add new stiches onto an exisiting map
