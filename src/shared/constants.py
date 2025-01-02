@@ -110,7 +110,7 @@ IMAGE_ITERATION_POSITION_NOT_TIME = True
 STITCHING_COUNT_LIMIT = 3000
 
 ## [MANUAL CONTROL]
-TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.narrow
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
 # To solve a single objective, set a time window in which melvonaut is active
 start_time = datetime.datetime(2025, 1, 2, 13, 00, tzinfo=datetime.timezone.utc)
 stop_time = datetime.datetime(2025, 1, 3, 12, 00, tzinfo=datetime.timezone.utc)
