@@ -42,3 +42,4 @@ class RiftTelemetry(Telemetry):
 
     # draw the next 5 objectives with a know location in html
     drawnObjectives: list[dict] = []
+    predTraj: list[tuple[int, int]] = []

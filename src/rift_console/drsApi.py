@@ -12,6 +12,29 @@ from shared.models import State, CameraAngle, ZonedObjective
 # TODO file aufteilung von Riftconsole???
 
 
+def fixOverflow(x: int, y: int) -> tuple[int, int]:
+    if x > con.WORLD_X:
+        x = 0
+    elif x < 0:
+        x = con.WORLD_X
+
+    if y > con.WORLD_Y:
+        y = 0
+    elif y < 0:
+        y = con.WORLD_Y
+    return (x, y)
+
+
+def predictTrajektorie(x, y, vx, vy) -> list[tuple[int, int]]:
+    traj = []
+
+    for _ in range(1000):
+        (x, y) = fixOverflow(x + vx * 5, y + vy * 5)
+        traj.append((x, y))
+
+    return traj
+
+
 def reset(melvin: RiftTelemetry) -> None:
     with requests.Session() as s:
         r = s.get(con.RESET_ENDPOINT)
@@ -138,7 +161,9 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
             if len(melvin.drawnObjectives) >= 5:
                 break
 
-    logger.error(melvin.drawnObjectives)
+    melvin.predTraj = predictTrajektorie(
+        melvin.width_x, melvin.height_y, melvin.vx, melvin.vy
+    )
     return
 
 

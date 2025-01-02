@@ -65,6 +65,15 @@ async def index() -> str:
         formatted_timedelta = "No timestamp available"
         formatted_last_backup_time = "Unkown"
 
+    match melvin.angle:
+        case CameraAngle.Narrow:
+            lens_size = 600
+        case CameraAngle.Normal:
+            lens_size = 800
+        case CameraAngle.Wide:
+            lens_size = 1000
+
+    logger.error([(int(x / 20), int(y / 20)) for x, y in melvin.predTraj])
     return await render_template(
         "console.html",
         width_x=melvin.width_x,
@@ -94,6 +103,10 @@ async def index() -> str:
         last_backup_time=formatted_last_backup_time,
         z_obj_list=melvin.z_obj_list,
         drawnObjectives=melvin.drawnObjectives,
+        scaledX=melvin.width_x / 20,
+        scaledY=melvin.height_y / 20,
+        scaledCameraZone=lens_size / 20,
+        predTraj=[(int(x / 20), int(y / 20)) for x, y in melvin.predTraj],
     )
 
 

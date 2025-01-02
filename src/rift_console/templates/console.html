@@ -281,57 +281,94 @@
     <!-- [NEW MAP] -->
     <h1 style="text-align:center;">World Map</h1>
     <canvas id="gameMap" width="1024" height="540"></canvas>
-        <script>
-
-        const objective_data = {{ drawnObjectives | safe }};
-
+      <script>
+        // Create a canvas object to draw on
         const canvas = document.getElementById('gameMap');
         const ctx = canvas.getContext('2d');
 
-        // Use the thumbnail as background img
+        // Pull the data from melvin
+        const objective_data = {{ drawnObjectives | safe }};
+        const traj = {{ predTraj| tojson }};
+
+        // Background image from src/rift_console/static/images
         const backgroundImage = new Image();
         backgroundImage.src = "{{ url_for('static', filename='images/thumb_grey.png') }}";
+
+        // my main work loop, first background then squares
         backgroundImage.onload = function() {
             ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
             drawObjectiveSquares();
+            drawCirclesOnCanvas();
+            drawSatellite();
+
         };
 
-        // Function to generate a random color with 50% transparancy
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color + '80';
+        function drawCirclesOnCanvas() {
+          ctx.fillStyle = 'yellow';
+
+          traj.forEach(coord => {
+              const [x, y] = coord;
+            console.log(`Drawing circle at x: ${x}, y: ${y}`);
+              ctx.beginPath();
+              ctx.arc(x, y, 5, 0, Math.PI * 2, true); // 10 is the radius of the circle
+              ctx.fill();
+          });
         }
+        function drawSatellite() {
+
+          ctx.strokeStyle = 'green';
+          ctx.lineWidth = 4;
+          ctx.strokeRect({{scaledX}} - {{scaledCameraZone}}/2, {{scaledY}} - {{scaledCameraZone}} / 2, {{scaledCameraZone}}, {{scaledCameraZone}});
+
+          const satelliteEmoji = '🛰️';
+          ctx.font = '32px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(satelliteEmoji, {{scaledX}}, {{scaledY}});
+        }
+
+        // Helper function to generate a random color
+        function getRandomColor() {
+          const letters = '0123456789ABCDEF';
+          let color = '#';
+          for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+          }
+          return color;
+        }
+
+        // Draws a square / one objective region
         function drawSquare(x1, y1, x2, y2, label) {
 
-console.log(`Drawing square from (${x1}, ${y1}) to (${x2}, ${y2}) with label: ${label}`);
-            const width = x2 - x1;
-            const height = y2 - y1;
+          console.log(`Drawing square from (${x1}, ${y1}) to (${x2}, ${y2}) with label: ${label}`);
 
-            ctx.fillStyle = getRandomColor();
-            ctx.fillRect(x1, y1, width, height);
+          const width = x2 - x1;
+          const height = y2 - y1;
+          ctx.fillStyle = getRandomColor();
 
-            ctx.fillStyle = 'green'; // color of the text
-            ctx.font = '18px Arial'; // font and size of the text
-            ctx.textAlign = 'center'; // center the text horizontally
-            ctx.textBaseline = 'bottom'; // align text at the top
-            ctx.fillText(label, x1 + width / 2, y1 - 2);
+          // Rectangle
+          ctx.fillRect(x1, y1, width, height);
+
+          // Text
+          ctx.fillStyle = 'black';
+          ctx.font = '18px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(label, x1 + width / 2, y1 + 20);
+
         }
 
-
-      function drawObjectiveSquares() {
-        objective_data.forEach(item => {
-          if (Array.isArray(item.zone) && item.zone.length === 4) {
-            const [x1, y1, x2, y2] = item.zone;
-            drawSquare(x1, y1, x2, y2, item.name);
-          } else {
-            console.error('Invalid zone data for item:', JSON.stringify(item));
-          }
-        });
-      }
+        // Calls drawSquare for each objective
+        function drawObjectiveSquares() {
+          objective_data.forEach(item => {
+            if (Array.isArray(item.zone) && item.zone.length === 4) {
+              const [x1, y1, x2, y2] = item.zone;
+              drawSquare(x1, y1, x2, y2, item.name, item.start);
+            } else {
+              console.error('Invalid zone data for item:', JSON.stringify(item));
+            }
+          });
+        }
 
     </script>
 
