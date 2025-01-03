@@ -73,7 +73,6 @@ async def index() -> str:
         case CameraAngle.Wide:
             lens_size = 1000
 
-    logger.error([(int(x / 20), int(y / 20)) for x, y in melvin.predTraj])
     return await render_template(
         "console.html",
         width_x=melvin.width_x,
@@ -91,22 +90,23 @@ async def index() -> str:
         timestamp=formatted_timestamp,
         timedelta=formatted_timedelta,
         new_image_folder_name=melvin.new_image_folder_name,
-        old_x=melvin.old_pos[0],
-        old_y=melvin.old_pos[1],
-        older_x=melvin.older_pos[0],
-        older_y=melvin.older_pos[1],
-        oldest_x=melvin.oldest_pos[0],
-        oldest_y=melvin.oldest_pos[1],
         state=melvin.state,
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
         last_backup_time=formatted_last_backup_time,
         z_obj_list=melvin.z_obj_list,
         drawnObjectives=melvin.drawnObjectives,
-        scaledX=melvin.width_x / 20,
-        scaledY=melvin.height_y / 20,
-        scaledCameraZone=lens_size / 20,
-        predTraj=[(int(x / 20), int(y / 20)) for x, y in melvin.predTraj],
+        scaledX=melvin.width_x / con.SCALING_FACTOR,
+        scaledY=melvin.height_y / con.SCALING_FACTOR,
+        scaledCameraZone=lens_size / con.SCALING_FACTOR,
+        predTraj=[
+            (int(x / con.SCALING_FACTOR), int(y / con.SCALING_FACTOR))
+            for x, y in melvin.predTraj
+        ],
+        pastTraj=[
+            (int(x / con.SCALING_FACTOR), int(y / con.SCALING_FACTOR))
+            for x, y in melvin.pastTraj
+        ],
     )
 
 

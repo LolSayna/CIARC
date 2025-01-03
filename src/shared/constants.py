@@ -84,6 +84,9 @@ RIFT_LOG_LEVEL = "INFO"
 
 TRACING = False
 
+# [TRAJEKTORIE]
+# Number of seconds to calculate the path
+TRAJ_TIME = 3600
 
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2  # use 1 for single core

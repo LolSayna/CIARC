@@ -14,22 +14,40 @@ from shared.models import State, CameraAngle, ZonedObjective
 
 def fixOverflow(x: int, y: int) -> tuple[int, int]:
     if x > con.WORLD_X:
-        x = 0
+        x = x % con.WORLD_X
     elif x < 0:
-        x = con.WORLD_X
+        x += con.WORLD_X
 
     if y > con.WORLD_Y:
-        y = 0
+        y = y % con.WORLD_Y
     elif y < 0:
-        y = con.WORLD_Y
+        y += con.WORLD_Y
     return (x, y)
 
 
-def predictTrajektorie(x, y, vx, vy) -> list[tuple[int, int]]:
+count = 3600
+step = 1 / 10
+
+
+def predictTrajektorie(
+    x: int, y: int, vx: float, vy: float, simulation_speed: int, reverse: bool = False
+) -> list[tuple[int, int]]:
+    """Calculate the points that melvin goes through next"""
     traj = []
 
-    for _ in range(1000):
-        (x, y) = fixOverflow(x + vx * 5, y + vy * 5)
+    if reverse:
+        vx = -vx
+        vy = -vy
+
+    # Subpoints, to get more smooth points make it higher
+    step_multiplicator = 10
+    # TODO
+
+    for _ in range(int(step_multiplicator * con.TRAJ_TIME / simulation_speed)):
+        (x, y) = fixOverflow(
+            x + vx * simulation_speed * step_multiplicator,
+            y + vy * simulation_speed * step_multiplicator,
+        )
         traj.append((x, y))
 
     return traj
@@ -89,13 +107,6 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
         melvin.target_vx = melvin.vx
         melvin.target_vy = melvin.vy
 
-    # if the last timestamp is longer then 10s ago shift around
-    if (melvin.timestamp - melvin.last_timestamp).total_seconds() > 10:
-        melvin.last_timestamp = melvin.timestamp
-        melvin.oldest_pos = melvin.older_pos
-        melvin.older_pos = melvin.old_pos
-        melvin.old_pos = (melvin.width_x, melvin.height_y)
-
     # TODO fix bug with error state
     # if next state is safe mode, store last valid state
     # if melvin.state == State.Transition and melvin.state != State.Safe and data['state'] == State.Safe:
@@ -106,13 +117,6 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
     if melvin.state != State.Transition:
         melvin.planed_transition_state = State.Unknown
 
-    """
-    print(melvin.timestamp)
-    print(melvin.last_timestamp)
-    print(melvin.old_pos)
-    print(melvin.older_pos)
-    print(melvin.oldest_pos)
-    """
     melvin.z_obj_list = []
     # parse objective list
     for obj in objective_list.json()["zoned_objectives"]:
@@ -162,7 +166,15 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
                 break
 
     melvin.predTraj = predictTrajektorie(
-        melvin.width_x, melvin.height_y, melvin.vx, melvin.vy
+        melvin.width_x, melvin.height_y, melvin.vx, melvin.vy, melvin.simulation_speed
+    )
+    melvin.pastTraj = predictTrajektorie(
+        melvin.width_x,
+        melvin.height_y,
+        melvin.vx,
+        melvin.vy,
+        melvin.simulation_speed,
+        reverse=True,
     )
     return
 

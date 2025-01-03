@@ -171,9 +171,6 @@ class BaseTelemetry(BaseModel):
 # more Telemetry, used in Riftconsole to display map
 # TODO only temporary so far
 class Telemetry(BaseTelemetry):
-    old_pos: tuple[int, int]
-    older_pos: tuple[int, int]
-    oldest_pos: tuple[int, int]
     last_timestamp: datetime.datetime
 
     pre_transition_state: State

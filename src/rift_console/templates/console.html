@@ -36,64 +36,6 @@
           width: 100px;
       }
 
-      /* Container for a world map */
-      /* TODO - warum klebt der manchmal an der rechten Kante
-        und ist nicht zentriert?*/
-      #map-container {
-          position: relative;
-          width: 216px;
-          height: 108px;
-          border: 2px solid #000;
-          background-color: #f0f0f0;
-          margin-left: auto;
-          margin-right: auto;
-      }
-
-      .line {
-          position: absolute;
-          background-color: red;
-      }
-
-      .horizontal {
-          width: 12px;
-          height: 2px;
-          top: {{height_y / 100}}px;
-          left: {{(width_x / 100) - 5}}px;
-      }
-
-      .vertical {
-          height: 12px;
-          width: 2px;
-          top: {{(height_y / 100) - 5}}px;
-          left: {{width_x / 100}}px;
-      }
-
-      /* To display past and future pos on map */
-      .point {
-        position: absolute;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-      }
-
-      .point_past {
-        background-color: rgb(255, 0, 212);
-        top: {{(old_y / 100) - 3}}px;
-        left: {{(old_x / 100) - 3}}px;
-      }
-
-      .point_paster {
-        background-color: rgb(132, 0, 255);
-        top: {{(older_y / 100) - 3}}px;
-        left: {{(older_x / 100) - 3}}px;
-      }
-
-      .point_pastest {
-        background-color: blue;
-        top: {{(oldest_y / 100) - 3}}px;
-        left: {{(oldest_x / 100) - 3}}px;
-      }
-
       .button-container {
         display: flex;
         align-items: center;
@@ -195,17 +137,6 @@
           </div>
           <div class="spacer"></div>
 
-          <div id="map-container">
-            <div class="line horizontal"></div>
-            <div class="line vertical"></div>
-
-
-            <div class="point point_past"></div>
-            <div class="point point_paster"></div>
-            <div class="point point_pastest"></div>
-          </div>
-
-
           <h4>Image Manipulation</h4>
           <form action="{{ url_for('image_pull_button') }}" method="POST">
               <label for="user_input">Scp all images to here</label>
@@ -280,7 +211,7 @@
 
     <!-- [NEW MAP] -->
     <h1 style="text-align:center;">World Map</h1>
-    <canvas id="gameMap" width="1024" height="540"></canvas>
+    <canvas id="gameMap" width="1080" height="540"></canvas>
       <script>
         // Create a canvas object to draw on
         const canvas = document.getElementById('gameMap');
@@ -288,7 +219,8 @@
 
         // Pull the data from melvin
         const objective_data = {{ drawnObjectives | safe }};
-        const traj = {{ predTraj| tojson }};
+        const predTraj = {{ predTraj| tojson }};
+        const pastTraj = {{ pastTraj| tojson }};
 
         // Background image from src/rift_console/static/images
         const backgroundImage = new Image();
@@ -298,24 +230,29 @@
         backgroundImage.onload = function() {
             ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
             drawObjectiveSquares();
-            drawCirclesOnCanvas();
+            drawTraj();
             drawSatellite();
-
         };
 
-        function drawCirclesOnCanvas() {
+        function drawTraj() {
           ctx.fillStyle = 'yellow';
-
-          traj.forEach(coord => {
+          predTraj.forEach(coord => {
               const [x, y] = coord;
-            console.log(`Drawing circle at x: ${x}, y: ${y}`);
               ctx.beginPath();
-              ctx.arc(x, y, 5, 0, Math.PI * 2, true); // 10 is the radius of the circle
+              ctx.arc(x, y, 5, 0, Math.PI * 2, true);
+              ctx.fill();
+          });
+
+          ctx.fillStyle = 'brown';
+          pastTraj.forEach(coord => {
+              const [x, y] = coord;
+              ctx.beginPath();
+              ctx.arc(x, y, 5, 0, Math.PI * 2, true);
               ctx.fill();
           });
         }
-        function drawSatellite() {
 
+        function drawSatellite() {
           ctx.strokeStyle = 'green';
           ctx.lineWidth = 4;
           ctx.strokeRect({{scaledX}} - {{scaledCameraZone}}/2, {{scaledY}} - {{scaledCameraZone}} / 2, {{scaledCameraZone}}, {{scaledCameraZone}});
@@ -371,7 +308,8 @@
         }
 
     </script>
-
+    <h3 class="spacer">Grenn Box: Camera View; Yellow Line: Trajectory for 1h/SimulationSpeed</h3>
+    <h3 class="spacer">Debug Info: x={{width_x}} y={{height_y}} vx={{vx}} vy={{vy}}; Scaled: x={{scaledX}} y={{scaledY}}</h3>
 
     <!-- [OBJECTIVES] -->
     <h1 style="text-align:center;"> Objectives </h1>

@@ -23,9 +23,6 @@ class RiftTelemetry(Telemetry):
     simulation_speed: int = 1
     max_battery: float = 100
 
-    old_pos: tuple[int, int] = (-1, -1)
-    older_pos: tuple[int, int] = (-1, -1)
-    oldest_pos: tuple[int, int] = (-1, -1)
     last_timestamp: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
     pre_transition_state: State = State.Unknown
     planed_transition_state: State = State.Unknown
@@ -43,3 +40,4 @@ class RiftTelemetry(Telemetry):
     # draw the next 5 objectives with a know location in html
     drawnObjectives: list[dict] = []
     predTraj: list[tuple[int, int]] = []
+    pastTraj: list[tuple[int, int]] = []
