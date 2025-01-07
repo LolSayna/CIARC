@@ -81,7 +81,7 @@ dist: clean ## builds source and wheel package
 	poetry build
 
 install: clean ## Install CIARC
-	poetry install
+	poetry install --with dev --with melvonaut
 
 run: ## Run CIARC
 	PYTHONPATH=$(shell pwd) rift-console run-server
