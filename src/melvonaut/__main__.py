@@ -617,6 +617,8 @@ async def get_observations() -> None:
             logger.warning("Observations endpoint timeouted.")
         except asyncio.TimeoutError:
             logger.warning("ASyncio TimeoutError occured.")
+        except aiohttp.client_exceptions.ClienOSError:
+            logger.warning("Client_exceptions.ClienOSError occured.")
 
 
 async def run_get_observations() -> None:
