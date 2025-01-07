@@ -1,5 +1,8 @@
 # Folder structure
+from os import cpu_count
 from shared.models import CameraAngle
+
+import datetime
 
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 PANORAMA_PATH = "media/"
@@ -32,6 +35,13 @@ STATE_TRANSITION_FROM_SAFE_TIME = 20 * 60  # Seconds for state transitions from 
 # world map
 WORLD_X = 21600
 WORLD_Y = 10800
+# Scaled down version for thumbnail
+SCALED_WORLD_X = 1080
+SCALED_WORLD_Y = 540
+SCALING_FACTOR = 20  # CARE IF SCALED_WORLD ist changed
+
+# While in Stitching add this border in each direction
+STITCHING_BORDER = 1000
 
 ACCELERATION = 0.04
 
@@ -68,9 +78,43 @@ TARGET_SPEED_NARROW_Y = 2.95
 TARGET_SPEED_WIDE_X = 49.84
 TARGET_SPEED_WIDE_Y = 21.16
 
-DISTANCE_BETWEEN_IMAGES = 250  # How many pixel before taking another image
+DISTANCE_BETWEEN_IMAGES = 350  # How many pixel before taking another image
 
-TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Wide
 RIFT_LOG_LEVEL = "INFO"
 
 TRACING = False
+
+# [TRAJEKTORIE]
+# Number of seconds to calculate the path
+TRAJ_TIME = 3600
+
+## For image processing
+NUMBER_OF_WORKER_THREADS = cpu_count() - 2  # use 1 for single core
+DO_IMAGE_NUDGING_SEARCH = False  # if False ignore SEARCH_GRID_SIDE_LENGTH
+SEARCH_GRID_SIDE_LENGTH = 15  # should be uneven
+
+# should be false, the naming convenction for images changed, for all new images this should be false
+USE_LEGACY_IMAGE_NAMES = False
+# should be 8, only for old datasets can be 9
+IMAGE_NAME_UNDERSCORE_COUNT = 8
+# should be 2, only for old datasets can be 3, since files were named differently back then
+IMAGE_ANGLE_POSITION = 2
+
+# save the curent panaoma each X images
+SAVE_PANAORMA_STEP = 1000
+
+# see image_processing:count_matching_pixels. Images are (0-255,0-255,0-255), summed up over RGB how
+# difference two pixels are allowed to be to still count as matching
+IMAGE_NOISE_FORGIVENESS = 20
+
+# WIP
+# first version sorted images by time, this flag instead sorts by position, starting in the top-right corner
+IMAGE_ITERATION_POSITION_NOT_TIME = True
+# only stiched that many images for better testing
+STITCHING_COUNT_LIMIT = 3000
+
+## [MANUAL CONTROL]
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
+# To solve a single objective, set a time window in which melvonaut is active
+start_time = datetime.datetime(2025, 1, 2, 13, 00, tzinfo=datetime.timezone.utc)
+stop_time = datetime.datetime(2025, 1, 3, 12, 00, tzinfo=datetime.timezone.utc)

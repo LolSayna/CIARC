@@ -4,11 +4,12 @@ import sys
 import datetime
 import subprocess
 import os
+import random
 
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, url_for, request
+from quart import Quart, render_template, redirect, url_for, request, jsonify
 from werkzeug.wrappers.response import Response
 
 # shared imports
@@ -64,6 +65,14 @@ async def index() -> str:
         formatted_timedelta = "No timestamp available"
         formatted_last_backup_time = "Unkown"
 
+    match melvin.angle:
+        case CameraAngle.Narrow:
+            lens_size = 600
+        case CameraAngle.Normal:
+            lens_size = 800
+        case CameraAngle.Wide:
+            lens_size = 1000
+
     return await render_template(
         "console.html",
         width_x=melvin.width_x,
@@ -81,30 +90,34 @@ async def index() -> str:
         timestamp=formatted_timestamp,
         timedelta=formatted_timedelta,
         new_image_folder_name=melvin.new_image_folder_name,
-        old_x=melvin.old_pos[0],
-        old_y=melvin.old_pos[1],
-        older_x=melvin.older_pos[0],
-        older_y=melvin.older_pos[1],
-        oldest_x=melvin.oldest_pos[0],
-        oldest_y=melvin.oldest_pos[1],
         state=melvin.state,
         pre_transition_state=melvin.pre_transition_state,
         planed_transition_state=melvin.planed_transition_state,
         last_backup_time=formatted_last_backup_time,
+        z_obj_list=melvin.z_obj_list,
+        drawnObjectives=melvin.drawnObjectives,
+        scaledX=melvin.width_x / con.SCALING_FACTOR,
+        scaledY=melvin.height_y / con.SCALING_FACTOR,
+        scaledCameraZone=lens_size / con.SCALING_FACTOR,
+        predTraj=[
+            (int(x / con.SCALING_FACTOR), int(y / con.SCALING_FACTOR))
+            for x, y in melvin.predTraj
+        ],
+        pastTraj=[
+            (int(x / con.SCALING_FACTOR), int(y / con.SCALING_FACTOR))
+            for x, y in melvin.pastTraj
+        ],
     )
 
 
-"""
-# TODO need help, to autorefresh
-# ja das mit dem Threading ist irgendwie doch nicht so einfach :P
-def call_telemetry() -> None:
-    while True:
-        print("Updating Telemtry")
+@app.route("/media")
+async def media():
+    # List of image filenames you want to display
+    images = ["media/phase1.png", "media/phase2_part.png", "media/phase2_done_v1.png"]
+    return await render_template("media.html", images=images)
 
-        # TODO use javascript for autorefresh, add a alive light or something to show when connection failed
-        drsApi.update_telemetry(melvin)
-        time.sleep(3)
-"""
+
+# TODO add better file handling structures, auto enter last copyed file name into stitching
 
 
 # Wrapper for all Image Stichting and Copying
@@ -113,13 +126,10 @@ async def image_stitch_button() -> Response:
     # USES LOKAL PATHS
     form = await request.form
     user_input = form.get("source_location")
-    source_path = con.IMAGE_PATH + str(user_input) + "/"
-    result_path = con.PANORAMA_PATH + str(user_input)
+    source_path = con.IMAGE_PATH + str(user_input)
 
     # logging inside image_processing
-    rift_console.image_processing.automated_processing(
-        image_path=source_path, output_path=result_path
-    )
+    rift_console.image_processing.automated_stitching(local_path=source_path)
     # logging inside image_processing
 
     # afterwards refresh page (which includes updating telemetry)

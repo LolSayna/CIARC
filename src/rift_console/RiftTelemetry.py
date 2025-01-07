@@ -1,5 +1,5 @@
 # shared imports
-from shared.models import State, Telemetry, CameraAngle
+from shared.models import State, Telemetry, CameraAngle, ZonedObjective
 from typing import Optional
 
 import datetime
@@ -23,9 +23,6 @@ class RiftTelemetry(Telemetry):
     simulation_speed: int = 1
     max_battery: float = 100
 
-    old_pos: tuple[int, int] = (-1, -1)
-    older_pos: tuple[int, int] = (-1, -1)
-    oldest_pos: tuple[int, int] = (-1, -1)
     last_timestamp: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
     pre_transition_state: State = State.Unknown
     planed_transition_state: State = State.Unknown
@@ -37,3 +34,10 @@ class RiftTelemetry(Telemetry):
     # default value for creating a new folder to store images
     new_image_folder_name: str = "MISSING"
     # nextStitch_folder_name: str = "DATE_MISSING"
+
+    z_obj_list: list[ZonedObjective] = []
+
+    # draw the next 5 objectives with a know location in html
+    drawnObjectives: list[dict] = []
+    predTraj: list[tuple[int, int]] = []
+    pastTraj: list[tuple[int, int]] = []

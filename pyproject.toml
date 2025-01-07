@@ -33,12 +33,19 @@ pydantic = "^2.9.2"
 
 [tool.poetry.group.melvonaut]
 optional = true
+pydantic = "^2.9.2"
+
+[tool.poetry.group.melvonaut]
+optional = true
 
 [tool.poetry.group.melvonaut.dependencies]
 uvloop = "^0.21.0"
 aiohttp = "^3.11.2"
 aiofile = "^3.9.0"
 pillow = "^11.0.0"
+
+[tool.poetry.group.rift_console]
+optional = true
 
 [tool.poetry.group.rift_console]
 optional = true

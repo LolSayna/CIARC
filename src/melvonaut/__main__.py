@@ -147,7 +147,7 @@ class StatePlanner(BaseModel):
 
     _accelerating: bool = False
 
-    _run_get_image_task: Optional[asyncio.Task[None]] = None
+    _run_get_image_task: Optional[asyncio.Task[None][None]] = None
 
     _aiohttp_session: Optional[aiohttp.ClientSession] = None
 
@@ -226,6 +226,7 @@ class StatePlanner(BaseModel):
                 else:
                     logger.error(f"Failed to set velocity to {new_vel_x}, {new_vel_y}")
 
+    # TODO only works at the second time
     async def trigger_camera_angle_change(self, new_angle: CameraAngle) -> None:
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot set camera angle.")
@@ -415,7 +416,19 @@ class StatePlanner(BaseModel):
                             logger.warning("State transition was externally triggered!")
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
-                        loop.create_task(self.run_get_image())
+
+                        # TODO
+                        if (
+                            con.start_time
+                            < datetime.datetime.now(datetime.timezone.utc)
+                            < con.stop_time
+                        ):
+                            loop.create_task(self.run_get_image())
+                        else:
+                            logger.warning(
+                                f"Not in Objective timewindow, no images taken: Current Time={datetime.datetime.now(datetime.timezone.utc)}"
+                            )
+
                         await self.control_acquisition()
                     case State.Charge:
                         pass
@@ -468,60 +481,67 @@ class StatePlanner(BaseModel):
 
         async with aiohttp.ClientSession() as session:
             try:
+                try:
                 async with session.get(con.IMAGE_ENDPOINT) as response:
-                    if response.status == 200:
-                        # Extract exact image timestamp
-                        img_timestamp = response.headers.get("image-timestamp")
-                        if img_timestamp is None:
-                            logger.error(
-                                "Image timestamp not found in headers, substituting with current time"
-                            )
-                            parsed_img_timestamp = datetime.datetime.now()
-                        else:
-                            parsed_img_timestamp = datetime.datetime.fromisoformat(
-                                img_timestamp
-                            )
+                        if response.status == 200:
+                            # Extract exact image timestamp
+                            img_timestamp = response.headers.get("image-timestamp")
+                            if img_timestamp is None:
+                                logger.error(
+                                    "Image timestamp not found in headers, substituting with current time"
+                                )
+                                parsed_img_timestamp = datetime.datetime.now()
+                            else:
+                                parsed_img_timestamp = datetime.datetime.fromisoformat(
+                                    img_timestamp
+                                )
 
-                        # Calculate the difference between the img and the last telemetry
-                        difference_in_seconds = (
-                            parsed_img_timestamp - tele_timestamp
-                        ).total_seconds()
+                            # Calculate the difference between the img and the last telemetry
+                            difference_in_seconds = (
+                                parsed_img_timestamp - tele_timestamp
+                            ).total_seconds()
 
-                        adj_x = round(
-                            tele_x + (difference_in_seconds * tele_vx * tele_simSpeed)
-                        ) - (LENS_SIZE / 2)
-                        adj_y = round(
-                            tele_y + (difference_in_seconds * tele_vy * tele_simSpeed)
-                        ) - (LENS_SIZE / 2)
+                            adj_x = round(
+                                tele_x + (difference_in_seconds * tele_vx * tele_simSpeed)
+                            ) - (LENS_SIZE / 2)
+                            adj_y = round(
+                                tele_y + (difference_in_seconds * tele_vy * tele_simSpeed)
+                            ) - (LENS_SIZE / 2)
 
-                        # TODO check if images are correct!
-                        # TODO might also need modulo for side cases
-                        logger.error(f"T {parsed_img_timestamp} | C {tele_timestamp}")
-                        logger.error(
+                            # TODO check if images are correct!
+                            # TODO might also need modulo for side cases
+                            logger.debug(f"T {parsed_img_timestamp} | C {tele_timestamp}")
+                            logger.debug(
+                            
                             f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}"
+                        
                         )
 
-                        image_path = con.IMAGE_LOCATION.format(
-                            melv_id=melv_id,
-                            angle=tele_angle,
-                            time=parsed_img_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f"),
-                            cor_x=int(adj_x),
-                            cor_y=int(adj_y),
-                        )
+                            image_path = con.IMAGE_LOCATION.format(
+                                melv_id=melv_id,
+                                angle=tele_angle,
+                                time=parsed_img_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+                                cor_x=int(adj_x),
+                                cor_y=int(adj_y),
+                            )
 
-                        logger.info(
-                            f"Received image at {adj_x}x {adj_y}y with {self.current_telemetry.angle} angle"
-                        )
+                            logger.info(
+                                f"Received image at {adj_x}x {adj_y}y with {self.current_telemetry.angle} angle"
+                            )
 
-                        async with async_open(image_path, "wb") as afp:
-                            while True:
-                                cnt = await response.content.readany()
-                                if not cnt:
-                                    break
-                                await afp.write(cnt)
-                    else:
-                        logger.warning(f"Failed to get image: {response.status}")
-                        logger.warning(f"Response body: {await response.text()}")
+                            async with async_open(image_path, "wb") as afp:
+                                while True:
+                                    cnt = await response.content.readany()
+                                    if not cnt:
+                                        break
+                                    await afp.write(cnt)
+                        else:
+                            logger.warning(f"Failed to get image: {response.status}")
+                            logger.warning(f"Response body: {await response.text()}")
+            except aiohttp.client_exceptions.ConnectionTimeoutError:
+                logger.warning("Observations endpoint timeouted.")
+            except asyncio.exceptions.CancelledError:
+                logger.warning("Get image task was cancelled.")
             except aiohttp.client_exceptions.ConnectionTimeoutError:
                 logger.warning("Observations endpoint timeouted.")
             except asyncio.exceptions.CancelledError:
@@ -600,8 +620,12 @@ async def get_observations() -> None:
                     await state_planner.update_telemetry(MelTelemetry(**json_response))
                 else:
                     logger.warning(f"Failed to get observations: {response.status}")
-        except aiohttp.client_exceptions.ConnectionTimeoutError:
+        except aiohttp.client_exceptions.ConnectionionTimeoutError:
             logger.warning("Observations endpoint timeouted.")
+        except asyncio.TimeoutError:
+            logger.warning("ASyncio TimeoutError occured.")
+        except aiohttp.client_exceptions.ClienOSError:
+            logger.warning("Client_exceptions.ClienOSError occured.")
 
 
 async def run_get_observations() -> None:

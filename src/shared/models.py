@@ -10,6 +10,9 @@ from typing import Optional
 
 from loguru import logger
 
+# Fix issue with Image size
+Image.MAX_IMAGE_PIXELS = 500000000
+
 
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
 # mypy: ignore-errors
@@ -86,12 +89,40 @@ class State(StrEnum):
     Unknown = "none"
 
 
+# ISO 8601 format
+# Melin returns like this: 2024-12-24T13:10:13.660337Z
+#   or                     2024-12-26T13:00:00Z
+
+# convert with datetime.datetime.fromisoformat(X)
+#   2024-12-24 13:09:12.786576+00:00
+#   2024-12-30 13:00:00+00:00
+
+
+# NOT USED only for referenze
+class MelvinTime(datetime.datetime):
+    time: datetime.datetime
+
+
 # From User Manual
 class CameraAngle(StrEnum):
     Wide = "wide"
     Narrow = "narrow"
     Normal = "normal"
     Unknown = "unknown"
+
+
+class ZonedObjective(BaseModel):
+    id: int  # could be null acording to Dto
+    name: str
+    start: datetime.datetime
+    end: datetime.datetime
+    decrease_rate: float
+    zone: Optional[tuple[int, int, int, int]]  # could be a str acording to dto
+    optic_required: CameraAngle  # cast from str
+    coverage_required: int
+    description: str  # cast from str
+    secret: bool
+    # sprite is ignored as said in email
 
 
 class MelvinImage(BaseModel):
@@ -140,9 +171,6 @@ class BaseTelemetry(BaseModel):
 # more Telemetry, used in Riftconsole to display map
 # TODO only temporary so far
 class Telemetry(BaseTelemetry):
-    old_pos: tuple[int, int]
-    older_pos: tuple[int, int]
-    oldest_pos: tuple[int, int]
     last_timestamp: datetime.datetime
 
     pre_transition_state: State
