@@ -147,7 +147,7 @@ class StatePlanner(BaseModel):
 
     _accelerating: bool = False
 
-    _run_get_image_task: Optional[asyncio.Task[None][None]] = None
+    _run_get_image_task: Optional[asyncio.Task[None]] = None
 
     _aiohttp_session: Optional[aiohttp.ClientSession] = None
 
@@ -481,7 +481,6 @@ class StatePlanner(BaseModel):
 
         async with aiohttp.ClientSession() as session:
             try:
-                try:
                 async with session.get(con.IMAGE_ENDPOINT) as response:
                         if response.status == 200:
                             # Extract exact image timestamp
@@ -538,10 +537,6 @@ class StatePlanner(BaseModel):
                         else:
                             logger.warning(f"Failed to get image: {response.status}")
                             logger.warning(f"Response body: {await response.text()}")
-            except aiohttp.client_exceptions.ConnectionTimeoutError:
-                logger.warning("Observations endpoint timeouted.")
-            except asyncio.exceptions.CancelledError:
-                logger.warning("Get image task was cancelled.")
             except aiohttp.client_exceptions.ConnectionTimeoutError:
                 logger.warning("Observations endpoint timeouted.")
             except asyncio.exceptions.CancelledError:
