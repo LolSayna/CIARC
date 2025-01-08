@@ -40,7 +40,7 @@ def predictTrajektorie(
         vy = -vy
 
     # Subpoints, to get more smooth points make it higher
-    step_multiplicator = 10
+    step_multiplicator = 1
     # TODO
 
     for _ in range(int(step_multiplicator * con.TRAJ_TIME / simulation_speed)):
