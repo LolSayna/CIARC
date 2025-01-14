@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import time
+import requests
 from enum import StrEnum
 from typing import Callable, Awaitable, Any
 
@@ -12,6 +13,63 @@ from loguru import logger
 
 # Fix issue with Image size
 Image.MAX_IMAGE_PIXELS = 500000000
+
+
+# From User Manual
+class CameraAngle(StrEnum):
+    Wide = "wide"
+    Narrow = "narrow"
+    Normal = "normal"
+    Unknown = "unknown"
+
+
+class ZonedObjective(BaseModel):
+    id: int  # could be null acording to Dto
+    name: str
+    start: datetime.datetime
+    end: datetime.datetime
+    decrease_rate: float
+    zone: Optional[tuple[int, int, int, int]]  # could be a str acording to dto
+    optic_required: CameraAngle  # cast from str
+    coverage_required: int
+    description: str  # cast from str
+    secret: bool
+    # sprite is ignored as said in email
+
+
+# extracts and parses objective format from the format given from its matching api endpoint
+def parse_objective_api(
+    objective_list: requests.models.Response,
+) -> list[ZonedObjective]:
+    z_obj_list = []
+    # parse objective list
+    for obj in objective_list.json()["zoned_objectives"]:
+        if type(obj["zone"]) is str:
+            zone = None
+        else:
+            zone = (
+                int(obj["zone"][0]),
+                int(obj["zone"][1]),
+                int(obj["zone"][2]),
+                int(obj["zone"][3]),
+            )
+
+        z_obj_list.append(
+            ZonedObjective(
+                id=obj["id"],
+                name=obj["name"],
+                start=datetime.datetime.fromisoformat(obj["start"]),
+                end=datetime.datetime.fromisoformat(obj["end"]),
+                decrease_rate=obj["decrease_rate"],
+                zone=zone,
+                optic_required=CameraAngle(obj["optic_required"]),
+                coverage_required=obj["coverage_required"],
+                description=obj["description"],
+                secret=obj["secret"],
+            )
+        )
+
+    return sorted(z_obj_list, key=lambda event: event.start)
 
 
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
@@ -73,6 +131,7 @@ class Timer(BaseModel):
 # Our custom programs/missions/states in which we can place Melvin
 class MELVINTasks(StrEnum):
     Mapping = "mapping"
+    Objectives_only = "objectives"
     Emergencies = "emergencies"
     Events = "events"
     Idle = "idle"
@@ -101,28 +160,6 @@ class State(StrEnum):
 # NOT USED only for referenze
 class MelvinTime(datetime.datetime):
     time: datetime.datetime
-
-
-# From User Manual
-class CameraAngle(StrEnum):
-    Wide = "wide"
-    Narrow = "narrow"
-    Normal = "normal"
-    Unknown = "unknown"
-
-
-class ZonedObjective(BaseModel):
-    id: int  # could be null acording to Dto
-    name: str
-    start: datetime.datetime
-    end: datetime.datetime
-    decrease_rate: float
-    zone: Optional[tuple[int, int, int, int]]  # could be a str acording to dto
-    optic_required: CameraAngle  # cast from str
-    coverage_required: int
-    description: str  # cast from str
-    secret: bool
-    # sprite is ignored as said in email
 
 
 class MelvinImage(BaseModel):

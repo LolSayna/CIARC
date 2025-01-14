@@ -6,7 +6,7 @@ import shared.constants as con
 import datetime
 
 from rift_console.RiftTelemetry import RiftTelemetry
-from shared.models import State, CameraAngle, ZonedObjective
+from shared.models import State, CameraAngle, ZonedObjective, parse_objective_api
 
 ### ALL METHODS SO FAR ONLY WORK IF NETWORK SIMULATION IS DISABLED ###
 # TODO file aufteilung von Riftconsole???
@@ -117,35 +117,7 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
     if melvin.state != State.Transition:
         melvin.planed_transition_state = State.Unknown
 
-    melvin.z_obj_list = []
-    # parse objective list
-    for obj in objective_list.json()["zoned_objectives"]:
-        if type(obj["zone"]) is str:
-            zone = None
-        else:
-            zone = (
-                int(obj["zone"][0]),
-                int(obj["zone"][1]),
-                int(obj["zone"][2]),
-                int(obj["zone"][3]),
-            )
-
-        melvin.z_obj_list.append(
-            ZonedObjective(
-                id=obj["id"],
-                name=obj["name"],
-                start=datetime.datetime.fromisoformat(obj["start"]),
-                end=datetime.datetime.fromisoformat(obj["end"]),
-                decrease_rate=obj["decrease_rate"],
-                zone=zone,
-                optic_required=CameraAngle(obj["optic_required"]),
-                coverage_required=obj["coverage_required"],
-                description=obj["description"],
-                secret=obj["secret"],
-            )
-        )
-
-    melvin.z_obj_list = sorted(melvin.z_obj_list, key=lambda event: event.start)
+    melvin.z_obj_list = parse_objective_api(objective_list)
 
     melvin.drawnObjectives = []
     for obj in melvin.z_obj_list:
