@@ -117,7 +117,7 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
     if melvin.state != State.Transition:
         melvin.planed_transition_state = State.Unknown
 
-    melvin.z_obj_list = parse_objective_api(objective_list)
+    melvin.z_obj_list = parse_objective_api(objective_list.json())
 
     melvin.drawnObjectives = []
     for obj in melvin.z_obj_list:

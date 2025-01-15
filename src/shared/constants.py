@@ -114,8 +114,9 @@ IMAGE_ITERATION_POSITION_NOT_TIME = True
 STITCHING_COUNT_LIMIT = 3000
 
 ## [MANUAL CONTROL]
-CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
-TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
+# CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
+CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Objectives_only
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Normal
 # To solve a single objective, set a time window in which melvonaut is active
 start_time = datetime.datetime(2025, 1, 2, 12, 00, tzinfo=datetime.timezone.utc)
 stop_time = datetime.datetime(2025, 1, 25, 12, 00, tzinfo=datetime.timezone.utc)

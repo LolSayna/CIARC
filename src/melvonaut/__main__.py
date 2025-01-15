@@ -44,6 +44,7 @@ from shared.models import (
     limited_log,
     ZonedObjective,
     parse_objective_api,
+    calc_distance,
 )
 
 if con.TRACING:
@@ -153,6 +154,10 @@ class StatePlanner(BaseModel):
 
     _target_vel_x: Optional[float] = None
     _target_vel_y: Optional[float] = None
+
+    _z_obj_list: list[ZonedObjective] = []
+
+    _current_objective: Optional[str] = ""
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:
@@ -450,6 +455,17 @@ class StatePlanner(BaseModel):
         if not self._aiohttp_session:
             self._aiohttp_session = aiohttp.ClientSession()
 
+        # Filter out cases where no image should be taken
+
+        if (
+            con.CURRENT_MELVIN_TASK == MELVINTasks.Objectives_only
+            and not self._z_obj_list
+        ):
+            logger.warning(
+                "Skipped image: In Objectives_only mode, but z_obj_list emtpy!"
+            )
+            return
+
         if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION:
             logger.info(
                 f"Skipped image: current_angle={self.current_telemetry.angle} vs target={con.TARGET_CAMERA_ANGLE_ACQUISITION}"
@@ -461,15 +477,20 @@ class StatePlanner(BaseModel):
             )
             return
 
-        if not (
-            con.start_time
-            < datetime.datetime.now(datetime.timezone.utc)
-            < con.stop_time
-        ):
+        if con.start_time > datetime.datetime.now(datetime.timezone.utc):
             logger.warning(
-                f"Skipped image, not in timewindow: current_time={datetime.datetime.now(datetime.timezone.utc)}"
+                f"Skipped image, to early: start={con.start_time} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
+        if datetime.datetime.now(datetime.timezone.utc) > con.stop_time:
+            logger.warning(
+                f"Skipped image, to late: end={con.end} current_time={datetime.datetime.now(datetime.timezone.utc)}"
+            )
+            return
+
+        # TODO check if within box, unless hidden
+        # if con.CURRENT_MELVIN_TASK == MELVINTasks.Objectives_only:
+        #    if calc_distance(self.current_telemetry.width_x, self.z_obj_list
 
         # save the current telemetry values, so they dont get overwritten by a later update
         tele_timestamp = self.current_telemetry.timestamp
@@ -524,7 +545,7 @@ class StatePlanner(BaseModel):
                         )
 
                         image_path = con.IMAGE_LOCATION.format(
-                            melv_id=melv_id,
+                            melv_id=self._current_objective + str(melv_id),
                             angle=tele_angle,
                             time=parsed_img_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f"),
                             cor_x=int(adj_x),
@@ -583,6 +604,30 @@ class StatePlanner(BaseModel):
             await asyncio.gather(image_task)
 
     async def control_acquisition(self) -> None:
+        # check for new targets each time we enter acquisition mode
+        async with aiohttp.ClientSession() as session:
+            async with session.get(con.OBJECTIVE_ENDPOINT) as response:
+                if response.status == 200:
+                    json_response = await response.json()
+                    self._z_obj_list: list[ZonedObjective] = parse_objective_api(
+                        json_response
+                    )
+                    logger.warning(
+                        f"Updated objectives, there are {len(self._z_obj_list)} objectives."
+                    )
+                else:
+                    logger.error("Could not get OBJECTIVE_ENDPOINT")
+
+        # TODO this is only bandaid
+        self._current_objective = str(self._z_obj_list[0].id) + (
+            self._z_obj_list[0].name
+        ).replace(" ", "")
+        con.start_time = self._z_obj_list[0].start
+        con.stop_time = self._z_obj_list[0].end
+        con.TARGET_CAMERA_ANGLE_ACQUISITION = self._z_obj_list[0].optic_required
+
+        # check if change occured and cut the last image
+
         await self.trigger_camera_angle_change(con.TARGET_CAMERA_ANGLE_ACQUISITION)
 
         # TODO stop velocity change if battery is low
@@ -620,11 +665,11 @@ async def get_observations() -> None:
                     await state_planner.update_telemetry(MelTelemetry(**json_response))
                 else:
                     logger.warning(f"Failed to get observations: {response.status}")
-        except aiohttp.client_exceptions.ConnectionionTimeoutError:
+        except aiohttp.client_exceptions.ConnectionTimeoutError:
             logger.warning("Observations endpoint timeouted.")
         except asyncio.TimeoutError:
             logger.warning("ASyncio TimeoutError occured.")
-        except aiohttp.client_exceptions.ClienOSError:
+        except aiohttp.client_exceptions.ClientOSError:
             logger.warning("Client_exceptions.ClienOSError occured.")
 
 

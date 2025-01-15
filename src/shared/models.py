@@ -9,6 +9,7 @@ from PIL import Image
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
+import shared.constants as con
 from loguru import logger
 
 # Fix issue with Image size
@@ -21,6 +22,22 @@ class CameraAngle(StrEnum):
     Narrow = "narrow"
     Normal = "normal"
     Unknown = "unknown"
+
+
+# calculates the distance between two coordinates, respecting overflows
+# TODO not sure about this, need to think when i am awake
+def calc_distance(a: int, b: int) -> int:
+    if a > con.WORLD_X:
+        a = a % con.WORLD_X
+    elif a < 0:
+        a += con.WORLD_X
+
+    if b > con.WORLD_X:
+        b = b % con.WORLD_X
+    elif b < 0:
+        b += con.WORLD_X
+
+    return abs(a, b)
 
 
 class ZonedObjective(BaseModel):
@@ -43,7 +60,7 @@ def parse_objective_api(
 ) -> list[ZonedObjective]:
     z_obj_list = []
     # parse objective list
-    for obj in objective_list.json()["zoned_objectives"]:
+    for obj in objective_list["zoned_objectives"]:
         if type(obj["zone"]) is str:
             zone = None
         else:
