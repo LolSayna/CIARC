@@ -14,7 +14,7 @@ from werkzeug.wrappers.response import Response
 
 # shared imports
 import shared.constants as con
-from shared.models import State, CameraAngle
+from shared.models import State, CameraAngle, lens_size_by_angle
 import rift_console.drsApi as drsApi
 import rift_console.RiftTelemetry
 import rift_console.image_processing
@@ -65,13 +65,7 @@ async def index() -> str:
         formatted_timedelta = "No timestamp available"
         formatted_last_backup_time = "Unkown"
 
-    match melvin.angle:
-        case CameraAngle.Narrow:
-            lens_size = 600
-        case CameraAngle.Normal:
-            lens_size = 800
-        case CameraAngle.Wide:
-            lens_size = 1000
+    lens_size = lens_size_by_angle(melvin.angle)
 
     return await render_template(
         "console.html",

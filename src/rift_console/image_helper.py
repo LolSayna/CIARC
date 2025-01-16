@@ -8,7 +8,6 @@ import re
 import os
 import datetime
 
-from shared.models import CameraAngle
 import shared.constants as con
 
 
@@ -65,6 +64,8 @@ def parse_image_name(name: str) -> tuple[int, int, int]:
         tuple[int, int, int]: Used lenssize (and therefore if the image should be scaled to this later)
         and approximated x/y coordinates on the stiched image
     """
+    from shared.models import CameraAngle
+
     # expected format: 'image_5344_wide_2024-12-11T17:31:27.507376_x_19936_y_4879'
     # with 8 underscores
     if len(name.split("_")) != con.IMAGE_NAME_UNDERSCORE_COUNT:

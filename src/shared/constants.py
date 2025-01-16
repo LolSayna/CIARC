@@ -8,6 +8,7 @@ MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 PANORAMA_PATH = "media/"
 TELEMETRY_LOCATION_JSON = "logs/melvonaut/telemetry_melvonaut.json"
 TELEMETRY_LOCATION_CSV = "logs/melvonaut/telemetry_melvonaut.csv"
+IMAGE_PATH_BASE = "logs/melvonaut/images/"
 IMAGE_PATH = "logs/melvonaut/images/"
 IMAGE_LOCATION = IMAGE_PATH + "image_{melv_id}_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
 

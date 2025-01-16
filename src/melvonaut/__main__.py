@@ -22,6 +22,7 @@ from pathlib import Path
 import tracemalloc
 import random
 
+import subprocess
 from typing import Any, Optional, AsyncIterable
 
 import aiohttp
@@ -45,6 +46,8 @@ from shared.models import (
     ZonedObjective,
     parse_objective_api,
     calc_distance,
+    boxes_overlap_in_grid,
+    lens_size_by_angle,
 )
 
 if con.TRACING:
@@ -476,7 +479,7 @@ class StatePlanner(BaseModel):
                 f"Skipped image: accelerating to: {self._target_vel_x} {self._target_vel_y}"
             )
             return
-
+        """
         if con.start_time > datetime.datetime.now(datetime.timezone.utc):
             logger.warning(
                 f"Skipped image, to early: start={con.start_time} current_time={datetime.datetime.now(datetime.timezone.utc)}"
@@ -487,11 +490,7 @@ class StatePlanner(BaseModel):
                 f"Skipped image, to late: end={con.end} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
-
-        # TODO check if within box, unless hidden
-        # if con.CURRENT_MELVIN_TASK == MELVINTasks.Objectives_only:
-        #    if calc_distance(self.current_telemetry.width_x, self.z_obj_list
-
+        """
         # save the current telemetry values, so they dont get overwritten by a later update
         tele_timestamp = self.current_telemetry.timestamp
         tele_x = self.current_telemetry.width_x
@@ -501,14 +500,32 @@ class StatePlanner(BaseModel):
         tele_simSpeed = self.get_simulation_speed()
         tele_angle = self.current_telemetry.angle
 
-        match self.current_telemetry.angle:
-            case CameraAngle.Narrow:
-                LENS_SIZE = 600
-            case CameraAngle.Normal:
-                LENS_SIZE = 800
-            case CameraAngle.Wide:
-                LENS_SIZE = 1000
+        lens_size = lens_size_by_angle(self.current_telemetry.angle)
+        """
+        # TODO add box check if melvin and objective overlap
+        # check if we are in range of an objective
+        # TODO also check MELVINTasks
+        # TODO check if within box, unless hidden
+        melvin_box = (
+            tele_x - lens_size / 2,
+            tele_y - lens_size / 2,
+            tele_x + lens_size / 2,
+            tele_y + lens_size / 2,
+        )
+        if self._z_obj_list[0].zone is None:
+            logger.warning("Hidden objective, taking photo")
+            return
+            TODO
+        else:
+            logger.warning("Checking if in range of objective:")
+            objective_box = self._z_obj_list[0].zone
 
+        if not boxes_overlap_in_grid(melvin_box, objective_box):
+            logger.error(
+                f"Image skipped, not Overlapping! {melvin_box} {objective_box}"
+            )
+            return
+        """
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(con.IMAGE_ENDPOINT) as response:
@@ -532,10 +549,10 @@ class StatePlanner(BaseModel):
 
                         adj_x = round(
                             tele_x + (difference_in_seconds * tele_vx * tele_simSpeed)
-                        ) - (LENS_SIZE / 2)
+                        ) - (lens_size / 2)
                         adj_y = round(
                             tele_y + (difference_in_seconds * tele_vy * tele_simSpeed)
-                        ) - (LENS_SIZE / 2)
+                        ) - (lens_size / 2)
 
                         # TODO check if images are correct!
                         # TODO might also need modulo for side cases
@@ -625,6 +642,17 @@ class StatePlanner(BaseModel):
         con.start_time = self._z_obj_list[0].start
         con.stop_time = self._z_obj_list[0].end
         con.TARGET_CAMERA_ANGLE_ACQUISITION = self._z_obj_list[0].optic_required
+        con.IMAGE_PATH = con.IMAGE_PATH_BASE + self._current_objective + "/"
+
+        con.IMAGE_LOCATION = (
+            con.IMAGE_PATH + "image_{melv_id}_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
+        )
+        try:
+            subprocess.run(["mkdir", con.IMAGE_PATH], check=True)
+            logger.debug(f"z_obj created folder: {con.IMAGE_PATH}")
+
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"z_obj could not mkdir: {e}")
 
         # check if change occured and cut the last image
 

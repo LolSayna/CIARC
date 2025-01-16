@@ -54,6 +54,51 @@ class ZonedObjective(BaseModel):
     # sprite is ignored as said in email
 
 
+# TODO test if this actually works as intentend???
+def boxes_overlap_in_grid(box1, box2):
+    grid_width = con.WORLD_X
+    grid_height = con.WORLD_Y
+    # Extract the position and dimensions of box1
+    x1, y1, width1, height1 = box1
+    # Extract the position and dimensions of box2
+    x2, y2, width2, height2 = box2
+
+    # Define a helper function to check overlap in one dimension with overflow
+    def overlap_1d(start1, length1, start2, length2, max_length):
+        # Compute the end positions with wrapping
+        end1 = (start1 + length1 - 1) % max_length
+        end2 = (start2 + length2 - 1) % max_length
+
+        # Check overlap considering wrapping
+        return (
+            (start1 <= end2 and end1 >= start2)  # direct overlap
+            or (
+                end1 < start1 and (start1 <= end2 or end1 >= start2)
+            )  # wrapped around for first box
+            or (
+                end2 < start2 and (start2 <= end1 or end2 >= start1)
+            )  # wrapped around for second box
+        )
+
+    # Check overlap in both dimensions
+    overlap_x = overlap_1d(x1, width1, x2, width2, grid_width)
+    overlap_y = overlap_1d(y1, height1, y2, height2, grid_height)
+
+    # The boxes overlap if they overlap in both dimensions
+    return overlap_x and overlap_y
+
+
+def lens_size_by_angle(angle: CameraAngle) -> int:
+    match angle:
+        case CameraAngle.Narrow:
+            lens_size = 600
+        case CameraAngle.Normal:
+            lens_size = 800
+        case CameraAngle.Wide:
+            lens_size = 1000
+    return lens_size
+
+
 # extracts and parses objective format from the format given from its matching api endpoint
 def parse_objective_api(
     objective_list: requests.models.Response,
