@@ -93,6 +93,7 @@ def stitch_images(
                 logger.warning(
                     f"Could not parse file {image_name}, skipped. Error: {e}"
                 )
+                continue
 
             # possible resize
             if lens_size != 600:
@@ -238,7 +239,7 @@ def cut(panorama_path: str, X1: int, Y1: int, X2: int, Y2: int) -> None:
     with Image.open(panorama_path) as panorama:
         cut_img = panorama.crop(coordinates)
 
-    cut_img.show()
+    # cut_img.show()
     cut_img.save(panorama_path.replace(".png", "") + "_cut.png")
 
     logger.warning("Saved cut to media/*_cut.png")

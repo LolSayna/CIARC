@@ -479,7 +479,7 @@ class StatePlanner(BaseModel):
                 f"Skipped image: accelerating to: {self._target_vel_x} {self._target_vel_y}"
             )
             return
-        """
+
         if con.start_time > datetime.datetime.now(datetime.timezone.utc):
             logger.warning(
                 f"Skipped image, to early: start={con.start_time} current_time={datetime.datetime.now(datetime.timezone.utc)}"
@@ -490,7 +490,8 @@ class StatePlanner(BaseModel):
                 f"Skipped image, to late: end={con.end} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
-        """
+
+
         # save the current telemetry values, so they dont get overwritten by a later update
         tele_timestamp = self.current_telemetry.timestamp
         tele_x = self.current_telemetry.width_x
