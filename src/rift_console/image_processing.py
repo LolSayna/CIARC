@@ -87,8 +87,12 @@ def stitch_images(
         with Image.open(image_path + image_name) as img:
             # extract image name
             lens_size, x, y = parse_image_name(image_name)
-
-            img = img.convert("RGBA")
+            try:
+                img = img.convert("RGBA")
+            except OSError as e:
+                logger.warning(
+                    f"Could not parse file {image_name}, skipped. Error: {e}"
+                )
 
             # possible resize
             if lens_size != 600:
