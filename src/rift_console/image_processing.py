@@ -2,6 +2,7 @@ import sys
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+import requests
 
 from loguru import logger
 from PIL import Image
@@ -93,7 +94,6 @@ def stitch_images(
                 logger.warning(
                     f"Could not parse file {image_name}, skipped. Error: {e}"
                 )
-                continue
 
             # possible resize
             if lens_size != 600:
@@ -228,6 +228,35 @@ def stitch_images(
     return panorama
 
 
+def upload(id: int, path: str, folder: bool = False) -> None:
+    """Uploads one objective image" """
+
+    if folder:
+        images = find_image_names(path)
+        for img in images:
+            logger.warning(img)
+            upload(id, path + "/" + img, False)
+
+            logger.warning(f"Uploaded folder of {len(images)}.")
+        return
+
+    logger.info(f"Uploading {id} with path {path}")
+    params = {"objective_id": id}
+
+    files = {"image": (path, open(path, "rb"), "image/png")}
+
+    with requests.Session() as s:
+        r = s.post(con.IMAGE_ENDPOINT, params=params, files=files)
+
+        if r.status_code == 200:
+            logger.warning(f"Uploaded: {r}")
+            logger.warning(f"{r.text}{r.json()}")
+        else:
+            logger.error(f"Upload failed with code: {r.status_code}")
+            logger.error(f"{r.text} {r.json()}")
+    logger.info("Done with Uplaod!")
+
+
 def cut(panorama_path: str, X1: int, Y1: int, X2: int, Y2: int) -> None:
     """Cut a small portion from a bigger Panorama.
 
@@ -239,7 +268,7 @@ def cut(panorama_path: str, X1: int, Y1: int, X2: int, Y2: int) -> None:
     with Image.open(panorama_path) as panorama:
         cut_img = panorama.crop(coordinates)
 
-    # cut_img.show()
+    cut_img.show()
     cut_img.save(panorama_path.replace(".png", "") + "_cut.png")
 
     logger.warning("Saved cut to media/*_cut.png")
@@ -296,6 +325,8 @@ def automated_stitching(local_path: str) -> None:
 
 # For CLI testing
 if __name__ == "__main__":
+    print("GO")
+
     if len(sys.argv) < 2:
         print("Usage: python3 src/rift_console/image_processing.py stitch PATH")
         print("Usage: python3 src/rift_console/image_processing.py thumb PATH")
@@ -326,5 +357,14 @@ if __name__ == "__main__":
             sys.exit(0)
         print(
             "Usage: python3 src/rift_console/image_processing.py cut PATH X1 Y1 X2 Y2)"
+        )
+        sys.exit(1)
+    # Upload objective
+    elif sys.argv[1] == "upload":
+        if len(sys.argv) == 5:
+            upload(id=sys.argv[2], path=sys.argv[3], folder=eval(sys.argv[4]))
+            sys.exit(0)
+        print(
+            "Usage: python3 src/rift_console/image_processing.py upload ID PATH IS_FOLDER"
         )
         sys.exit(1)
