@@ -480,14 +480,14 @@ class StatePlanner(BaseModel):
             )
             return
 
-        if con.start_time > datetime.datetime.now(datetime.timezone.utc):
+        if con.DO_TIMING_CHECK and con.start_time > datetime.datetime.now(datetime.timezone.utc):
             logger.warning(
                 f"Skipped image, to early: start={con.start_time} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
-        if datetime.datetime.now(datetime.timezone.utc) > con.stop_time:
+        if con.DO_TIMING_CHECK and datetime.datetime.now(datetime.timezone.utc) > con.stop_time:
             logger.warning(
-                f"Skipped image, to late: end={con.end} current_time={datetime.datetime.now(datetime.timezone.utc)}"
+                f"Skipped image, to late: end={con.stop_time} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
 
@@ -636,13 +636,20 @@ class StatePlanner(BaseModel):
                 else:
                     logger.error("Could not get OBJECTIVE_ENDPOINT")
 
+        
         # TODO this is only bandaid
-        self._current_objective = str(self._z_obj_list[0].id) + (
-            self._z_obj_list[0].name
+        current_obj = self._z_obj_list[0]
+        for obj in self._z_obj_list:
+            if obj.name == "Aurora 9":
+                logger.warning(f"Manual choose Aurora 9 worked for {obj}")
+                current_obj = obj
+
+        self._current_objective = str(current_obj.id) + (
+            current_obj.name
         ).replace(" ", "")
-        con.start_time = self._z_obj_list[0].start
-        con.stop_time = self._z_obj_list[0].end
-        con.TARGET_CAMERA_ANGLE_ACQUISITION = self._z_obj_list[0].optic_required
+        con.start_time = current_obj.start
+        con.stop_time = current_obj.end
+        con.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
         con.IMAGE_PATH = con.IMAGE_PATH_BASE + self._current_objective + "/"
 
         con.IMAGE_LOCATION = (
