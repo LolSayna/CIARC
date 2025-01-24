@@ -5,6 +5,23 @@
 
 [pre-commit]: https://github.com/pre-commit/pre-commit
 
+# MAIN TODO LIST
+## Melvonaut
+- machen unsere Speeds so sinn? zu schnell in wide mode?
+  - wie oft oberserven, wie oft Fotos machen
+- Box Erkennung, im Objective modus nur dann auch Fotos machen
+
+## Riftconsole
+- karte updaten, das trajektorie besser visualisert wird
+  - velocity in px/s, beschleuniung ist 0.02 px/s**2, dazu simulation speed
+- beim cli stitching nudigen als parameter
+
+## Sonstiges
+- Tried "coverage_required": 0 / 0.0 -> führt zum crash beim komplet
+- Alles darüber wird nie erfüllt
+
+
+
 ## Overview
 
 This is the [Riftonaut's CIARC](https://github.com/Lolsayna/CIARC) repository.

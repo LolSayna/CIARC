@@ -16,7 +16,7 @@ from werkzeug.wrappers.response import Response
 import shared.constants as con
 from shared.models import State, CameraAngle, lens_size_by_angle
 import rift_console.drsApi as drsApi
-import rift_console.RiftTelemetry
+import rift_console.rift_telemetry
 import rift_console.image_processing
 
 # TODO-s
@@ -39,7 +39,7 @@ logger.add(
 
 
 app = Quart(__name__)
-melvin = rift_console.RiftTelemetry.RiftTelemetry()
+melvin = rift_console.rift_telemetry.RiftTelemetry()
 
 
 # Main Page

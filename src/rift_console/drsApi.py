@@ -5,7 +5,7 @@ import shared.constants as con
 
 import datetime
 
-from rift_console.RiftTelemetry import RiftTelemetry
+from rift_console.rift_telemetry import RiftTelemetry
 from shared.models import State, CameraAngle, ZonedObjective, parse_objective_api
 
 ### ALL METHODS SO FAR ONLY WORK IF NETWORK SIMULATION IS DISABLED ###

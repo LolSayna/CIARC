@@ -4,6 +4,7 @@ from shared.models import CameraAngle, MELVINTasks
 
 import datetime
 
+# [PATHS]
 MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
 PANORAMA_PATH = "media/"
 TELEMETRY_LOCATION_JSON = "logs/melvonaut/telemetry_melvonaut.json"
@@ -11,12 +12,10 @@ TELEMETRY_LOCATION_CSV = "logs/melvonaut/telemetry_melvonaut.csv"
 IMAGE_PATH_BASE = "logs/melvonaut/images/"
 IMAGE_PATH = "logs/melvonaut/images/"
 IMAGE_LOCATION = IMAGE_PATH + "image_{melv_id}_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
-
 RIFT_LOG_LOCATION = "logs/rift_console/log_rift-console_{time:YYYY-MM-DD_HH}.log"
 
-# URL of our instance
-BASE_URL = "http://10.100.10.11:33000/"
-
+# [URLs]
+BASE_URL = "http://10.100.10.11:33000/"  # URL of our instance
 # Given Data Reference System API endpoints
 OBJECTIVE_ENDPOINT = f"{BASE_URL}objective"
 ANNOUNCEMENTS_ENDPOINT = f"{BASE_URL}announcements"
@@ -28,25 +27,15 @@ RESET_ENDPOINT = f"{BASE_URL}reset"
 SIMULATION_ENDPOINT = f"{BASE_URL}simulation"
 BACKUP_ENDPOINT = f"{BASE_URL}backup"
 
-# From User Manual
+# [From User Manual]
 STATE_TRANSITION_TIME = 3 * 60  # Seconds for regular state transitions
 STATE_TRANSITION_TO_SAFE_TIME = 1 * 60  # Seconds for state transitions to safe
 STATE_TRANSITION_FROM_SAFE_TIME = 20 * 60  # Seconds for state transitions from safe
-
-# world map
 WORLD_X = 21600
 WORLD_Y = 10800
+ACCELERATION = 0.02
 
-# Scaled down version for thumbnail
-SCALED_WORLD_X = 1080
-SCALED_WORLD_Y = 540
-SCALING_FACTOR = 20  # CARE IF SCALED_WORLD ist changed
-
-# While in Stitching add this border in each direction
-STITCHING_BORDER = 1000
-
-ACCELERATION = 0.04
-
+# [General Settings]
 # Our settings, could be changed later
 OBSERVATION_REFRESH_RATE = 5  # Seconds between observation requests
 BATTERY_LOW_THRESHOLD = 20
@@ -81,15 +70,23 @@ TARGET_SPEED_WIDE_X = 49.84
 TARGET_SPEED_WIDE_Y = 21.16
 
 DISTANCE_BETWEEN_IMAGES = 350  # How many pixel before taking another image
-
 RIFT_LOG_LEVEL = "INFO"
-
 TRACING = False
+
 
 # [TRAJEKTORIE]
 # Number of seconds to calculate the path
 TRAJ_TIME = 3600
 
+
+## [IMAGE PROCESSING]
+# Scaled down version for thumbnail
+SCALED_WORLD_X = 1080
+SCALED_WORLD_Y = 540
+SCALING_FACTOR = 20  # CARE IF SCALED_WORLD ist changed
+
+# While in Stitching add this border in each direction
+STITCHING_BORDER = 1000
 ## For image processing
 NUMBER_OF_WORKER_THREADS = cpu_count() - 2  # use 1 for single core
 DO_IMAGE_NUDGING_SEARCH = False  # if False ignore SEARCH_GRID_SIDE_LENGTH
@@ -115,11 +112,20 @@ IMAGE_ITERATION_POSITION_NOT_TIME = True
 # only stiched that many images for better testing
 STITCHING_COUNT_LIMIT = 3000
 
-## [MANUAL CONTROL]
+
+## [Melvin Task Planing]
+# Standard mapping, with no objectives and the camera angle below
 # CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
-CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Objectives_only
 TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Normal
-# To solve a single objective, set a time window in which melvonaut is active
-start_time = datetime.datetime(2025, 1, 2, 12, 00, tzinfo=datetime.timezone.utc)
-stop_time = datetime.datetime(2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc)
-DO_TIMING_CHECK = False 
+
+# Automatically do the next upcoming objective
+CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
+
+# Do a specific objective
+# CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Fixed_objective
+FIXED_OBJECTIVE = None
+
+# To set a custom time window to be active, or to disable all timing checks
+DO_TIMING_CHECK = False
+START_TIME = datetime.datetime(2025, 1, 2, 12, 00, tzinfo=datetime.timezone.utc)
+STOP_TIME = datetime.datetime(2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc)

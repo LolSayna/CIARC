@@ -193,10 +193,11 @@ class Timer(BaseModel):
 # Our custom programs/missions/states in which we can place Melvin
 class MELVINTasks(StrEnum):
     Mapping = "mapping"
-    Objectives_only = "objectives"
-    Emergencies = "emergencies"
-    Events = "events"
-    Idle = "idle"
+    Next_objective = "next_objective"
+    Fixed_objective = "fixed_objective"
+    # Emergencies = "emergencies"
+    # Events = "events"
+    # Idle = "idle"
 
 
 # From User Manual
