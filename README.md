@@ -18,7 +18,7 @@
 
 ## Sonstiges
 - Tried "coverage_required": 0 / 0.0 -> führt zum crash beim komplet
-- Alles darüber wird nie erfüllt
+  - Alles darüber wird nie erfüllt
 
 
 

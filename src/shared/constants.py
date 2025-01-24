@@ -119,11 +119,11 @@ STITCHING_COUNT_LIMIT = 3000
 TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Normal
 
 # Automatically do the next upcoming objective
-CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
+#CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
 
 # Do a specific objective
-# CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Fixed_objective
-FIXED_OBJECTIVE = None
+CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Fixed_objective
+FIXED_OBJECTIVE = "Aurora 10"
 
 # To set a custom time window to be active, or to disable all timing checks
 DO_TIMING_CHECK = False
