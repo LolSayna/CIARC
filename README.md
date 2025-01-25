@@ -15,10 +15,12 @@
 - karte updaten, das trajektorie besser visualisert wird
   - velocity in px/s, beschleuniung ist 0.02 px/s**2, dazu simulation speed
 - beim cli stitching nudigen als parameter
+- CLI befehl um Bilder zu filtern, a) nach datum b) nach Region
 
 ## Sonstiges
 - Tried "coverage_required": 0 / 0.0 -> führt zum crash beim komplet
   - Alles darüber wird nie erfüllt
+
 
 
 
