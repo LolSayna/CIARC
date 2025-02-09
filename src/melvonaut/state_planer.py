@@ -242,7 +242,7 @@ class StatePlanner(BaseModel):
 
 
                         # starting ebt, but speed/angle not set yet
-                        
+
                         #if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
                         if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION:
                             logger.info("In Ebt, setting up angle")
@@ -253,7 +253,7 @@ class StatePlanner(BaseModel):
                         else:
                             logger.info("starting comms!")
                             await self.trigger_state_transition(State.Communication)
-                        
+
                     else:
                         logger.info("starting acq!")
                         await self.trigger_state_transition(State.Acquisition)

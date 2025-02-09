@@ -8,6 +8,8 @@ import concurrent.futures
 import signal
 import sys
 import tracemalloc
+from typing import Optional
+
 import aiohttp
 import click
 
@@ -18,7 +20,7 @@ from loguru import logger
 from melvonaut.mel_telemetry import MelTelemetry
 from melvonaut.state_planer import StatePlanner
 import shared.constants as con
-from shared.models import Timer
+from shared.models import Timer, Event
 from melvonaut.loop_config import loop
 
 if con.TRACING:
@@ -94,12 +96,57 @@ async def get_announcements() -> None:
         # could add async sleep here
         logger.error("Announcements subscription timed out")
 
+async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
+    headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
+    if last_id:
+        headers["Last-Event-ID"] = last_id
+
+    timeout = aiohttp.ClientTimeout(total=None, connect=None, sock_connect=None, sock_read=None)
+
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.get(
+                con.ANNOUNCEMENTS_ENDPOINT, headers=headers
+            ) as response:
+                if response.status not in [200, 301, 307]:
+                    logger.error(f"Failed to get announcements: {response.status}")
+                    await session.close()
+                    return None
+                else:
+                    lines = []
+                    async for line in response.content:
+                        line = line.decode("utf-8")
+                        logger.debug(f"Received announcement {line}")
+                        line = line.replace("data:", "").strip()
+                        if line in {"\n", "\r\n", "\r"}:
+                            if not lines:
+                                continue
+                            if lines[0] == ':ok\n':
+                                lines = []
+                                continue
+
+                            current_event = Event()
+                            current_event.parse(''.join(lines))
+                            logger.warning(f"Received announcement: {current_event.dump()}")
+                            last_id = current_event.id
+                            lines = []
+                        else:
+                            lines.append(line)
+        except TimeoutError:
+            logger.error("Announcements subscription timed out")
+        finally:
+            if response and not response.closed:
+                response.close()
+            if not session.closed:
+                await session.close()
+            return last_id
+
 
 # Irgendwie restartet der sich alle 5 sekunden, und glaube überlastet die API
 async def run_get_announcements() -> None:
     logger.error("Started announcements subscription")
     while True:
-        await asyncio.gather(get_announcements())
+        await asyncio.gather(get_announcements2())
         logger.error("Restarted announcements subscription")
 
 
@@ -164,7 +211,7 @@ def start_event_loop() -> None:
 
     loop.create_task(run_get_observations())
     # TODO removed for now, test later
-    #loop.create_task(run_get_announcements())
+    loop.create_task(run_get_announcements())
 
     # loop.create_task(run_read_images())
 
@@ -174,7 +221,7 @@ def start_event_loop() -> None:
         loop.remove_signal_handler(sig)
 
     logger.info("Shutting down Melvonaut...")
-    
+
 
 @click.command()
 @click.version_option()
