@@ -48,7 +48,7 @@ class ZonedObjective(BaseModel):
     decrease_rate: float
     zone: Optional[tuple[int, int, int, int]]  # could be a str acording to dto
     optic_required: CameraAngle  # cast from str
-    coverage_required: int
+    coverage_required: float
     description: str  # cast from str
     secret: bool
     # sprite is ignored as said in email
@@ -195,6 +195,7 @@ class MELVINTasks(StrEnum):
     Mapping = "mapping"
     Next_objective = "next_objective"
     Fixed_objective = "fixed_objective"
+    EBT = "ebt"
     # Emergencies = "emergencies"
     # Events = "events"
     # Idle = "idle"

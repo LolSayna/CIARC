@@ -225,13 +225,40 @@ class StatePlanner(BaseModel):
                     f"Previous state: {self.get_previous_state()}, Current state: {self.get_current_state()}"
                 )
             case State.Acquisition:
+
+                # in EBT leave once everything is set
+                if con.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
+                    if self.current_telemetry.angle == con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x == self.current_telemetry.vx or self._target_vel_y == self.current_telemetry.vy:
+                        await self.trigger_state_transition(State.Acquisition)
+
                 await self.switch_if_battery_low(State.Charge, State.Acquisition)
+
             case State.Charge:
                 if (
                     self.current_telemetry.battery
                     >= self.current_telemetry.max_battery - con.BATTERY_HIGH_THRESHOLD
                 ):
-                    await self.trigger_state_transition(State.Acquisition)
+                    if con.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
+
+
+                        # starting ebt, but speed/angle not set yet
+                        
+                        #if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
+                        if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION:
+                            logger.info("In Ebt, setting up angle")
+                            logger.info(f"{self.current_telemetry.angle} { con.TARGET_CAMERA_ANGLE_ACQUISITION}")
+                            logger.info(f"{self._target_vel_x} {self.current_telemetry.vx}")
+                            logger.info(f"{self._target_vel_y} {self.current_telemetry.vy}")
+                            await self.trigger_state_transition(State.Acquisition)
+                        else:
+                            logger.info("starting comms!")
+                            await self.trigger_state_transition(State.Communication)
+                        
+                    else:
+                        logger.info("starting acq!")
+                        await self.trigger_state_transition(State.Acquisition)
+
+
             case State.Safe:
                 if self.current_telemetry.battery >= (
                     self.current_telemetry.max_battery * 0.5
@@ -241,7 +268,7 @@ class StatePlanner(BaseModel):
                     await self.trigger_state_transition(State.Charge)
                 await self.switch_if_battery_low(State.Charge, State.Acquisition)
             case State.Communication:
-                await self.switch_if_battery_low(State.Charge, State.Acquisition)
+                await self.switch_if_battery_low(State.Charge, State.Communication)
             case State.Deployment:
                 logger.debug(
                     "State is Deployment, triggering transition to Acquisition"
@@ -307,7 +334,7 @@ class StatePlanner(BaseModel):
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
 
-                        loop.create_task(self.run_get_image())
+                        # loop.create_task(self.run_get_image())
 
                         await self.control_acquisition()
                     case State.Charge:

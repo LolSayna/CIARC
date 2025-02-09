@@ -87,20 +87,20 @@ async def get_announcements() -> None:
                 if response.status == 200:
                     async for line in response.content:
                         clean_line = line.decode("utf-8").strip().replace("data:", "")
-                        logger.info(f"Received announcement: {clean_line}")
+                        logger.error(f"Received announcement: {clean_line}")
                 else:
-                    logger.warning(f"Failed to get announcements: {response.status}")
+                    logger.error(f"Failed to get announcements: {response.status}")
     except TimeoutError:
         # could add async sleep here
-        logger.info("Announcements subscription timed out")
+        logger.error("Announcements subscription timed out")
 
 
 # Irgendwie restartet der sich alle 5 sekunden, und glaube überlastet die API
 async def run_get_announcements() -> None:
-    logger.info("Started announcements subscription")
+    logger.error("Started announcements subscription")
     while True:
         await asyncio.gather(get_announcements())
-        logger.info("Restarted announcements subscription")
+        logger.error("Restarted announcements subscription")
 
 
 # not in use, can be removed
@@ -164,7 +164,7 @@ def start_event_loop() -> None:
 
     loop.create_task(run_get_observations())
     # TODO removed for now, test later
-    # loop.create_task(run_get_announcements())
+    #loop.create_task(run_get_announcements())
 
     # loop.create_task(run_read_images())
 

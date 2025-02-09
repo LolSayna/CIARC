@@ -123,9 +123,12 @@ TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
 
 # Do a specific objective
 #CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Fixed_objective
-#FIXED_OBJECTIVE = "Atlantis 10"
+#FIXED_OBJECTIVE = "Aurora 10"
+
+# Go for the emergency beacon tracker
+CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.EBT
 
 # To set a custom time window to be active, or to disable all timing checks
-DO_TIMING_CHECK = True
-START_TIME = datetime.datetime(2025, 1, 29, 12, 00, tzinfo=datetime.timezone.utc)
-STOP_TIME = datetime.datetime(2025, 2, 1, 12, 00, tzinfo=datetime.timezone.utc)
+DO_TIMING_CHECK = False
+START_TIME = datetime.datetime(2025, 1, 2, 12, 00, tzinfo=datetime.timezone.utc)
+STOP_TIME = datetime.datetime(2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc)

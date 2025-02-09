@@ -20,7 +20,7 @@
 ## Sonstiges
 - Tried "coverage_required": 0 / 0.0 -> führt zum crash beim komplet
   - Alles darüber wird nie erfüllt
-
+- Better Stitching of 23Atlantis10 dataset
 
 
 
