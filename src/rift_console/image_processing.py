@@ -94,6 +94,7 @@ def stitch_images(
                 logger.warning(
                     f"Could not parse file {image_name}, skipped. Error: {e}"
                 )
+                continue
 
             # possible resize
             if lens_size != 600:
