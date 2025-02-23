@@ -546,7 +546,7 @@ class StatePlanner(BaseModel):
                     self._z_obj_list: list[ZonedObjective] = parse_objective_api(
                         json_response
                     )
-                    logger.warning(
+                    logger.info(
                         f"Updated objectives, there are {len(self._z_obj_list)} objectives."
                     )
                 else:

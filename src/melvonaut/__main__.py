@@ -116,6 +116,9 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                     lines = []
                     async for line in response.content:
                         line = line.decode("utf-8")
+                        logger.warning(f"Received announcement {line}")
+                        logger.warning(f"Location is: {state_planner.calc_current_location()}")
+
                         logger.debug(f"Received announcement {line}")
                         line = line.replace("data:", "").strip()
                         if line in {"\n", "\r\n", "\r"}:

@@ -172,3 +172,4 @@ media
 logs/melvonaut/images
 src/rift_console/static/images/preview.png
 *.csv
+*.csv.old
