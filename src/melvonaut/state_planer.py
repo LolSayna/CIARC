@@ -99,17 +99,9 @@ class StatePlanner(BaseModel):
     def calc_current_location(self) -> tuple[float, float]:
         if self.current_telemetry is None:
             return 0.0, 0.0
-        time_since_observation = (
-            datetime.datetime.now() - self.current_telemetry.timestamp
-        ).total_seconds()
-        current_x = (
-            self.current_telemetry.width_x
-            + self.current_telemetry.vx * time_since_observation
-        )
-        current_y = (
-            self.current_telemetry.height_y
-            + self.current_telemetry.vy * time_since_observation
-        )
+        time_since_observation = (datetime.datetime.now(datetime.timezone.utc) - self.current_telemetry.timestamp).total_seconds()
+        current_x = (self.current_telemetry.width_x + self.current_telemetry.vx * time_since_observation)
+        current_y = (self.current_telemetry.height_y + self.current_telemetry.vy * time_since_observation)
         return current_x, current_y
 
     async def trigger_velocity_change(self, new_vel_x: float, new_vel_y: float) -> None:

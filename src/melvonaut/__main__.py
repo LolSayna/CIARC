@@ -8,7 +8,7 @@ import concurrent.futures
 import signal
 import sys
 import tracemalloc
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import aiohttp
@@ -120,16 +120,16 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                         #logger.warning(f"Received announcement {line}")
                         #logger.warning(f"Location is: {state_planner.calc_current_location()}")
 
-                        logger.warning(f"Received announcement {line}")
+                        logger.warning(f"Received announcement with content:{line}")
                         line = line.replace("data:", "")
-                        if line in {"\n", "\r\n", "\r"}:
+                        if line in {"\n", "\r\n", " \r\n", "\r"}:
                             if not lines:
                                 continue
                             if lines[0] == ':ok\n':
                                 lines = []
                                 continue
                             current_event = Event()
-                            current_event.timestamp = datetime.now()
+                            current_event.timestamp = datetime.now( timezone.utc)
                             current_event.current_x, current_event.current_y = state_planner.calc_current_location()
                             current_event.parse(''.join(lines))
                             logger.warning(f"Received announcement: {current_event.model_dump()}")
@@ -138,7 +138,7 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                             last_id = current_event.id
                             lines = []
                         else:
-                            logger.debug(f"Appending event line: {line}")
+                            logger.debug(f"Appending event line: {line}/{repr(line)}")
                             lines.append(line)
         except TimeoutError:
             logger.error("Announcements subscription timed out")
