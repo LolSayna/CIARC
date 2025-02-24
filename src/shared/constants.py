@@ -117,7 +117,7 @@ STITCHING_COUNT_LIMIT = 5000
 ## [Melvin Task Planing]
 # Standard mapping, with no objectives and the camera angle below
 #CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
-TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
+TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Normal
 
 # Automatically do the next upcoming objective
 #CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
