@@ -1,14 +1,20 @@
 import asyncio
+import csv
 import datetime
 import re
 import time
+from pathlib import Path
+
 import requests
 from enum import StrEnum
 from typing import Callable, Awaitable, Any, Final
 
 from PIL import Image
+from aiofile import async_open
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
+
+from urllib3.filepost import writer
 
 import shared.constants as con
 from loguru import logger
@@ -285,6 +291,9 @@ class Event(BaseModel):
     event: str = 'message'
     id: Optional[str] = None
     retry: Optional[bool] = None
+    timestamp: Optional[datetime.datetime] = None
+    current_x: Optional[float] = None
+    current_y: Optional[float] = None
 
     def dump(self) -> str:
         lines = []
@@ -322,3 +331,24 @@ class Event(BaseModel):
 
     def __str__(self) -> str:
         return self.data
+
+    async def to_csv(self) -> None:
+        logger.debug("Storing event as csv.")
+
+        event_dict = self.model_dump()
+        if self.timestamp:
+            event_dict["timestamp"] = self.timestamp.isoformat()
+        if not Path(con.EVENT_LOCATION_CSV).is_file():
+            async with async_open(con.EVENT_LOCATION_CSV, "w") as afp:
+                writer = csv.DictWriter(afp, fieldnames=event_dict.keys())
+                await writer.writeheader()
+                await writer.writerow(event_dict)
+            logger.debug(f"Writing to {con.EVENT_LOCATION_CSV}")
+        else:
+            async with async_open(con.EVENT_LOCATION_CSV, "a") as afp:
+                writer = csv.DictWriter(afp, fieldnames=event_dict.keys())
+                await writer.writerow(event_dict)
+            logger.debug(f"Writing to {con.EVENT_LOCATION_CSV}")
+
+
+

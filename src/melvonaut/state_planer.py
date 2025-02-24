@@ -1,22 +1,38 @@
 
 ##### State machine #####
 import asyncio
+import csv
 import subprocess
 import datetime
 import math
 import threading
 import tracemalloc
+from pathlib import Path
 from typing import Optional
 from aiofile import async_open
 import aiohttp
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import shared.constants as con
 from melvonaut.mel_telemetry import MelTelemetry
-from shared.models import CameraAngle, MELVINTasks, State, Timer, ZonedObjective, lens_size_by_angle, limited_log, parse_objective_api
+from shared.models import CameraAngle, MELVINTasks, State, Timer, ZonedObjective, lens_size_by_angle, limited_log, \
+    parse_objective_api, Event
 from loguru import logger
 from melvonaut.loop_config import loop
 import random
+
+
+async def load_events_from_csv() -> list[Event]:
+    events = []
+    if not Path(con.EVENT_LOCATION_CSV).is_file():
+        logger.warning(f"No event file found under {con.EVENT_LOCATION_CSV}")
+    else:
+        async with async_open(con.EVENT_LOCATION_CSV, "r") as afp:
+            reader = csv.DictReader(afp)
+            for row in reader:
+                events.append(Event(**row))
+        logger.info(f"Loaded {len(events)} events from {con.EVENT_LOCATION_CSV}")
+    return events
 
 
 class StatePlanner(BaseModel):
@@ -30,6 +46,8 @@ class StatePlanner(BaseModel):
     submitted_transition_request: bool = False
 
     target_state: Optional[State] = None
+
+    recent_events: list[Event] = load_events_from_csv()
 
     _accelerating: bool = False
 

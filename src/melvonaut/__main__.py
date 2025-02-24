@@ -8,6 +8,7 @@ import concurrent.futures
 import signal
 import sys
 import tracemalloc
+from datetime import datetime
 from typing import Optional
 
 import aiohttp
@@ -30,7 +31,7 @@ if con.TRACING:
 
 ##### LOGGING #####
 logger.remove()
-logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
+logger.add(sink=sys.stdout, level="DEBUG", backtrace=True, diagnose=True)
 logger.add(
     sink=con.MEL_LOG_LOCATION,
     rotation="00:00",
@@ -46,7 +47,7 @@ aiodebug.log_slow_callbacks.enable(0.05)
 # create a unique id each time melvonauts start, to allow better image sorting
 
 
-tracemalloc.start()
+#tracemalloc.start()
 
 state_planner = StatePlanner()
 
@@ -116,10 +117,10 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                     lines = []
                     async for line in response.content:
                         line = line.decode("utf-8")
-                        logger.warning(f"Received announcement {line}")
-                        logger.warning(f"Location is: {state_planner.calc_current_location()}")
+                        #logger.warning(f"Received announcement {line}")
+                        #logger.warning(f"Location is: {state_planner.calc_current_location()}")
 
-                        logger.debug(f"Received announcement {line}")
+                        logger.warning(f"Received announcement {line}")
                         line = line.replace("data:", "").strip()
                         if line in {"\n", "\r\n", "\r"}:
                             if not lines:
@@ -127,10 +128,13 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                             if lines[0] == ':ok\n':
                                 lines = []
                                 continue
-
                             current_event = Event()
+                            current_event.timestamp = datetime.now()
+                            current_event.current_x, current_event.current_y = state_planner.calc_current_location()
                             current_event.parse(''.join(lines))
-                            logger.warning(f"Received announcement: {current_event.dump()}")
+                            logger.warning(f"Received announcement: {current_event.model_dump()}")
+                            await current_event.to_csv()
+                            state_planner.recent_events.append(current_event)
                             last_id = current_event.id
                             lines = []
                         else:
@@ -147,10 +151,10 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
 
 # Irgendwie restartet der sich alle 5 sekunden, und glaube überlastet die API
 async def run_get_announcements() -> None:
-    logger.error("Started announcements subscription")
+    logger.warning("Started announcements subscription")
     while True:
         await asyncio.gather(get_announcements2())
-        logger.error("Restarted announcements subscription")
+        logger.warning("Restarted announcements subscription")
 
 
 # not in use, can be removed
