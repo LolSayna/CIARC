@@ -121,7 +121,7 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                         #logger.warning(f"Location is: {state_planner.calc_current_location()}")
 
                         logger.warning(f"Received announcement {line}")
-                        line = line.replace("data:", "").strip()
+                        line = line.replace("data:", "")
                         if line in {"\n", "\r\n", "\r"}:
                             if not lines:
                                 continue
@@ -138,6 +138,7 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                             last_id = current_event.id
                             lines = []
                         else:
+                            logger.debug(f"Appending event line: {line}")
                             lines.append(line)
         except TimeoutError:
             logger.error("Announcements subscription timed out")
