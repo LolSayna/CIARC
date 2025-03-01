@@ -58,7 +58,6 @@ optional = true
 Pygments = ">=2.10.0"
 coverage = {extras = ["toml"], version = ">=6.2"}
 darglint = ">=1.8.1"
-furo = ">=2021.11.12"
 mypy = ">=0.930"
 pre-commit = ">=2.16.0"
 pre-commit-hooks = ">=4.1.0"
@@ -77,6 +76,7 @@ mkdocs-coverage = "^1.1.0"
 mkdocs-material = "^9.6.6"
 mkdocs = "^1.6.1"
 pydocstyle = "^6.3.0"
+vulture = "^2.14"
 
 [tool.poetry.scripts]
 melvonaut = "melvonaut.__main__:main"

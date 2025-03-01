@@ -201,7 +201,7 @@ def stitch_images(
                 )
 
             processed_images_counter += 1
-            if processed_images_counter % con.SAVE_PANAORMA_STEP == 0:
+            if processed_images_counter % con.SAVE_PANORAMA_STEP == 0:
                 panorama.save(
                     con.PANORAMA_PATH + "step_" + str(processed_images_counter) + ".png"
                 )

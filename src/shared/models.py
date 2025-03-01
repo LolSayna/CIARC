@@ -284,7 +284,7 @@ class BaseTelemetry(BaseModel):
     def __str__(self):
         return (
             f"Telemetry@{self.timestamp.isoformat()} state={self.state} angle={self.angle} "
-            f"(x,y)=({self.width_x},{self.height_y}) (vx,vy)=({self.vx},{self.vy}) " 
+            f"(x,y)=({self.width_x},{self.height_y}) (vx,vy)=({self.vx},{self.vy}) "
             f"battery={self.battery}/{self.max_battery} fuel={self.fuel} sim_speed={self.simulation_speed} "
             f"dist_cov={self.distance_covered} area_cov={self.area_covered.narrow}/{self.area_covered.normal}/{self.area_covered.wide} "
             f"active_t={self.active_time} #images={self.images_taken} obj-done/points={self.objectives_done}/{self.objectives_points} "

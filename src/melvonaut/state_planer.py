@@ -13,6 +13,7 @@ import aiohttp
 from pydantic import BaseModel
 
 import shared.constants as con
+import melvonaut.settings as settings
 from melvonaut.mel_telemetry import MelTelemetry
 from shared.models import (
     CameraAngle,
@@ -106,9 +107,18 @@ class StatePlanner(BaseModel):
     def calc_current_location(self) -> tuple[float, float]:
         if self.current_telemetry is None:
             return 0.0, 0.0
-        time_since_observation = (datetime.datetime.now(datetime.timezone.utc) - self.current_telemetry.timestamp).total_seconds()
-        current_x = (self.current_telemetry.width_x + self.current_telemetry.vx * time_since_observation)
-        current_y = (self.current_telemetry.height_y + self.current_telemetry.vy * time_since_observation)
+        time_since_observation = (
+            datetime.datetime.now(datetime.timezone.utc)
+            - self.current_telemetry.timestamp
+        ).total_seconds()
+        current_x = (
+            self.current_telemetry.width_x
+            + self.current_telemetry.vx * time_since_observation
+        )
+        current_y = (
+            self.current_telemetry.height_y
+            + self.current_telemetry.vy * time_since_observation
+        )
         return current_x, current_y
 
     async def trigger_velocity_change(self, new_vel_x: float, new_vel_y: float) -> None:
@@ -207,7 +217,7 @@ class StatePlanner(BaseModel):
                 "No telemetry data available. Cannot plan battery based switching."
             )
             return
-        if self.current_telemetry.battery <= con.BATTERY_LOW_THRESHOLD:
+        if self.current_telemetry.battery <= settings.BATTERY_LOW_THRESHOLD:
             if self.get_current_state() == state_low_battery:
                 return
             logger.debug(
@@ -243,10 +253,10 @@ class StatePlanner(BaseModel):
                 )
             case State.Acquisition:
                 # in EBT leave once everything is set
-                if con.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
+                if settings.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
                     if (
                         self.current_telemetry.angle
-                        == con.TARGET_CAMERA_ANGLE_ACQUISITION
+                        == settings.TARGET_CAMERA_ANGLE_ACQUISITION
                         or self._target_vel_x == self.current_telemetry.vx
                         or self._target_vel_y == self.current_telemetry.vy
                     ):
@@ -257,19 +267,20 @@ class StatePlanner(BaseModel):
             case State.Charge:
                 if (
                     self.current_telemetry.battery
-                    >= self.current_telemetry.max_battery - con.BATTERY_HIGH_THRESHOLD
+                    >= self.current_telemetry.max_battery
+                    - settings.BATTERY_HIGH_THRESHOLD
                 ):
-                    if con.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
+                    if settings.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
                         # starting ebt, but speed/angle not set yet
 
                         # if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
                         if (
                             self.current_telemetry.angle
-                            != con.TARGET_CAMERA_ANGLE_ACQUISITION
+                            != settings.TARGET_CAMERA_ANGLE_ACQUISITION
                         ):
                             logger.info("In Ebt, setting up angle")
                             logger.info(
-                                f"{self.current_telemetry.angle} { con.TARGET_CAMERA_ANGLE_ACQUISITION}"
+                                f"{self.current_telemetry.angle} { settings.TARGET_CAMERA_ANGLE_ACQUISITION}"
                             )
                             logger.info(
                                 f"{self._target_vel_x} {self.current_telemetry.vx}"
@@ -335,7 +346,7 @@ class StatePlanner(BaseModel):
                 self.previous_state = self.get_previous_state()
                 self.state_change_time = datetime.datetime.now()
                 # Put in here events to do on state change
-                if con.TRACING:
+                if settings.TRACING:
                     if self.previous_state == State.Transition:
                         snapshot1 = tracemalloc.take_snapshot()
                         stats = snapshot1.statistics("traceback")
@@ -399,17 +410,17 @@ class StatePlanner(BaseModel):
         # Filter out cases where no image should be taken
 
         if (
-            con.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective
-            or con.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective
+            settings.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective
+            or settings.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective
         ) and not self._z_obj_list:
             logger.warning(
                 "Skipped image: In Objectives_only mode, but z_obj_list emtpy!"
             )
             return
 
-        if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION:
+        if self.current_telemetry.angle != settings.TARGET_CAMERA_ANGLE_ACQUISITION:
             logger.info(
-                f"Skipped image: current_angle={self.current_telemetry.angle} vs target={con.TARGET_CAMERA_ANGLE_ACQUISITION}"
+                f"Skipped image: current_angle={self.current_telemetry.angle} vs target={settings.TARGET_CAMERA_ANGLE_ACQUISITION}"
             )
             return
         if self._accelerating:
@@ -418,19 +429,19 @@ class StatePlanner(BaseModel):
             )
             return
 
-        if con.DO_TIMING_CHECK and con.START_TIME > datetime.datetime.now(
+        if settings.DO_TIMING_CHECK and settings.START_TIME > datetime.datetime.now(
             datetime.timezone.utc
         ):
             logger.warning(
-                f"Skipped image, to early: start={con.START_TIME} current_time={datetime.datetime.now(datetime.timezone.utc)}"
+                f"Skipped image, to early: start={settings.START_TIME} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
         if (
-            con.DO_TIMING_CHECK
-            and datetime.datetime.now(datetime.timezone.utc) > con.STOP_TIME
+            settings.DO_TIMING_CHECK
+            and datetime.datetime.now(datetime.timezone.utc) > settings.STOP_TIME
         ):
             logger.warning(
-                f"Skipped image, to late: end={con.STOP_TIME} current_time={datetime.datetime.now(datetime.timezone.utc)}"
+                f"Skipped image, to late: end={settings.STOP_TIME} current_time={datetime.datetime.now(datetime.timezone.utc)}"
             )
             return
 
@@ -538,10 +549,10 @@ class StatePlanner(BaseModel):
         while self.get_current_state() == State.Acquisition:
             if self.current_telemetry is None:
                 logger.warning(
-                    f"No telemetry data available. Waiting {con.OBSERVATION_REFRESH_RATE}s for next image."
+                    f"No telemetry data available. Waiting {settings.OBSERVATION_REFRESH_RATE}s for next image."
                 )
                 image_task = Timer(
-                    timeout=con.OBSERVATION_REFRESH_RATE, callback=self.get_image
+                    timeout=settings.OBSERVATION_REFRESH_RATE, callback=self.get_image
                 ).get_task()
                 await asyncio.gather(image_task)
                 continue
@@ -551,13 +562,13 @@ class StatePlanner(BaseModel):
                 delay_in_s = (
                     math.sqrt(
                         current_total_vel**2
-                        + 2 * con.ACCELERATION * con.DISTANCE_BETWEEN_IMAGES
+                        + 2 * con.ACCELERATION * settings.DISTANCE_BETWEEN_IMAGES
                     )
                     - current_total_vel
                 ) / con.ACCELERATION
             else:
                 # When not accelerating calculate distance based on current speed
-                delay_in_s = float(con.DISTANCE_BETWEEN_IMAGES) / current_total_vel
+                delay_in_s = float(settings.DISTANCE_BETWEEN_IMAGES) / current_total_vel
             delay_in_s = delay_in_s / self.get_simulation_speed()
             logger.debug(f"Next image in {delay_in_s}s.")
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()
@@ -581,13 +592,13 @@ class StatePlanner(BaseModel):
 
         current_obj = None
         # Always check for new objective in this task
-        if con.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective:
+        if settings.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective:
             current_obj = self._z_obj_list[0]
 
             logger.error(f"Using next_objective, current task: {current_obj.name}")
 
         # In this task look for the given string
-        elif con.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective:
+        elif settings.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective:
             for obj in self._z_obj_list:
                 if obj.name == con.FIXED_OBJECTIVE:
                     logger.error(f"Using fixed_objective, current task: {obj}")
@@ -599,7 +610,7 @@ class StatePlanner(BaseModel):
             con.STOP_TIME = current_obj.end
             con.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
 
-            self._current_obj_name = str(current_obj.id) + (current_obj.name).replace(
+            self._current_obj_name = str(current_obj.id) + current_obj.name.replace(
                 " ", ""
             )
 
@@ -618,24 +629,24 @@ class StatePlanner(BaseModel):
 
         # check if change occured and cut the last image
 
-        await self.trigger_camera_angle_change(con.TARGET_CAMERA_ANGLE_ACQUISITION)
+        await self.trigger_camera_angle_change(settings.TARGET_CAMERA_ANGLE_ACQUISITION)
 
         # TODO stop velocity change if battery is low
         if self.current_telemetry.battery < 25:
             logger.error("Battery low, TODO")
 
-        match con.TARGET_CAMERA_ANGLE_ACQUISITION:
+        match settings.TARGET_CAMERA_ANGLE_ACQUISITION:
             case CameraAngle.Wide:
                 await self.trigger_velocity_change(
-                    con.TARGET_SPEED_WIDE_X, con.TARGET_SPEED_WIDE_Y
+                    settings.TARGET_SPEED_WIDE_X, settings.TARGET_SPEED_WIDE_Y
                 )
             case CameraAngle.Narrow:
                 await self.trigger_velocity_change(
-                    con.TARGET_SPEED_NARROW_X, con.TARGET_SPEED_NARROW_Y
+                    settings.TARGET_SPEED_NARROW_X, settings.TARGET_SPEED_NARROW_Y
                 )
             case CameraAngle.Normal:
                 await self.trigger_velocity_change(
-                    con.TARGET_SPEED_NORMAL_X, con.TARGET_SPEED_NORMAL_Y
+                    settings.TARGET_SPEED_NORMAL_X, settings.TARGET_SPEED_NORMAL_Y
                 )
             case _:
                 pass

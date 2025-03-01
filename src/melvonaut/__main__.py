@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 import aiohttp
 import click
 
-import uvloop
 import aiodebug.log_slow_callbacks  # type: ignore
 from PIL import Image
 from aiofile import async_open
@@ -25,10 +24,11 @@ from loguru import logger
 from melvonaut.mel_telemetry import MelTelemetry
 from melvonaut.state_planer import StatePlanner
 import shared.constants as con
+import melvonaut.settings as settings
 from shared.models import Timer, Event, MelvinImage, CameraAngle
 from melvonaut.loop_config import loop
 
-if con.TRACING:
+if settings.TRACING:
     import tracemalloc
 
     tracemalloc.start(5)
@@ -86,7 +86,8 @@ async def run_get_observations() -> None:
     while True:
         logger.debug("Submitted observations request")
         observe_task = Timer(
-            timeout=con.OBSERVATION_REFRESH_RATE / state_planner.get_simulation_speed(),
+            timeout=settings.OBSERVATION_REFRESH_RATE
+            / state_planner.get_simulation_speed(),
             callback=get_observations,
         ).get_task()
         await asyncio.gather(observe_task)
@@ -108,6 +109,7 @@ async def get_announcements() -> None:
     except TimeoutError:
         # could add async sleep here
         logger.error("Announcements subscription timed out")
+
 
 async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
     headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
@@ -143,10 +145,14 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                                 lines = []
                                 continue
                             current_event = Event()
-                            current_event.timestamp = datetime.now( timezone.utc)
-                            current_event.current_x, current_event.current_y = state_planner.calc_current_location()
-                            current_event.parse(''.join(lines))
-                            logger.warning(f"Received announcement: {current_event.model_dump()}")
+                            current_event.timestamp = datetime.now(timezone.utc)
+                            current_event.current_x, current_event.current_y = (
+                                state_planner.calc_current_location()
+                            )
+                            current_event.parse("".join(lines))
+                            logger.warning(
+                                f"Received announcement: {current_event.model_dump()}"
+                            )
                             await current_event.to_csv()
                             state_planner.recent_events.append(current_event)
                             last_id = current_event.id

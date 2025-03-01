@@ -46,10 +46,9 @@ melvin = rift_console.rift_telemetry.RiftTelemetry()
 # Main Page
 @app.route("/", methods=["GET"])
 async def index() -> str:
-
-    #ciarc_api.load_backup(datetime.datetime.now())
-    #ciarc_api.change_simulation_speed(user_speed_multiplier=5)
-    #ciarc_api.set_network_sim(is_network_simulation=False)
+    # ciarc_api.load_backup(datetime.datetime.now())
+    # ciarc_api.change_simulation_speed(user_speed_multiplier=5)
+    # ciarc_api.set_network_sim(is_network_simulation=False)
 
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
@@ -257,7 +256,7 @@ def run_server() -> None:
     # thread.start()
 
     ciarc_api.live_observation()
-    #ciarc_api.change_velocity(5.4,4.2)
+    # ciarc_api.change_velocity(5.4,4.2)
 
     drsApi.update_telemetry(melvin)
     click.echo("Updated Telemetry")

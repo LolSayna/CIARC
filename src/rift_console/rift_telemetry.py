@@ -45,7 +45,9 @@ class RiftTelemetry(Telemetry):
     area_covered: dict = {}
     data_volume: dict = {}
     distance_covered: float = 0.0
-    images_taken:int = 0
-    objectives_done:int = 0
-    objectives_points:int = 0
-    timestamp: datetime.datetime = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    images_taken: int = 0
+    objectives_done: int = 0
+    objectives_points: int = 0
+    timestamp: datetime.datetime = datetime.datetime.now(
+        datetime.timezone.utc
+    ).isoformat()
