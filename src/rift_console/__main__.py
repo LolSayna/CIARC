@@ -12,6 +12,7 @@ from quart import Quart, render_template, redirect, url_for, request
 from werkzeug.wrappers.response import Response
 
 # shared imports
+import rift_console.rift_console
 import shared.constants as con
 from shared.models import State, CameraAngle, lens_size_by_angle
 import rift_console.drsApi as drsApi
@@ -41,7 +42,53 @@ logger.add(
 
 app = Quart(__name__)
 melvin = rift_console.rift_telemetry.RiftTelemetry()
+console = rift_console.rift_console.RiftConsole()
 
+@app.route("/main", methods=["GET"])
+async def new_index():
+
+    return await render_template("main.html",
+                                 
+        last_backup_date=console.last_backup_date,
+        is_network_simulation=console.is_network_simulation,
+        user_speed_multiplier=console.user_speed_multiplier,
+        )
+
+
+
+
+# Wrapper for all Simulation Manipulation buttons
+@app.route("/control_handler", methods=["POST"])
+async def control_handler() -> Response:
+
+    global console
+
+    # read which button was pressed
+    form = await request.form
+    button = form.get("button", type=str)
+
+    match button:
+        case "reset":
+            ciarc_api.reset()
+            console = rift_console.rift_console.RiftConsole()
+        case "load":
+            ciarc_api.load_backup(console.last_backup_date)
+            console = rift_console.rift_console.RiftConsole()
+        case "save":
+            console.last_backup_date = ciarc_api.save_backup()
+        case "on_sim":
+            ciarc_api.change_network_sim(is_network_simulation=True)
+            console.is_network_simulation = True
+        case "off_sim":
+            ciarc_api.change_network_sim(is_network_simulation=False)
+            console.is_network_simulation = False
+        case _:
+            logger.error(f"Unknown button pressed: {button}")
+
+    return redirect(url_for("new_index"))
+
+
+# OLD CODE!
 
 # Main Page
 @app.route("/", methods=["GET"])

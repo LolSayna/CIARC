@@ -54,6 +54,10 @@ def console_api(
                 f"Console: could not contact satellite - {r.status_code} - {type(r.json())} - {r.json()}."
             )
             return {}
+    
+def reset() -> None:
+    console_api(method=HttpCode.GET, endpoint=con.RESET_ENDPOINT)
+    return
 
 
 def save_backup() -> datetime.datetime:
@@ -130,7 +134,7 @@ def change_velocity(vel_x: float, vel_y: float) -> dict:
     return d
 
 
-def change_state(angle: CameraAngle) -> dict:
+def change_angle(angle: CameraAngle) -> dict:
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
