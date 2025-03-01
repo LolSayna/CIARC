@@ -55,6 +55,9 @@ async def index() -> str:
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
 
+    ciarc_api.change_state(CameraAngle.Narrow)
+    # ciarc_api.change_velocity(7.2,4.2)
+
     if melvin.timestamp is not None:
         formatted_timestamp = str(
             melvin.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -209,7 +212,7 @@ async def slider_button() -> Response:
     )
     """
     ciarc_api.change_simulation_speed(user_speed_multiplier=slider_value)
-    ciarc_api.set_network_sim(is_network_simulation=is_network_simulation)
+    ciarc_api.change_network_sim(is_network_simulation=is_network_simulation)
 
     return redirect(url_for("index"))
 
@@ -254,6 +257,8 @@ def run_server() -> None:
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
 
+    ciarc_api.live_observation()
+    #ciarc_api.change_velocity(5.4,4.2)
 
     drsApi.update_telemetry(melvin)
     click.echo("Updated Telemetry")

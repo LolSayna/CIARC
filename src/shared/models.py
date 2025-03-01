@@ -265,22 +265,32 @@ class BaseTelemetry(BaseModel):
 
     active_time: float
     angle: CameraAngle
-    area_covered: Optional[AreaCovered] = None
+    area_covered: AreaCovered
     battery: float
-    data_volume: Optional[DataVolume] = None
-    distance_covered: Optional[float] = None
+    data_volume: DataVolume
+    distance_covered: float
     fuel: float
     width_x: int
     height_y: int
-    images_taken: Optional[int] = None
+    images_taken: int
     max_battery: float
-    objectives_done: Optional[int] = None
-    objectives_points: Optional[int] = None
+    objectives_done: int
+    objectives_points: int
     simulation_speed: int
     state: State
-    timestamp: Optional[datetime.datetime] = None
+    timestamp: datetime.datetime
     vx: float
     vy: float
+
+    def __str__(self):
+        return (
+            f"Telemetry@{self.timestamp.isoformat()} state={self.state} angle={self.angle} "
+            f"(x,y)=({self.width_x},{self.height_y}) (vx,vy)=({self.vx},{self.vy}) " 
+            f"battery={self.battery}/{self.max_battery} fuel={self.fuel} sim_speed={self.simulation_speed} "
+            f"dist_cov={self.distance_covered} area_cov={self.area_covered.narrow}/{self.area_covered.normal}/{self.area_covered.wide} "
+            f"active_t={self.active_time} #images={self.images_taken} obj-done/points={self.objectives_done}/{self.objectives_points} "
+            f"data-s/r={self.data_volume.data_volume_sent}/{self.data_volume.data_volume_received}"
+        )
 
 
 # more Telemetry, used in Riftconsole to display map
