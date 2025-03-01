@@ -17,6 +17,7 @@ from shared.models import State, CameraAngle, lens_size_by_angle
 import rift_console.drsApi as drsApi
 import rift_console.rift_telemetry
 import rift_console.image_processing
+import rift_console.ciarc_api as ciarc_api
 
 # TODO-s
 # - Autorefresh (maybe javascript)
@@ -26,6 +27,7 @@ import rift_console.image_processing
 
 
 ##### LOGGING #####
+con.RIFT_LOG_LEVEL = "DEBUG"
 logger.remove()
 logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
 logger.add(
@@ -44,8 +46,16 @@ melvin = rift_console.rift_telemetry.RiftTelemetry()
 # Main Page
 @app.route("/", methods=["GET"])
 async def index() -> str:
+
+    #ciarc_api.load_backup(datetime.datetime.now())
+    #ciarc_api.change_simulation_speed(user_speed_multiplier=5)
+    #ciarc_api.set_network_sim(is_network_simulation=False)
+
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
+
+    ciarc_api.change_state(CameraAngle.Narrow)
+    # ciarc_api.change_velocity(7.2,4.2)
 
     if melvin.timestamp is not None:
         formatted_timestamp = str(
@@ -193,11 +203,15 @@ async def slider_button() -> Response:
     slider_value = form.get("speed", default=20, type=int)
     is_network_simulation = "enableSim" in form
 
+    """
     drsApi.change_simulation_speed(
         melvin=melvin,
         is_network_simulation=is_network_simulation,
         user_speed_multiplier=slider_value,
     )
+    """
+    ciarc_api.change_simulation_speed(user_speed_multiplier=slider_value)
+    ciarc_api.change_network_sim(is_network_simulation=is_network_simulation)
 
     return redirect(url_for("index"))
 
@@ -241,6 +255,9 @@ def run_server() -> None:
 
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
+
+    ciarc_api.live_observation()
+    #ciarc_api.change_velocity(5.4,4.2)
 
     drsApi.update_telemetry(melvin)
     click.echo("Updated Telemetry")

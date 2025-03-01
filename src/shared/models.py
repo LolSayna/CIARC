@@ -223,10 +223,15 @@ class State(StrEnum):
 # ISO 8601 format
 # Melin returns like this: 2024-12-24T13:10:13.660337Z
 #   or                     2024-12-26T13:00:00Z
+# Z equivalent to +00:00 to indicate UTC timezone
 
-# convert with datetime.datetime.fromisoformat(X)
+# To get current time in UTC use datetime.datetime.now(datetime.timezone.utc)
+# or get from string with datetime.datetime.fromisoformat(X)
+# to also change into isoformat use X.isoformat()
+
 #   2024-12-24 13:09:12.786576+00:00
 #   2024-12-30 13:00:00+00:00
+# TARGET: 2025-03-01T00:54:02.809428+00:00
 
 
 # NOT USED only for referenze
@@ -259,22 +264,32 @@ class BaseTelemetry(BaseModel):
 
     active_time: float
     angle: CameraAngle
-    area_covered: Optional[AreaCovered] = None
+    area_covered: AreaCovered
     battery: float
-    data_volume: Optional[DataVolume] = None
-    distance_covered: Optional[float] = None
+    data_volume: DataVolume
+    distance_covered: float
     fuel: float
     width_x: int
     height_y: int
-    images_taken: Optional[int] = None
+    images_taken: int
     max_battery: float
-    objectives_done: Optional[int] = None
-    objectives_points: Optional[int] = None
+    objectives_done: int
+    objectives_points: int
     simulation_speed: int
     state: State
-    timestamp: Optional[datetime.datetime] = None
+    timestamp: datetime.datetime
     vx: float
     vy: float
+
+    def __str__(self):
+        return (
+            f"Telemetry@{self.timestamp.isoformat()} state={self.state} angle={self.angle} "
+            f"(x,y)=({self.width_x},{self.height_y}) (vx,vy)=({self.vx},{self.vy}) " 
+            f"battery={self.battery}/{self.max_battery} fuel={self.fuel} sim_speed={self.simulation_speed} "
+            f"dist_cov={self.distance_covered} area_cov={self.area_covered.narrow}/{self.area_covered.normal}/{self.area_covered.wide} "
+            f"active_t={self.active_time} #images={self.images_taken} obj-done/points={self.objectives_done}/{self.objectives_points} "
+            f"data-s/r={self.data_volume.data_volume_sent}/{self.data_volume.data_volume_received}"
+        )
 
 
 # more Telemetry, used in Riftconsole to display map
