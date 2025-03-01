@@ -12,6 +12,18 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v2
 
+      - name: Install dependencies
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev --with melvonaut --with rift_console
+
       - name: Deploy docs
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
