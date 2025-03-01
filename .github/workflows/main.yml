@@ -12,23 +12,9 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v2
 
-      - name: Install python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.12'
-
-      - name: Install poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.5.1
-
-      - name: Export dependencies
-        run: |
-          poetry export --with dev --with melvonaut --with rift_console -o requirements.txt
-
       - name: Deploy docs
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONFIG_FILE: mkdocs.yml
-          REQUIREMENTS: requirements.txt
+          REQUIREMENTS: docs/docs-requirements.txt
