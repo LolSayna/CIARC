@@ -12,6 +12,7 @@ from shared.models import BaseTelemetry
 from melvonaut.loop_config import loop
 from loguru import logger
 
+
 class MelTelemetry(BaseTelemetry):
     timestamp: datetime.datetime
 

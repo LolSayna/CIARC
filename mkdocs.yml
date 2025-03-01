@@ -1,0 +1,61 @@
+site_name: "Riftonauts Docs"
+site_description: "Documentation for Melvonaut and Riftconsole"
+site_url: "https://c103-219.cloud.gwdg.de/docs/"
+repo_url: "https://github.com/LolSayna/CIARC"
+repo_name: "LolSayna/CIARC"
+site_dir: "site"
+
+nav:
+- Home:
+  - Overview: index.md
+  - Changelog: changelog.md
+  - License: license.md
+- Code Reference:
+  - Melvonaut: melvonaut.md
+  - Rift-Console: rift_console.md
+  - Shared: shared.md
+
+theme:
+  name: material
+  features:
+  - navigation.tabs
+  palette:
+    scheme: slate
+    primary: teal
+    accent: purple
+
+extra_css:
+- css/mkdocstrings.css
+
+markdown_extensions:
+- admonition
+- pymdownx.emoji
+- pymdownx.magiclink
+- pymdownx.snippets:
+    check_paths: true
+- pymdownx.superfences
+- pymdownx.tabbed
+- pymdownx.tasklist
+- toc:
+    permalink: true
+
+watch:
+- src
+
+plugins:
+- search
+- autorefs
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        paths: [src]
+        options:
+          show_source: true
+          docstring_style: google
+          show_submodules: true
+          show_if_no_docstring: true
+          show_inherited: true
+          show_private: true
+          show_line_numbers: true
+          show_warnings: true

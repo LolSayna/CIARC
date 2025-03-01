@@ -1,4 +1,3 @@
-
 ##### State machine #####
 import asyncio
 import csv
@@ -11,14 +10,22 @@ from pathlib import Path
 from typing import Optional
 from aiofile import async_open
 import aiohttp
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 import shared.constants as con
 from melvonaut.mel_telemetry import MelTelemetry
-from shared.models import CameraAngle, MELVINTasks, State, Timer, ZonedObjective, lens_size_by_angle, limited_log, \
-    parse_objective_api, Event
+from shared.models import (
+    CameraAngle,
+    MELVINTasks,
+    State,
+    Timer,
+    ZonedObjective,
+    lens_size_by_angle,
+    limited_log,
+    parse_objective_api,
+    Event,
+)
 from loguru import logger
-from melvonaut.loop_config import loop
 import random
 
 
@@ -164,8 +171,8 @@ class StatePlanner(BaseModel):
                     logger.error(f"Failed to set camera angle to {new_angle}")
         # set if angle got set
         # TODO fix later
-        #await loop.run_get_observations()
-        #await loop.create_task(get_observations())
+        # await loop.run_get_observations()
+        # await loop.create_task(get_observations())
 
     async def trigger_state_transition(self, new_state: State) -> None:
         if new_state in [State.Transition, State.Unknown, State.Deployment, State.Safe]:
@@ -243,10 +250,14 @@ class StatePlanner(BaseModel):
                     f"Previous state: {self.get_previous_state()}, Current state: {self.get_current_state()}"
                 )
             case State.Acquisition:
-
                 # in EBT leave once everything is set
                 if con.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
-                    if self.current_telemetry.angle == con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x == self.current_telemetry.vx or self._target_vel_y == self.current_telemetry.vy:
+                    if (
+                        self.current_telemetry.angle
+                        == con.TARGET_CAMERA_ANGLE_ACQUISITION
+                        or self._target_vel_x == self.current_telemetry.vx
+                        or self._target_vel_y == self.current_telemetry.vy
+                    ):
                         await self.trigger_state_transition(State.Acquisition)
 
                 await self.switch_if_battery_low(State.Charge, State.Acquisition)
@@ -257,16 +268,23 @@ class StatePlanner(BaseModel):
                     >= self.current_telemetry.max_battery - con.BATTERY_HIGH_THRESHOLD
                 ):
                     if con.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
-
-
                         # starting ebt, but speed/angle not set yet
 
-                        #if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
-                        if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION:
+                        # if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
+                        if (
+                            self.current_telemetry.angle
+                            != con.TARGET_CAMERA_ANGLE_ACQUISITION
+                        ):
                             logger.info("In Ebt, setting up angle")
-                            logger.info(f"{self.current_telemetry.angle} { con.TARGET_CAMERA_ANGLE_ACQUISITION}")
-                            logger.info(f"{self._target_vel_x} {self.current_telemetry.vx}")
-                            logger.info(f"{self._target_vel_y} {self.current_telemetry.vy}")
+                            logger.info(
+                                f"{self.current_telemetry.angle} { con.TARGET_CAMERA_ANGLE_ACQUISITION}"
+                            )
+                            logger.info(
+                                f"{self._target_vel_x} {self.current_telemetry.vx}"
+                            )
+                            logger.info(
+                                f"{self._target_vel_y} {self.current_telemetry.vy}"
+                            )
                             await self.trigger_state_transition(State.Acquisition)
                         else:
                             logger.info("starting comms!")
@@ -275,7 +293,6 @@ class StatePlanner(BaseModel):
                     else:
                         logger.info("starting acq!")
                         await self.trigger_state_transition(State.Acquisition)
-
 
             case State.Safe:
                 if self.current_telemetry.battery >= (
@@ -390,9 +407,9 @@ class StatePlanner(BaseModel):
         # Filter out cases where no image should be taken
 
         if (
-            (con.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective or con.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective)
-            and not self._z_obj_list
-        ):
+            con.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective
+            or con.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective
+        ) and not self._z_obj_list:
             logger.warning(
                 "Skipped image: In Objectives_only mode, but z_obj_list emtpy!"
             )
@@ -579,7 +596,6 @@ class StatePlanner(BaseModel):
 
         # In this task look for the given string
         elif con.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective:
-
             for obj in self._z_obj_list:
                 if obj.name == con.FIXED_OBJECTIVE:
                     logger.error(f"Using fixed_objective, current task: {obj}")
@@ -587,7 +603,6 @@ class StatePlanner(BaseModel):
                     break
 
         if current_obj:
-
             con.START_TIME = current_obj.start
             con.STOP_TIME = current_obj.end
             con.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
@@ -599,7 +614,8 @@ class StatePlanner(BaseModel):
             con.IMAGE_PATH = con.IMAGE_PATH_BASE + self._current_obj_name + "/"
 
             con.IMAGE_LOCATION = (
-                con.IMAGE_PATH + "image_{melv_id}_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
+                con.IMAGE_PATH
+                + "image_{melv_id}_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
             )
             try:
                 subprocess.run(["mkdir", con.IMAGE_PATH], check=True)
@@ -607,7 +623,6 @@ class StatePlanner(BaseModel):
 
             except subprocess.CalledProcessError as e:
                 logger.info(f"z_obj could not mkdir: {e}")
-
 
         # check if change occured and cut the last image
 

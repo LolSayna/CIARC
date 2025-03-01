@@ -116,15 +116,15 @@ STITCHING_COUNT_LIMIT = 5000
 
 ## [Melvin Task Planing]
 # Standard mapping, with no objectives and the camera angle below
-#CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
+# CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
 TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Narrow
 
 # Automatically do the next upcoming objective
-#CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
+# CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
 
 # Do a specific objective
-#CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Fixed_objective
-#FIXED_OBJECTIVE = "Aurora 10"
+# CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Fixed_objective
+# FIXED_OBJECTIVE = "Aurora 10"
 
 # Go for the emergency beacon tracker
 CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.EBT

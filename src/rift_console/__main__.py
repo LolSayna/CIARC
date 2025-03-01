@@ -4,12 +4,11 @@ import sys
 import datetime
 import subprocess
 import os
-import random
 
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, url_for, request, jsonify
+from quart import Quart, render_template, redirect, url_for, request
 from werkzeug.wrappers.response import Response
 
 # shared imports

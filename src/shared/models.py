@@ -14,7 +14,6 @@ from aiofile import async_open
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
-from urllib3.filepost import writer
 
 import shared.constants as con
 from loguru import logger
@@ -22,7 +21,7 @@ from loguru import logger
 # Fix issue with Image size
 Image.MAX_IMAGE_PIXELS = 500000000
 
-SSE_LINE_PATTERN: Final[re.Pattern] = re.compile('(?P<name>[^:]*):?( ?(?P<value>.*))?')
+SSE_LINE_PATTERN: Final[re.Pattern] = re.compile("(?P<name>[^:]*):?( ?(?P<value>.*))?")
 
 
 # From User Manual
@@ -286,9 +285,10 @@ class Telemetry(BaseTelemetry):
     pre_transition_state: State
     planed_transition_state: State
 
+
 class Event(BaseModel):
-    data: str = ''
-    event: str = 'message'
+    data: str = ""
+    event: str = "message"
     id: Optional[str] = None
     retry: Optional[bool] = None
     timestamp: Optional[datetime.datetime] = None
@@ -299,11 +299,11 @@ class Event(BaseModel):
         lines = []
         if self.id:
             lines.append(f"id: {self.id}")
-        if self.event != 'message':
+        if self.event != "message":
             lines.append(f"event: {self.event}")
         if self.retry:
             lines.append(f"retry: {self.retry}")
-        lines.extend(f"data: {d}" for d in self.data.split('\n'))
+        lines.extend(f"data: {d}" for d in self.data.split("\n"))
         return "\n".join(lines)
 
     def parse(self, raw) -> None:
@@ -314,19 +314,19 @@ class Event(BaseModel):
                 continue
 
             name = m.group("name")
-            if name == '':
+            if name == "":
                 continue
             value = m.group("value")
-            if name == 'data':
+            if name == "data":
                 if self.data:
-                    self.data = f'{self.data}\n{value}'
+                    self.data = f"{self.data}\n{value}"
                 else:
                     self.data = value
-            elif name == 'event':
+            elif name == "event":
                 self.event = value
-            elif name == 'id':
+            elif name == "id":
                 self.id = value
-            elif name == 'retry':
+            elif name == "retry":
                 self.retry = bool(value)
 
     def __str__(self) -> str:
@@ -349,6 +349,3 @@ class Event(BaseModel):
                 writer = csv.DictWriter(afp, fieldnames=event_dict.keys())
                 await writer.writerow(event_dict)
             logger.debug(f"Writing to {con.EVENT_LOCATION_CSV}")
-
-
-

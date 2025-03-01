@@ -5,23 +5,26 @@ Melvonaut
 
 import asyncio
 import concurrent.futures
+import io
+import os
+import re
 import signal
 import sys
-import tracemalloc
 from datetime import datetime
-from typing import Optional
+from typing import Optional, AsyncIterable
 
 import aiohttp
 import click
 
-import uvloop
 import aiodebug.log_slow_callbacks  # type: ignore
+from PIL import Image
+from aiofile import async_open
 
 from loguru import logger
 from melvonaut.mel_telemetry import MelTelemetry
 from melvonaut.state_planer import StatePlanner
 import shared.constants as con
-from shared.models import Timer, Event
+from shared.models import Timer, Event, MelvinImage, CameraAngle
 from melvonaut.loop_config import loop
 
 if con.TRACING:
@@ -47,11 +50,18 @@ aiodebug.log_slow_callbacks.enable(0.05)
 # create a unique id each time melvonauts start, to allow better image sorting
 
 
-#tracemalloc.start()
+# tracemalloc.start()
 
 state_planner = StatePlanner()
 
+
 async def get_observations() -> None:
+    """Async get observations from the Melvin API and update the state planner
+
+    Returns:
+        None
+
+    """
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(con.OBSERVATION_ENDPOINT) as response:
@@ -80,6 +90,7 @@ async def run_get_observations() -> None:
         ).get_task()
         await asyncio.gather(observe_task)
 
+
 # currently not in use
 async def get_announcements() -> None:
     try:
@@ -97,12 +108,15 @@ async def get_announcements() -> None:
         # could add async sleep here
         logger.error("Announcements subscription timed out")
 
+
 async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
     headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
     if last_id:
         headers["Last-Event-ID"] = last_id
 
-    timeout = aiohttp.ClientTimeout(total=None, connect=None, sock_connect=None, sock_read=None)
+    timeout = aiohttp.ClientTimeout(
+        total=None, connect=None, sock_connect=None, sock_read=None
+    )
 
     async with aiohttp.ClientSession(timeout=timeout) as session:
         try:
@@ -117,22 +131,26 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                     lines = []
                     async for line in response.content:
                         line = line.decode("utf-8")
-                        #logger.warning(f"Received announcement {line}")
-                        #logger.warning(f"Location is: {state_planner.calc_current_location()}")
+                        # logger.warning(f"Received announcement {line}")
+                        # logger.warning(f"Location is: {state_planner.calc_current_location()}")
 
                         logger.warning(f"Received announcement {line}")
                         line = line.replace("data:", "")
                         if line in {"\n", "\r\n", "\r"}:
                             if not lines:
                                 continue
-                            if lines[0] == ':ok\n':
+                            if lines[0] == ":ok\n":
                                 lines = []
                                 continue
                             current_event = Event()
                             current_event.timestamp = datetime.now()
-                            current_event.current_x, current_event.current_y = state_planner.calc_current_location()
-                            current_event.parse(''.join(lines))
-                            logger.warning(f"Received announcement: {current_event.model_dump()}")
+                            current_event.current_x, current_event.current_y = (
+                                state_planner.calc_current_location()
+                            )
+                            current_event.parse("".join(lines))
+                            logger.warning(
+                                f"Received announcement: {current_event.model_dump()}"
+                            )
                             await current_event.to_csv()
                             state_planner.recent_events.append(current_event)
                             last_id = current_event.id
@@ -159,7 +177,6 @@ async def run_get_announcements() -> None:
 
 
 # not in use, can be removed
-"""
 async def read_images() -> AsyncIterable[MelvinImage]:
     if not os.path.exists(con.IMAGE_PATH):
         logger.warning(f"{con.IMAGE_PATH} does not exist.")
@@ -191,7 +208,7 @@ async def read_images() -> AsyncIterable[MelvinImage]:
                 angle = CameraAngle(match.group(1))
                 cor_x = int(match.group(2))
                 cor_y = int(match.group(3))
-                time = datetime.datetime.strptime(match.group(4), "%Y-%m-%d_%H-%M-%S")
+                time = datetime.strptime(match.group(4), "%Y-%m-%d_%H-%M-%S")
                 yield MelvinImage(
                     image=image, angle=angle, cor_x=cor_x, cor_y=cor_y, time=time
                 )
@@ -202,13 +219,12 @@ async def read_images() -> AsyncIterable[MelvinImage]:
 async def run_read_images() -> None:
     async for image in read_images():
         logger.debug(f"Received image: {image}")
-"""
+
 
 def cancel_tasks() -> None:
     for task in asyncio.all_tasks():
         task.cancel()
     loop.stop()
-
 
 
 def start_event_loop() -> None:

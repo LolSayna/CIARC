@@ -1,7 +1,1 @@
-# License
-
-```{literalinclude} ../LICENSE
----
-language: none
----
-```
+--8<-- "LICENSE"
