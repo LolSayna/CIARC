@@ -224,10 +224,15 @@ class State(StrEnum):
 # ISO 8601 format
 # Melin returns like this: 2024-12-24T13:10:13.660337Z
 #   or                     2024-12-26T13:00:00Z
+# Z equivalent to +00:00 to indicate UTC timezone
 
-# convert with datetime.datetime.fromisoformat(X)
+# To get current time in UTC use datetime.datetime.now(datetime.timezone.utc)
+# or get from string with datetime.datetime.fromisoformat(X)
+# to also change into isoformat use X.isoformat()
+
 #   2024-12-24 13:09:12.786576+00:00
 #   2024-12-30 13:00:00+00:00
+# TARGET: 2025-03-01T00:54:02.809428+00:00
 
 
 # NOT USED only for referenze
