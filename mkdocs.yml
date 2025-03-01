@@ -55,7 +55,8 @@ plugins:
           docstring_style: google
           show_submodules: true
           show_if_no_docstring: true
-          show_inherited: true
-          show_private: true
-          show_line_numbers: true
-          show_warnings: true
+          extra:
+            show_inherited: true
+            show_private: true
+            show_line_numbers: true
+            show_warnings: true

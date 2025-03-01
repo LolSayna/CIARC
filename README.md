@@ -5,47 +5,14 @@
 
 [pre-commit]: https://github.com/pre-commit/pre-commit
 
-# MAIN TODO LIST
-## Melvonaut
-- machen unsere Speeds so sinn? zu schnell in wide mode?
-  - wie oft oberserven, wie oft Fotos machen
-- Box Erkennung, im Objective modus nur dann auch Fotos machen
-
-## Riftconsole
-- karte updaten, das trajektorie besser visualisert wird
-  - velocity in px/s, beschleuniung ist 0.02 px/s**2, dazu simulation speed
-- beim cli stitching nudigen als parameter
-- CLI befehl um Bilder zu filtern, a) nach datum b) nach Region
-
-## Sonstiges
-- Tried "coverage_required": 0 / 0.0 -> führt zum crash beim komplet
-  - Alles darüber wird nie erfüllt
-- Better Stitching of 23Atlantis10 dataset
-
-# 2025-02-22 14:52:22.004 [1740232341] GALILEO_MSG_EB,ID_100,DISTANCE_2041.90
-4097,7652 - 2025-02-22T14:52:24.512541+00:00
-
-# 2025-02-22 14:56:26.095 [1740232586] GALILEO_MSG_EB,ID_100,DISTANCE_688.46
-5758,8357 - 2025-02-22T14:56:23.675082+00:00
-5793,8372 - 2025-02-22T14:56:28.762635+00:00
-
-# 2025-02-22 14:57:27.118 [1740232647] GALILEO_MSG_EB,ID_100,DISTANCE_1075.88
-6220,8553 - 2025-02-22T14:57:29
-
-# 2025-02-22 14:57:57.584 [1740232677] GALILEO_MSG_EB,ID_100,DISTANCE_1014.08
-6398,8629 - 2025-02-22T14:57:55.392352+00:00
-
-# 2025-02-22 14:58:28.150 [1740232708] GALILEO_MSG_EB,ID_100,DISTANCE_1330.08
-6609,8719 - 2025-02-22T14:58:25.935891+00:00
-
-# 2025-02-22 14:59:59.650 [1740232799] GALILEO_MSG_EB,ID_100,DISTANCE_1669.02
-7245,8989 -   2025-02-22T14:59:57
 
 ## Overview
 
 This is the [Riftonaut's CIARC](https://github.com/Lolsayna/CIARC) repository.
 It implements software for MELVIN and the Operator Console of the
 ESA [Computer In A Room Challenge 3](https://www.esa.int/Education/Engagement/Applications_are_now_open_for_the_ESA_Academy_s_Computer_In_A_Room_Challenge_CIARC_3).
+
+The project implements two packages: `melvonaut` and `rift-console`.
 
 The Operator Console, referred to as _Rift-Console_, implements a web application based on Flask,
 which provides an interface to visualize and control the MELVIN in the satellite simulation.
@@ -72,9 +39,11 @@ pipx inject nox nox-poetry
 
 ## Installation
 
-To install the requirements run `poetry install`. Afterwards run `poetry shell` to activate the virtual environment in your shell.
+To install the requirements run `poetry install --with melvonaut` or `poetry install --with rift_console`.
+Afterward run `poetry shell` to activate the virtual environment in your shell.
 This provides the `melvonaut` and `rift-console` commands.
 Then the commands can be used, make sure to run them in the main project folder.
+For development run `poetry install --with dev`.
 
 The rift-console can be deployed as a docker container.
 Use the `docker-compose up --build -d` command to start it. Run `docker-compose down` inside the repository to stop them.
@@ -82,19 +51,30 @@ Or refer to `make docker-compose-up` in the Makefile.
 
 To use the Image Processing, make sure an `.ssh/config` for the entry `console` exists.
 
-Inside `poetry shell` run `make myps` to check for type errors or run `make lint` to check linting before commiting. Use `poetry add NAME` to add librarys.
+Inside `poetry shell` run `make mypy` to check for type errors or run `make lint` to check linting before commiting.
+Use `poetry add NAME` to add dependencies or `poetry add --group dev NAME` to add dev dependencies.
+Replace `dev` with `melvonaut` or `rift-console` to add to the corresponding group.
+
+To build docs use `make docs` and `make servedocs`.
+This will build the docs and serve them on http://localhost:9000/
 
 ## Usage
 
-- TODO
+### Melvonaut
+- Run `melvonaut` to start the service.
+- Run `melvonaut --help` for more information.
 
+### Rift-Console
+- Run `rift-console` to start the web application.
+- Run `rift-console --help` for more information.
+- Deploy the web application to a docker container using `docker-compose up --build -d`.
 
 ## Conventions
 ### Logging Level
 - Debug: some basic function is executed
 - Info: DEFAULT state - only important transitions
-- Warning: something notworthy/important that should stand out from the logs
-- Error: something that should never have happend
+- Warning: something noteworthy/important that should stand out from the logs
+- Error: something that should never have happened
 - CRITICAL: reserved for debugging
 
 
@@ -151,3 +131,40 @@ _Ciarc_ is free and open source software.
 
 
 [license]: https://github.com/Lolsayna/CIARC/blob/main/LICENSE
+
+
+# MAIN TODO LIST
+## Melvonaut
+- machen unsere Speeds so sinn? zu schnell in wide mode?
+  - wie oft oberserven, wie oft Fotos machen
+- Box Erkennung, im Objective modus nur dann auch Fotos machen
+
+## Riftconsole
+- karte updaten, das trajektorie besser visualisert wird
+  - velocity in px/s, beschleuniung ist 0.02 px/s**2, dazu simulation speed
+- beim cli stitching nudigen als parameter
+- CLI befehl um Bilder zu filtern, a) nach datum b) nach Region
+
+## Sonstiges
+- Tried "coverage_required": 0 / 0.0 -> führt zum crash beim komplet
+  - Alles darüber wird nie erfüllt
+- Better Stitching of 23Atlantis10 dataset
+
+# 2025-02-22 14:52:22.004 [1740232341] GALILEO_MSG_EB,ID_100,DISTANCE_2041.90
+4097,7652 - 2025-02-22T14:52:24.512541+00:00
+
+# 2025-02-22 14:56:26.095 [1740232586] GALILEO_MSG_EB,ID_100,DISTANCE_688.46
+5758,8357 - 2025-02-22T14:56:23.675082+00:00
+5793,8372 - 2025-02-22T14:56:28.762635+00:00
+
+# 2025-02-22 14:57:27.118 [1740232647] GALILEO_MSG_EB,ID_100,DISTANCE_1075.88
+6220,8553 - 2025-02-22T14:57:29
+
+# 2025-02-22 14:57:57.584 [1740232677] GALILEO_MSG_EB,ID_100,DISTANCE_1014.08
+6398,8629 - 2025-02-22T14:57:55.392352+00:00
+
+# 2025-02-22 14:58:28.150 [1740232708] GALILEO_MSG_EB,ID_100,DISTANCE_1330.08
+6609,8719 - 2025-02-22T14:58:25.935891+00:00
+
+# 2025-02-22 14:59:59.650 [1740232799] GALILEO_MSG_EB,ID_100,DISTANCE_1669.02
+7245,8989 -   2025-02-22T14:59:57

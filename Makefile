@@ -66,13 +66,13 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	nox -s docs-build
-	-cp -r media html/media
-	$(BROWSER) html/index.html
+docs: ## generate mkdocs HTML documentation, including API docs
+	mkdocs build
+	-cp -r media site/media
+	$(BROWSER) site/index.html
 
 servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c 'sphinx-build -C docs html' -R -D .
+	mkdocs serve -a 0.0.0.0:9000
 
 release: dist ## package and upload a release
 	poetry publish

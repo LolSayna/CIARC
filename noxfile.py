@@ -23,7 +23,7 @@ except ImportError:
     raise SystemExit(dedent(message)) from None
 
 
-packages = ["melvonaut", "rift_console"]
+packages = ["melvonaut", "rift_console", "shared"]
 python_versions = ["3.12"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
@@ -32,7 +32,6 @@ nox.options.sessions = (
     "tests",
     "typeguard",
     "xdoctest",
-    "docs-build",
     "trivy",
 )
 
@@ -141,7 +140,7 @@ def trivy(session: Session) -> None:
 @session(python=python_versions)
 def mypy(session: Session) -> None:
     """Type-scan using mypy."""
-    args = session.posargs or ["src", "tests", "docs/conf.py"]
+    args = session.posargs or ["src", "tests"]
     session.install(".")
     requirements = session.poetry.export_requirements()
     session.install("-r", str(requirements))
@@ -202,36 +201,3 @@ def xdoctest(session: Session) -> None:
         session.install(".")
         session.install("xdoctest[colors]")
         session.run("python", "-m", "xdoctest", *args)
-
-
-@session(name="docs-build", python=python_versions[0])
-def docs_build(session: Session) -> None:
-    """Build the documentation."""
-    args = session.posargs or ["docs", "html"]
-    if not session.posargs and "FORCE_COLOR" in os.environ:
-        args.insert(0, "--color")
-
-    session.install(".")
-    session.install("sphinx", "sphinx-click", "furo", "myst-parser")
-    requirements = session.poetry.export_requirements()
-    session.install("-r", str(requirements))
-
-    build_dir = Path("html")
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-
-    session.run("sphinx-build", *args)
-
-
-@session(python=python_versions[0])
-def docs(session: Session) -> None:
-    """Build and serve the documentation with live reloading on file changes."""
-    args = session.posargs or ["--open-browser", "docs", "docs/_build"]
-    session.install(".")
-    session.install("sphinx", "sphinx-autobuild", "sphinx-click", "furo", "myst-parser")
-
-    build_dir = Path("docs", "_build")
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-
-    session.run("sphinx-autobuild", *args)
