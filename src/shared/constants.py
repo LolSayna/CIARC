@@ -13,6 +13,7 @@ IMAGE_PATH = "logs/melvonaut/images/"
 IMAGE_LOCATION = IMAGE_PATH + "image_{melv_id}_{angle}_{time}_x_{cor_x}_y_{cor_y}.png"
 RIFT_LOG_LOCATION = "logs/rift_console/log_rift-console_{time:YYYY-MM-DD_HH}.log"
 PANORAMA_PATH = "media/"
+MEL_PERSISTENT_SETTINGS = "logs/melvonaut/persistent_settings.json"
 
 # [TRAJECTORY]
 # Number of seconds to calculate the path

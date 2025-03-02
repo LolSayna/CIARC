@@ -1,16 +1,20 @@
+
 from aiofile import async_open
 import json
+import pathlib
+from loguru import logger
+from shared import constants as con
 
 
 # load settings
 async def load_settings() -> dict:
-    async with async_open("persistent_settings.json", "r") as afp:
+    async with async_open(con.MEL_PERSISTENT_SETTINGS, "r") as afp:
         return json.loads(await afp.read())
 
 
 # save settings
 async def save_settings(settings):
-    async with async_open("persistent_settings.json", "w") as afp:
+    async with async_open(con.MEL_PERSISTENT_SETTINGS, "w") as afp:
         await afp.write(json.dumps(settings))
 
 
@@ -39,6 +43,14 @@ async def delete_settings(keys: list):
     for key in keys:
         del settings[key]
     await save_settings(settings)
+
+
+async def init_settings():
+    if pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
+        logger.debug("Settings already exist")
+        return
+    await save_settings({})
+    logger.debug("Settings created")
 
 
 # clear settings

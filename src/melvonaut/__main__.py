@@ -15,12 +15,13 @@ from datetime import datetime, timezone
 
 import aiohttp
 import click
+import apprise
 
 import aiodebug.log_slow_callbacks  # type: ignore
 from PIL import Image
 from aiofile import async_open
-
 from loguru import logger
+
 from melvonaut.mel_telemetry import MelTelemetry
 from melvonaut.state_planer import StatePlanner
 from melvonaut import api
@@ -36,14 +37,29 @@ if settings.TRACING:
 
 ##### LOGGING #####
 logger.remove()
-logger.add(sink=sys.stdout, level="DEBUG", backtrace=True, diagnose=True)
+logger.add(sink=sys.stdout, level=settings.TERMINAL_LOGGING_LEVEL, backtrace=True, diagnose=True)
 logger.add(
     sink=con.MEL_LOG_LOCATION,
     rotation="00:00",
-    level="DEBUG",
+    level=settings.FILE_LOGGING_LEVEL,
     backtrace=True,
     diagnose=True,
 )
+
+@apprise.decorators.notify(on="melvin")
+def melvin_notifier(body, title, notify_type, *args, **kwargs):
+    print("MELVIN HERE!")
+
+
+notifier = apprise.Apprise()
+if settings.DISCORD_WEBHOOK_TOKEN and settings.DISCORD_ALERTS_ENABLED:
+    notifier.add(f"discord://{settings.DISCORD_WEBHOOK_TOKEN}")
+    logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
+
+if settings.NETWORK_SIM_ENABLED:
+    notifier.add(f"melvin://")
+    logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
+
 
 ##### Global Variables #####
 current_telemetry = None

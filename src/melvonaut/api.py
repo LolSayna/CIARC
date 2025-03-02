@@ -98,6 +98,7 @@ def setup_routes(app) -> None:
 
 async def run_api() -> None:
     logger.debug("Setting up API server")
+    await p_settings.init_settings()
     app = web.Application()
     setup_routes(app)
     runner = web.AppRunner(app)

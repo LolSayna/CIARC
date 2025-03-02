@@ -1,8 +1,12 @@
 ## [General Settings]
 # Our settings, could be changed later
 import datetime
-
+from dotenv import load_dotenv
+import os
 from shared.models import CameraAngle, MELVINTasks
+
+load_dotenv()
+
 
 OBSERVATION_REFRESH_RATE = 5  # Seconds between observation requests
 BATTERY_LOW_THRESHOLD = 20
@@ -10,7 +14,15 @@ BATTERY_HIGH_THRESHOLD = 0  # Difference to Max Battery before switching
 
 TRACING = False
 
+TERMINAL_LOGGING_LEVEL = "DEBUG"
+FILE_LOGGING_LEVEL = "DEBUG"
+
 API_PORT = 8080
+
+DISCORD_WEBHOOK_TOKEN = os.getenv("DISCORD_WEBHOOK_TOKEN", None)
+DISCORD_ALERTS_ENABLED = True
+
+NETWORK_SIM_ENABLED = False
 
 ## [Camera Settings]
 TARGET_ANGLE_DEG = 23
