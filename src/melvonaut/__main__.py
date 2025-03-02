@@ -23,6 +23,7 @@ from aiofile import async_open
 from loguru import logger
 from melvonaut.mel_telemetry import MelTelemetry
 from melvonaut.state_planer import StatePlanner
+from melvonaut import api
 import shared.constants as con
 import melvonaut.settings as settings
 from shared.models import Timer, Event, MelvinImage, CameraAngle
@@ -236,8 +237,9 @@ def start_event_loop() -> None:
     loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=1))
 
     loop.create_task(run_get_observations())
-    # TODO removed for now, test later
     loop.create_task(run_get_announcements())
+
+    loop.create_task(api.run_api())
 
     # loop.create_task(run_read_images())
 

@@ -1,4 +1,4 @@
-# [General Settings]
+## [General Settings]
 # Our settings, could be changed later
 import datetime
 
@@ -8,6 +8,11 @@ OBSERVATION_REFRESH_RATE = 5  # Seconds between observation requests
 BATTERY_LOW_THRESHOLD = 20
 BATTERY_HIGH_THRESHOLD = 0  # Difference to Max Battery before switching
 
+TRACING = False
+
+API_PORT = 8080
+
+## [Camera Settings]
 TARGET_ANGLE_DEG = 23
 # With total speed over 50, cannot use wide angle camera
 # 49.9 = y + x
@@ -37,7 +42,7 @@ TARGET_SPEED_WIDE_X = 49.84
 TARGET_SPEED_WIDE_Y = 21.16
 
 DISTANCE_BETWEEN_IMAGES = 350  # How many pixel before taking another image
-TRACING = False
+
 
 ## [Melvin Task Planing]
 # Standard mapping, with no objectives and the camera angle below

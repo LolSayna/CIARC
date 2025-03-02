@@ -2,19 +2,20 @@
 name = "ciarc"
 version = "0.0.0"
 description = "Ciarc"
-authors = ["Riftonauts <TBD>"]
+authors = ["Riftonauts"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/Lolsayna/CIARC"
 repository = "https://github.com/Lolsayna/CIARC"
-#documentation = ""
+documentation = "https://lolsayna.github.io/CIARC/"
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 4 - Beta",
 ]
 
 packages = [
     { include = "melvonaut", from = "src" },
-    { include = "rift_console", from = "src" }
+    { include = "rift_console", from = "src" },
+    { include = "shared", from = "src" }
 ]
 
 [tool.poetry.urls]
@@ -30,6 +31,7 @@ aiodebug = "^2.3.0"
 pillow = "^11.0.0"
 psutil = "^6.1.0"
 pydantic = "^2.9.2"
+aiofile = "^3.9.0"
 
 [tool.poetry.group.melvonaut]
 optional = true
@@ -37,7 +39,6 @@ optional = true
 [tool.poetry.group.melvonaut.dependencies]
 uvloop = "^0.21.0"
 aiohttp = "^3.11.2"
-aiofile = "^3.9.0"
 pillow = "^11.0.0"
 pydantic = "^2.9.2"
 

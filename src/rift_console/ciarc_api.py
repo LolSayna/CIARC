@@ -133,9 +133,7 @@ def change_velocity(vel_x: float, vel_y: float) -> dict:
 def change_state(angle: CameraAngle) -> dict:
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
-        logger.warning(
-            "Console: no telemetry available, could not change camera angle"
-        )
+        logger.warning("Console: no telemetry available, could not change camera angle")
         return
     json = {
         "vel_x": obs["vx"],
