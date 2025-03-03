@@ -75,30 +75,16 @@ def load_backup(last_backup_date: datetime.datetime) -> None:
     return
 
 
-# WARNING, this disables network_simulation, since we dont know if it was enabled before
-def change_simulation_speed(user_speed_multiplier: int) -> None:
+def change_simulation_env(
+    is_network_simulation: bool = False, user_speed_multiplier: int = 1
+) -> None:
     params = {
-        "is_network_simulation": "false",
+        "is_network_simulation": str(is_network_simulation).lower(),
         "user_speed_multiplier": str(user_speed_multiplier),
     }
     console_api(method=HttpCode.PUT, endpoint=con.SIMULATION_ENDPOINT, params=params)
     logger.info(
-        f"Console: disabled network_sim - simulation speed changed set to {user_speed_multiplier}."
-    )
-
-    return
-
-
-def change_network_sim(
-    is_network_simulation: bool, old_user_speed_multiplier: int = 1
-) -> None:
-    params = {
-        "is_network_simulation": str(is_network_simulation).lower(),
-        "user_speed_multiplier": str(old_user_speed_multiplier),
-    }
-    console_api(method=HttpCode.PUT, endpoint=con.SIMULATION_ENDPOINT, params=params)
-    logger.info(
-        f"Console: simulation speed is {old_user_speed_multiplier} - network sim set {is_network_simulation}."
+        f"Console: simulation speed set to {user_speed_multiplier} - network simulation is {is_network_simulation}."
     )
 
     return
@@ -106,10 +92,13 @@ def change_network_sim(
 
 def live_observation() -> BaseTelemetry:
     d = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
-    b = BaseTelemetry(**d)
-    logger.info(f"Console: received live telemetry\n{b}.")
-
-    return b
+    if d:
+        b = BaseTelemetry(**d)
+        logger.info(f"Console: received live telemetry\n{b}.")
+        return b
+    else:
+        logger.warning("Live telemtry failed.")
+        return None
 
 
 def change_velocity(vel_x: float, vel_y: float) -> dict:

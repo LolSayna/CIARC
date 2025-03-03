@@ -47,14 +47,70 @@ console = rift_console.rift_console.RiftConsole()
 @app.route("/main", methods=["GET"])
 async def new_index():
 
-    return await render_template("main.html",
-                                 
-        last_backup_date=console.last_backup_date,
-        is_network_simulation=console.is_network_simulation,
-        user_speed_multiplier=console.user_speed_multiplier,
+    if console.live_telemetry:
+        return await render_template("main.html",
+                                    
+            last_backup_date=console.last_backup_date,
+            is_network_simulation=console.is_network_simulation,
+            user_speed_multiplier=console.user_speed_multiplier,
+
+            timestamp = console.live_telemetry.timestamp.isoformat(),
+            state=console.live_telemetry.state,
+            angle=console.live_telemetry.angle,
+            width_x=console.live_telemetry.width_x,
+            height_y=console.live_telemetry.height_y,
+            vx=console.live_telemetry.vx,
+            vy=console.live_telemetry.vy,
+            fuel=console.live_telemetry.fuel,
+            battery=console.live_telemetry.battery,
+            max_battery=console.live_telemetry.max_battery,
+            distance_covered=console.live_telemetry.distance_covered,
+            area_covered_narrow=console.live_telemetry.area_covered.narrow,
+            area_covered_normal=console.live_telemetry.area_covered.normal,
+            area_covered_wide=console.live_telemetry.area_covered.wide,
+            active_time=console.live_telemetry.active_time,
+            images_taken=console.live_telemetry.images_taken,
+            objectives_done=console.live_telemetry.objectives_done,
+            objectives_points=console.live_telemetry.objectives_points,
+            data_volume_sent=console.live_telemetry.data_volume.data_volume_sent,
+            data_volume_received=console.live_telemetry.data_volume.data_volume_received,
+        )
+    else:
+        return await render_template("main.html",
+                                    
+            last_backup_date=console.last_backup_date,
+            is_network_simulation=console.is_network_simulation,
+            user_speed_multiplier=console.user_speed_multiplier
         )
 
 
+
+
+# Wrapper to change Melvin Status
+@app.route("/satellite_handler", methods=["POST"])
+async def satellite_handler() -> Response:
+
+    global console
+
+    # read which button was pressed
+    form = await request.form
+    button = form.get("button", type=str)
+
+    match button:
+        case "telemetry":
+            new_tel = ciarc_api.live_observation()
+            if new_tel:
+                console.live_telemetry = new_tel
+                console.user_speed_multiplier = new_tel.simulation_speed
+        case "state":
+            pass
+        case "accelerate":
+            pass
+        case _:
+            logger.error(f"Unknown button pressed: {button}")
+    
+
+    return redirect(url_for("new_index"))   
 
 
 # Wrapper for all Simulation Manipulation buttons
@@ -71,17 +127,42 @@ async def control_handler() -> Response:
         case "reset":
             ciarc_api.reset()
             console = rift_console.rift_console.RiftConsole()
+            new_tel = ciarc_api.live_observation()
+            if new_tel:
+                console.live_telemetry = new_tel
+                console.user_speed_multiplier = new_tel.simulation_speed
         case "load":
             ciarc_api.load_backup(console.last_backup_date)
-            console = rift_console.rift_console.RiftConsole()
+            console.live_telemetry = None
+            new_tel = ciarc_api.live_observation()
+            if new_tel:
+                console.live_telemetry = new_tel
+                console.user_speed_multiplier = new_tel.simulation_speed
         case "save":
+            ciarc_api.save_backup()
             console.last_backup_date = ciarc_api.save_backup()
         case "on_sim":
-            ciarc_api.change_network_sim(is_network_simulation=True)
+            if console.user_speed_multiplier:
+                ciarc_api.change_simulation_env(is_network_simulation=True, user_speed_multiplier=console.user_speed_multiplier)
+            else:
+                ciarc_api.change_simulation_env(is_network_simulation=True)
+                logger.warning("Reset simulation speed to 1.")
             console.is_network_simulation = True
         case "off_sim":
-            ciarc_api.change_network_sim(is_network_simulation=False)
+            if console.user_speed_multiplier:
+                ciarc_api.change_simulation_env(is_network_simulation=False, user_speed_multiplier=console.user_speed_multiplier)
+            else:
+                ciarc_api.change_simulation_env(is_network_simulation=False)
+                logger.warning("Reset simulation speed to 1.")
             console.is_network_simulation = False
+        case "sim_speed":
+            speed = form.get("sim_speed", type=int)
+            if not (console.is_network_simulation is None):
+                ciarc_api.change_simulation_env(is_network_simulation=console.is_network_simulation, user_speed_multiplier=speed)
+            else:
+                ciarc_api.change_simulation_env(user_speed_multiplier=speed)
+                logger.warning("Disabled network simulation.")
+            console.user_speed_multiplier = speed
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
@@ -100,9 +181,10 @@ async def index() -> str:
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
 
-    ciarc_api.change_state(CameraAngle.Narrow)
+    #ciarc_api.change_state(CameraAngle.Narrow)
     # ciarc_api.change_velocity(7.2,4.2)
 
+    # TODO add check for if it worked
     if melvin.timestamp is not None:
         formatted_timestamp = str(
             melvin.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
