@@ -3,7 +3,7 @@
 import datetime
 from dotenv import load_dotenv
 import os
-from shared.models import CameraAngle, MELVINTasks
+from shared.models import CameraAngle, MELVINTask
 
 load_dotenv()
 
@@ -69,7 +69,7 @@ TARGET_CAMERA_ANGLE_ACQUISITION = CameraAngle.Normal
 # FIXED_OBJECTIVE = "Aurora 10"
 
 # Go for the emergency beacon tracker
-CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.EBT
+CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.EBT
 
 # To set a custom time window to be active, or to disable all timing checks
 DO_TIMING_CHECK = False

@@ -199,7 +199,7 @@ class Timer(BaseModel):
 
 
 # Our custom programs/missions/states in which we can place Melvin
-class MELVINTasks(StrEnum):
+class MELVINTask(StrEnum):
     Mapping = "mapping"
     Next_objective = "next_objective"
     Fixed_objective = "fixed_objective"

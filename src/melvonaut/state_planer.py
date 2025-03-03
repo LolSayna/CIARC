@@ -17,7 +17,7 @@ import melvonaut.settings as settings
 from melvonaut.mel_telemetry import MelTelemetry
 from shared.models import (
     CameraAngle,
-    MELVINTasks,
+    MELVINTask,
     State,
     Timer,
     ZonedObjective,
@@ -253,7 +253,7 @@ class StatePlanner(BaseModel):
                 )
             case State.Acquisition:
                 # in EBT leave once everything is set
-                if settings.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
+                if settings.CURRENT_MELVIN_TASK == MELVINTask.EBT:
                     if (
                         self.current_telemetry.angle
                         == settings.TARGET_CAMERA_ANGLE_ACQUISITION
@@ -270,7 +270,7 @@ class StatePlanner(BaseModel):
                     >= self.current_telemetry.max_battery
                     - settings.BATTERY_HIGH_THRESHOLD
                 ):
-                    if settings.CURRENT_MELVIN_TASK == MELVINTasks.EBT:
+                    if settings.CURRENT_MELVIN_TASK == MELVINTask.EBT:
                         # starting ebt, but speed/angle not set yet
 
                         # if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
@@ -410,8 +410,8 @@ class StatePlanner(BaseModel):
         # Filter out cases where no image should be taken
 
         if (
-            settings.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective
-            or settings.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective
+            settings.CURRENT_MELVIN_TASK == MELVINTask.Fixed_objective
+            or settings.CURRENT_MELVIN_TASK == MELVINTask.Next_objective
         ) and not self._z_obj_list:
             logger.warning(
                 "Skipped image: In Objectives_only mode, but z_obj_list emtpy!"
@@ -592,13 +592,13 @@ class StatePlanner(BaseModel):
 
         current_obj = None
         # Always check for new objective in this task
-        if settings.CURRENT_MELVIN_TASK == MELVINTasks.Next_objective:
+        if settings.CURRENT_MELVIN_TASK == MELVINTask.Next_objective:
             current_obj = self._z_obj_list[0]
 
             logger.error(f"Using next_objective, current task: {current_obj.name}")
 
         # In this task look for the given string
-        elif settings.CURRENT_MELVIN_TASK == MELVINTasks.Fixed_objective:
+        elif settings.CURRENT_MELVIN_TASK == MELVINTask.Fixed_objective:
             for obj in self._z_obj_list:
                 if obj.name == con.FIXED_OBJECTIVE:
                     logger.error(f"Using fixed_objective, current task: {obj}")

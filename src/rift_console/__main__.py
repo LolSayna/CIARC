@@ -44,17 +44,16 @@ app = Quart(__name__)
 melvin = rift_console.rift_telemetry.RiftTelemetry()
 console = rift_console.rift_console.RiftConsole()
 
+
 @app.route("/main", methods=["GET"])
 async def new_index():
-
     if console.live_telemetry:
-        return await render_template("main.html",
-                                    
+        return await render_template(
+            "main.html",
             last_backup_date=console.last_backup_date,
             is_network_simulation=console.is_network_simulation,
             user_speed_multiplier=console.user_speed_multiplier,
-
-            timestamp = console.live_telemetry.timestamp.isoformat(),
+            timestamp=console.live_telemetry.timestamp.isoformat(),
             state=console.live_telemetry.state,
             angle=console.live_telemetry.angle,
             width_x=console.live_telemetry.width_x,
@@ -76,20 +75,17 @@ async def new_index():
             data_volume_received=console.live_telemetry.data_volume.data_volume_received,
         )
     else:
-        return await render_template("main.html",
-                                    
+        return await render_template(
+            "main.html",
             last_backup_date=console.last_backup_date,
             is_network_simulation=console.is_network_simulation,
-            user_speed_multiplier=console.user_speed_multiplier
+            user_speed_multiplier=console.user_speed_multiplier,
         )
-
-
 
 
 # Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
 async def satellite_handler() -> Response:
-
     global console
 
     # read which button was pressed
@@ -108,15 +104,13 @@ async def satellite_handler() -> Response:
             pass
         case _:
             logger.error(f"Unknown button pressed: {button}")
-    
 
-    return redirect(url_for("new_index"))   
+    return redirect(url_for("new_index"))
 
 
 # Wrapper for all Simulation Manipulation buttons
 @app.route("/control_handler", methods=["POST"])
 async def control_handler() -> Response:
-
     global console
 
     # read which button was pressed
@@ -143,22 +137,31 @@ async def control_handler() -> Response:
             console.last_backup_date = ciarc_api.save_backup()
         case "on_sim":
             if console.user_speed_multiplier:
-                ciarc_api.change_simulation_env(is_network_simulation=True, user_speed_multiplier=console.user_speed_multiplier)
+                ciarc_api.change_simulation_env(
+                    is_network_simulation=True,
+                    user_speed_multiplier=console.user_speed_multiplier,
+                )
             else:
                 ciarc_api.change_simulation_env(is_network_simulation=True)
                 logger.warning("Reset simulation speed to 1.")
             console.is_network_simulation = True
         case "off_sim":
             if console.user_speed_multiplier:
-                ciarc_api.change_simulation_env(is_network_simulation=False, user_speed_multiplier=console.user_speed_multiplier)
+                ciarc_api.change_simulation_env(
+                    is_network_simulation=False,
+                    user_speed_multiplier=console.user_speed_multiplier,
+                )
             else:
                 ciarc_api.change_simulation_env(is_network_simulation=False)
                 logger.warning("Reset simulation speed to 1.")
             console.is_network_simulation = False
         case "sim_speed":
             speed = form.get("sim_speed", type=int)
-            if not (console.is_network_simulation is None):
-                ciarc_api.change_simulation_env(is_network_simulation=console.is_network_simulation, user_speed_multiplier=speed)
+            if console.is_network_simulation is not None:
+                ciarc_api.change_simulation_env(
+                    is_network_simulation=console.is_network_simulation,
+                    user_speed_multiplier=speed,
+                )
             else:
                 ciarc_api.change_simulation_env(user_speed_multiplier=speed)
                 logger.warning("Disabled network simulation.")
@@ -171,6 +174,7 @@ async def control_handler() -> Response:
 
 # OLD CODE!
 
+
 # Main Page
 @app.route("/", methods=["GET"])
 async def index() -> str:
@@ -181,7 +185,7 @@ async def index() -> str:
     # when refreshing pull updated telemetry
     drsApi.update_telemetry(melvin)
 
-    #ciarc_api.change_state(CameraAngle.Narrow)
+    # ciarc_api.change_state(CameraAngle.Narrow)
     # ciarc_api.change_velocity(7.2,4.2)
 
     # TODO add check for if it worked

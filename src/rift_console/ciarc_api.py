@@ -54,7 +54,8 @@ def console_api(
                 f"Console: could not contact satellite - {r.status_code} - {type(r.json())} - {r.json()}."
             )
             return {}
-    
+
+
 def reset() -> None:
     console_api(method=HttpCode.GET, endpoint=con.RESET_ENDPOINT)
     return

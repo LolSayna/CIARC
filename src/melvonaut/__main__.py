@@ -37,7 +37,12 @@ if settings.TRACING:
 
 ##### LOGGING #####
 logger.remove()
-logger.add(sink=sys.stdout, level=settings.TERMINAL_LOGGING_LEVEL, backtrace=True, diagnose=True)
+logger.add(
+    sink=sys.stdout,
+    level=settings.TERMINAL_LOGGING_LEVEL,
+    backtrace=True,
+    diagnose=True,
+)
 logger.add(
     sink=con.MEL_LOG_LOCATION,
     rotation="00:00",
@@ -45,6 +50,7 @@ logger.add(
     backtrace=True,
     diagnose=True,
 )
+
 
 @apprise.decorators.notify(on="melvin")
 def melvin_notifier(body, title, notify_type, *args, **kwargs):
@@ -57,7 +63,7 @@ if settings.DISCORD_WEBHOOK_TOKEN and settings.DISCORD_ALERTS_ENABLED:
     logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
 
 if settings.NETWORK_SIM_ENABLED:
-    notifier.add(f"melvin://")
+    notifier.add("melvin://")
     logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
 
 
