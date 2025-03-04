@@ -11,6 +11,28 @@
 
     <!-- CSS -->
     <style>
+
+      .button-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+      }
+      .arrow {
+          width: 0;
+          height: 0;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-bottom: 10px solid #007bff; /* Matches the button color */
+          margin: 0 10px;
+          transform: rotate(90deg);
+      }
+      /* Larger State icon in the middle */
+      .smaller_img {
+        width: 48px;
+        height: auto;
+    }
+
     </style>
   </head>
 
@@ -20,11 +42,29 @@
     <!-- Header Section -->
     <div class="container-fluid mt-3">
       <div class="container-fluid row border">
-          <h1 class="col text-center text-primary">Rift Console</h1>
+
+        <div class="col-md-6 mt-3">
+          <h1 class="text-center text-primary">Rift Console</h1>
+        </div>
+        <div class="col-md-3 mt-2">
+          <div class="button-container">
+            <img src="{{ url_for('static', filename='images/' + prev_state + '.png') }}" alt="prev_state" class="smaller_img">
+            <div class="arrow"></div>
+            <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="current_state">
+            <div class="arrow"></div>
+            <img src="{{ url_for('static', filename='images/' + next_state + '.png') }}" alt="next_state" class="smaller_img">
+          </div>
+        </div>
+        <div class="col-md-3">
           <h2 class="col text-center text-secondary" id="time">Loading UTC Time...</h2>
+        </div>
       </div>
     </div>
-
+    <ul>
+      {% for message in get_flashed_messages() %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
       <!-- Content Section -->
     <div class="container-fluid mt-2">
       <div class="row">
@@ -105,17 +145,52 @@
               <h6>SimOn: {{is_network_simulation}}</h6>
               <h6>SimSpeed: {{user_speed_multiplier}}</h6>
             </div>
-            <div class="container mt-1 border">
+            <div class="container-fluid mt-1 border">
               <h3>Satellite</h3>
               <form action="{{ url_for('satellite_handler') }}" method="post">
                 <div class="row">
                   <div class="col-md-12">
-                    <button type="submit" class="btn btn-info" name="button" value="telemetry">Telemetry</button>
+                    <button type="submit" class="btn btn-info w-100" name="button" value="telemetry">Telemetry</button>
                   </div>
                 </div>
-
-                <button type="submit" class="btn btn-warning" name="button" value="state">State</button>
-                <button type="submit" class="btn btn-warning" name="button" value="accelerate">Accelerate</button>
+                <!-- State -->
+                <div class="row">
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" name="button" value="acquisition">Acq.</button>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" name="button" value="charge">Charge</button>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" name="button" value="communication">Com.</button>
+                  </div>
+                </div>
+                <!-- Camera angle -->
+                <div class="row">
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" name="button" value="narrow">Narrow</button>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" name="button" value="normal">Normal</button>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100" name="button" value="wide">Wide</button>
+                  </div>
+                </div>
+                <!-- Velocity -->
+                <div class="row">
+                  <div class="col-md-6">
+                      <label for="vel_x">Vel_x:</label>
+                      <input type="text" class="form-control w-100" name="vel_x">
+                  </div>
+                  <div class="col-md-6">
+                      <label for="vel_y">Vel_y:</label>
+                      <input type="text" class="form-control w-100" name="vel_y">
+                  </div>
+                  <div class="col-md-12 mb-3">
+                    <button type="submit" class="btn btn-secondary w-100" name="button" value="velocity"">Confirm</button>
+                  </div>
+                </div>
               </form>
             </div>
 

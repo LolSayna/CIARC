@@ -8,6 +8,7 @@ import shared.constants as con
 from shared.models import (
     CameraAngle,
     BaseTelemetry,
+    State,
 )
 
 
@@ -141,5 +142,50 @@ def change_angle(angle: CameraAngle) -> dict:
         logger.info(f"Console: angle changed to {d["camera_angle"]}.")
     else:
         logger.warning("Console: could not change angle, not in acquisition?")
+        return {}
+
+    return d
+
+
+def change_state(state: State) -> dict:
+    obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
+    if not obs:
+        logger.warning("Console: no telemetry available, could not change camera angle")
+        return
+    json = {
+        "vel_x": obs["vx"],
+        "vel_y": obs["vy"],
+        "camera_angle": obs["angle"],
+        "state": state,
+    }
+    d = console_api(method=HttpCode.PUT, endpoint=con.CONTROL_ENDPOINT, json=json)
+
+    if d and d["state"] == state:
+        logger.info(f"Console: state changed to {d["state"]}.")
+    else:
+        logger.warning("Console: could not change state, not in acquisition?")
+        return {}
+
+    return d
+
+
+def change_velocity(vel_x: float, vel_y: float) -> dict:
+    obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
+    if not obs:
+        logger.warning("Console: no telemetry available, could not change camera angle")
+        return
+    json = {
+        "vel_x": vel_x,
+        "vel_y": vel_y,
+        "camera_angle": obs["angle"],
+        "state": obs["state"],
+    }
+    d = console_api(method=HttpCode.PUT, endpoint=con.CONTROL_ENDPOINT, json=json)
+
+    if d and d["vel_x"] == vel_x and d["vel_y"] == vel_y:
+        logger.info(f"Console: velocity changed to ({d["vel_x"]},{d["vel_y"]}).")
+    else:
+        logger.warning("Console: could not change velocity, not in acquisition?")
+        return {}
 
     return d

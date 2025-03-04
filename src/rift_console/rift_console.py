@@ -4,7 +4,7 @@ from typing import Optional
 
 import datetime
 
-from shared.models import BaseTelemetry
+from shared.models import BaseTelemetry, State
 
 
 class RiftConsole:
@@ -13,3 +13,5 @@ class RiftConsole:
     user_speed_multiplier: Optional[int] = None
 
     live_telemetry: Optional[BaseTelemetry] = None
+    prev_state: State = State.Unknown
+    next_state: State = State.Unknown

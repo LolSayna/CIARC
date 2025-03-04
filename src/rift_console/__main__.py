@@ -8,7 +8,7 @@ import os
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, url_for, request
+from quart import Quart, render_template, redirect, url_for, request, flash
 from werkzeug.wrappers.response import Response
 
 # shared imports
@@ -41,6 +41,7 @@ logger.add(
 
 
 app = Quart(__name__)
+app.secret_key = "yoursecret_key" 
 melvin = rift_console.rift_telemetry.RiftTelemetry()
 console = rift_console.rift_console.RiftConsole()
 
@@ -73,6 +74,8 @@ async def new_index():
             objectives_points=console.live_telemetry.objectives_points,
             data_volume_sent=console.live_telemetry.data_volume.data_volume_sent,
             data_volume_received=console.live_telemetry.data_volume.data_volume_received,
+            prev_state=console.prev_state,  # keep track of history
+            next_state=console.next_state   # if in transition
         )
     else:
         return await render_template(
@@ -80,6 +83,9 @@ async def new_index():
             last_backup_date=console.last_backup_date,
             is_network_simulation=console.is_network_simulation,
             user_speed_multiplier=console.user_speed_multiplier,
+            prev_state=State.Unknown,
+            next_state=State.Unknown,
+            state=State.Unknown
         )
 
 
@@ -92,18 +98,57 @@ async def satellite_handler() -> Response:
     form = await request.form
     button = form.get("button", type=str)
 
+    # keep track of next and prev state
+    old_state = State.Unknown
+    if console.live_telemetry:
+        old_state = console.live_telemetry.state
+
     match button:
         case "telemetry":
-            new_tel = ciarc_api.live_observation()
-            if new_tel:
-                console.live_telemetry = new_tel
-                console.user_speed_multiplier = new_tel.simulation_speed
-        case "state":
             pass
-        case "accelerate":
-            pass
+        case "acquisition":
+            if ciarc_api.change_state(State.Acquisition):
+                console.prev_state = old_state
+                console.next_state = State.Acquisition
+            else:
+                await flash("Could not change State")
+        case "charge":
+            if ciarc_api.change_state(State.Charge):
+                console.prev_state = old_state
+                console.next_state = State.Charge
+            else:
+                await flash("Could not change State")
+        case "communication":
+            if ciarc_api.change_state(State.Communication):
+                console.prev_state = old_state
+                console.next_state = State.Communication
+            else:
+                await flash("Could not change State")
+        case "narrow":
+            if not ciarc_api.change_angle(CameraAngle.Narrow):
+                await flash("Could not change Camera Angle")
+        case "normal":
+            if not ciarc_api.change_angle(CameraAngle.Normal):
+                await flash("Could not change Camera Angle")
+        case "wide":
+            if not ciarc_api.change_angle(CameraAngle.Wide):
+                await flash("Could not change Camera Angle")
+        case "velocity":
+            vel_x = form.get("vel_x", type=float)
+            vel_y = form.get("vel_y", type=float)
+            if not ciarc_api.change_velocity(vel_x=vel_x, vel_y=vel_y):
+                await flash("Could not change Velocity")
         case _:
             logger.error(f"Unknown button pressed: {button}")
+    
+
+    new_tel = ciarc_api.live_observation()
+    if new_tel:
+        console.live_telemetry = new_tel
+        console.user_speed_multiplier = new_tel.simulation_speed
+
+        if console.live_telemetry.state != State.Transition:
+            console.next_state = State.Unknown
 
     return redirect(url_for("new_index"))
 
