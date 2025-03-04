@@ -9,6 +9,7 @@ from shared.models import (
     CameraAngle,
     BaseTelemetry,
     State,
+    Slot
 )
 
 
@@ -94,10 +95,14 @@ def change_simulation_env(
 
 def live_observation() -> BaseTelemetry:
     d = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
-    if d:
+    s = console_api(method=HttpCode.GET, endpoint=con.SLOTS_ENDPOINT)
+    o = console_api(method=HttpCode.GET, endpoint=con.OBJECTIVE_ENDPOINT)
+    a = console_api(method=HttpCode.GET, endpoint=con.ACHIEVEMENTS_ENDPOINT)
+    if d and s and o and a:
         b = BaseTelemetry(**d)
+        (slots_used, slots) = Slot.parse_api(s) 
         logger.info(f"Console: received live telemetry\n{b}.")
-        return b
+        return (b, slots_used, slots)
     else:
         logger.warning("Live telemtry failed.")
         return None
@@ -173,7 +178,7 @@ def change_velocity(vel_x: float, vel_y: float) -> dict:
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
-        return
+        return {}
     json = {
         "vel_x": vel_x,
         "vel_y": vel_y,
@@ -184,8 +189,26 @@ def change_velocity(vel_x: float, vel_y: float) -> dict:
 
     if d and d["vel_x"] == vel_x and d["vel_y"] == vel_y:
         logger.info(f"Console: velocity changed to ({d["vel_x"]},{d["vel_y"]}).")
+        return d
     else:
         logger.warning("Console: could not change velocity, not in acquisition?")
         return {}
 
-    return d
+
+def book_slot(slot_id: int, enabled: bool):
+
+    params = {
+        "slot_id": slot_id,
+        "enabled": str(enabled).lower(),
+    }
+    d = console_api(method=HttpCode.PUT, endpoint=con.SLOTS_ENDPOINT, params=params)
+
+    if d:
+        if d["enabled"]:
+            logger.info(f"Console: booked communication slot ({d["id"]}.")
+        else:
+            logger.info(f"Console: cancled communication slot {d["id"]}")
+        return d
+    else:
+        logger.warning("Console: could not book slot, not in acquisition?")
+        return {}

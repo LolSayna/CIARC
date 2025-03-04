@@ -12,6 +12,7 @@
     <!-- CSS -->
     <style>
 
+      /* For state transition buttons*/
       .button-container {
         display: flex;
         align-items: center;
@@ -31,8 +32,23 @@
       .smaller_img {
         width: 48px;
         height: auto;
-    }
+      }
 
+
+      /* For zoned objective table */
+      table {
+        width: 90%;
+        margin: 20px auto;
+        border-collapse: collapse;
+      }
+      th, td {
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          text-align: left;
+      }
+      th {
+          background-color: #f4f4f4;
+      }
     </style>
   </head>
 
@@ -68,146 +84,174 @@
       <!-- Content Section -->
     <div class="container-fluid mt-2">
       <div class="row">
-          <!-- Navigation Sidebar -->
-          <div class="col-md-3">
-              <h2>Live Telemetry</h2>
-              <p>{{timestamp}}</p>
-              <div class="progress mt-2">
-                <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">Fuel: {{fuel}}%</div>
-              </div>
-              <div class="progress mt-2">
-                <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">Battery: {{battery}}%</div>
-              </div>
-              <div class="progress mt-2">
-                <div class="progress-bar"="progressbar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">Max Battery: {{max_battery}}%</div>
-              </div>
-              <p>Pos: ({{width_x}},{{height_y}}) & Vel: ({{vx}},{{vy}})</p>
-              <p>State: {{state}} & angle: {{angle}}</p>
-              <p>dist_cov: {{distance_covered}} & active_t: {{active_time}}</p>
-              <p>area_cov: {{area_covered_narrow}}/{{area_covered_normal}}/{{area_covered_wide}}</p>
-              <p>#images: {{images_taken}} obj-done/points={{objectives_done}}/{{objectives_points}}</p>
-              <p>data-s/r={{data_volume_sent}}/{{data_volume_received}}</p>
-
-              <ul class="list-group">
-                  <li class="list-group-item">Home</li>
-                  <li class="list-group-item">About</li>
-                  <li class="list-group-item">Contact</li>
-              </ul>
-          </div>
-          <!-- Main Content -->
-          <div class="col-md-7">
-              <h2>World Map</h2>
-              <p>This is the main content area where you can add any information, links, images, or other elements you'd like.</p>
-          </div>
-
-          <!-- Buttons -->
-          <div class="col-md-2">
-            <h2>Controls</h2>
-            <div class="container-fluid border">
-              <h3>Simulation</h3>
-              <form action="{{ url_for('control_handler') }}" method="post">
-                <div class="row">
-                  <div class="col-md-12">
-                    <button type="submit" class="btn btn-danger w-100" name="button" value="reset">Reset Sim</button>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-6">
-                    <button type="submit" class="btn btn-danger w-100" name="button" value="save">Save State</button>
-                  </div>
-                  <div class="col-md-6">
-                    <button type="submit" class="btn btn-danger w-100" name="button" value="load">Load State</button>
-                  </div>
-                </div>
-                <div class="row">
-                  <h6>Network Simulation:</h6>
-                  <div class="col-md-6">
-                    <button type="submit" class="btn btn-warning w-100" name="button" value="on_sim">On</button>
-                  </div>
-                  <div class="col-md-6">
-                    <button type="submit" class="btn btn-warning w-100" name="button" value="off_sim">Off</button>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-6">
-                    <select name="sim_speed" id="sim_speed">
-                        {% for i in range(1, 21) %}
-                            <option value="{{ i }}" {% if selected_value == i|string %}selected{% endif %}>{{ i }}</option>
-                        {% endfor %}
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <button type="submit" class="btn btn-secondary w-100" name="button" value="sim_speed">Change</button>
-                  </div>
-                </div>
-              </form>
-              <h6>Saved backup: {{last_backup_date}}</h6>
-              <h6>SimOn: {{is_network_simulation}}</h6>
-              <h6>SimSpeed: {{user_speed_multiplier}}</h6>
+        <!-- Navigation Sidebar -->
+        <div class="col-md-3">
+            <h2>Live Telemetry</h2>
+            <p>{{timestamp}}</p>
+            <div class="progress mt-2">
+              <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">Fuel: {{fuel}}%</div>
             </div>
-            <div class="container-fluid mt-1 border">
-              <h3>Satellite</h3>
-              <form action="{{ url_for('satellite_handler') }}" method="post">
-                <div class="row">
-                  <div class="col-md-12">
-                    <button type="submit" class="btn btn-info w-100" name="button" value="telemetry">Telemetry</button>
-                  </div>
-                </div>
-                <!-- State -->
-                <div class="row">
-                  <div class="col-md-4">
-                    <button type="submit" class="btn btn-success w-100" name="button" value="acquisition">Acq.</button>
-                  </div>
-                  <div class="col-md-4">
-                    <button type="submit" class="btn btn-success w-100" name="button" value="charge">Charge</button>
-                  </div>
-                  <div class="col-md-4">
-                    <button type="submit" class="btn btn-success w-100" name="button" value="communication">Com.</button>
-                  </div>
-                </div>
-                <!-- Camera angle -->
-                <div class="row">
-                  <div class="col-md-4">
-                    <button type="submit" class="btn btn-success w-100" name="button" value="narrow">Narrow</button>
-                  </div>
-                  <div class="col-md-4">
-                    <button type="submit" class="btn btn-success w-100" name="button" value="normal">Normal</button>
-                  </div>
-                  <div class="col-md-4">
-                    <button type="submit" class="btn btn-success w-100" name="button" value="wide">Wide</button>
-                  </div>
-                </div>
-                <!-- Velocity -->
-                <div class="row">
-                  <div class="col-md-6">
-                      <label for="vel_x">Vel_x:</label>
-                      <input type="text" class="form-control w-100" name="vel_x">
-                  </div>
-                  <div class="col-md-6">
-                      <label for="vel_y">Vel_y:</label>
-                      <input type="text" class="form-control w-100" name="vel_y">
-                  </div>
-                  <div class="col-md-12 mb-3">
-                    <button type="submit" class="btn btn-secondary w-100" name="button" value="velocity"">Confirm</button>
-                  </div>
-                </div>
-              </form>
+            <div class="progress mt-2">
+              <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">Battery: {{battery}}%</div>
             </div>
+            <div class="progress mt-2">
+              <div class="progress-bar"="progressbar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">Max Battery: {{max_battery}}%</div>
+            </div>
+            <p>Pos: ({{width_x}},{{height_y}}) & Vel: ({{vx}},{{vy}})</p>
+            <p>State: {{state}} & angle: {{angle}}</p>
+            <p>dist_cov: {{distance_covered}} & active_t: {{active_time}}</p>
+            <p>area_cov: {{area_covered_narrow}}/{{area_covered_normal}}/{{area_covered_wide}}</p>
+            <p>#images: {{images_taken}} obj-done/points={{objectives_done}}/{{objectives_points}}</p>
+            <p>data-s/r={{data_volume_sent}}/{{data_volume_received}}</p>
+            <p>slots_used={{slots_used}}</p>
+
+            <ul class="list-group">
+                <li class="list-group-item">Home</li>
+                <li class="list-group-item">About</li>
+                <li class="list-group-item">Contact</li>
+            </ul>
+        </div>
+        <!-- Main Content -->
+        <div class="col-md-7">
+            <h2>World Map</h2>
+            <p>This is the main content area where you can add any information, links, images, or other elements you'd like.</p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-md-2">
+          <h2>Controls</h2>
+          <div class="container-fluid border">
+            <h3>Simulation</h3>
+            <form action="{{ url_for('control_handler') }}" method="post">
+              <div class="row">
+                <div class="col-md-12">
+                  <button type="submit" class="btn btn-danger w-100" name="button" value="reset">Reset Sim</button>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-danger w-100" name="button" value="save">Save State</button>
+                </div>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-danger w-100" name="button" value="load">Load State</button>
+                </div>
+              </div>
+              <div class="row">
+                <h6>Network Simulation:</h6>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-warning w-100" name="button" value="on_sim">On</button>
+                </div>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-warning w-100" name="button" value="off_sim">Off</button>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <select name="sim_speed" id="sim_speed">
+                      {% for i in range(1, 21) %}
+                          <option value="{{ i }}" {% if selected_value == i|string %}selected{% endif %}>{{ i }}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-secondary w-100" name="button" value="sim_speed">Change</button>
+                </div>
+              </div>
+            </form>
+            <h6>Saved backup: {{last_backup_date}}</h6>
+            <h6>SimOn: {{is_network_simulation}}</h6>
+            <h6>SimSpeed: {{user_speed_multiplier}}</h6>
+          </div>
+          <div class="container-fluid mt-1 border">
+            <h3>Satellite</h3>
+            <form action="{{ url_for('satellite_handler') }}" method="post">
+              <div class="row">
+                <div class="col-md-12">
+                  <button type="submit" class="btn btn-info w-100" name="button" value="telemetry">Telemetry</button>
+                </div>
+              </div>
+              <!-- State -->
+              <div class="row">
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="acquisition">Acq.</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="charge">Charge</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="communication">Com.</button>
+                </div>
+              </div>
+              <!-- Camera angle -->
+              <div class="row">
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="narrow">Narrow</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="normal">Normal</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="wide">Wide</button>
+                </div>
+              </div>
+              <!-- Velocity -->
+              <div class="row">
+                <div class="col-md-6">
+                    <label for="vel_x">Vel_x:</label>
+                    <input type="text" class="form-control w-100" name="vel_x">
+                </div>
+                <div class="col-md-6">
+                    <label for="vel_y">Vel_y:</label>
+                    <input type="text" class="form-control w-100" name="vel_y">
+                </div>
+                <div class="col-md-12 mb-3">
+                  <button type="submit" class="btn btn-secondary w-100" name="button" value="velocity"">Confirm</button>
+                </div>
+              </div>
+            </form>
+          </div>
 
         </div>
       </div>
+    </div>
 
+    <!-- [Arrays] -->
     <div class="container mt-3">
       <div class="row">
-        <h3>Timeline</h3>
+        <h2 style="text-align:center;">Tables</h2>
+          <table> 
+            <thead>
+              <tr>
+                <th>Id</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Booked</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for slot in slots %}
+              <tr>
+                <td>{{ slot.id }}</td>
+                <td>{{ slot.start.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
+                <td>{{ slot.end.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
+                <td>{{ slot.enabled }}</td>
+                <td>
+                  <form action="{{ url_for('book_slot', slot_id=slot.id) }}" method="post">
+                    {% if slot.enabled %}
+                    <button type="submit" class="btn btn-warning" name="button" value="cancle">Cancle</button>
+                    {% else %}
+                    <button type="submit" class="btn btn-success" name="button" value="book">Book</button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
       </div>
     </div>
 
-    <div class="container mt-3">
-      <div class="row">
-        <h3>Objetives</h3>
-      </div>
-    </div>
   </div>
 
   <!-- Java Script -->

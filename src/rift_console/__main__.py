@@ -28,7 +28,7 @@ import rift_console.ciarc_api as ciarc_api
 
 
 ##### LOGGING #####
-con.RIFT_LOG_LEVEL = "DEBUG"
+con.RIFT_LOG_LEVEL = "INFO"
 logger.remove()
 logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=True)
 logger.add(
@@ -75,7 +75,9 @@ async def new_index():
             data_volume_sent=console.live_telemetry.data_volume.data_volume_sent,
             data_volume_received=console.live_telemetry.data_volume.data_volume_received,
             prev_state=console.prev_state,  # keep track of history
-            next_state=console.next_state   # if in transition
+            next_state=console.next_state,   # if in transition
+            slots_used=console.slots_used,
+            slots=console.slots
         )
     else:
         return await render_template(
@@ -88,6 +90,22 @@ async def new_index():
             state=State.Unknown
         )
 
+
+@app.route("/book_slot/<int:slot_id>", methods=["POST"])
+async def book_slot(slot_id: int) -> Response:
+
+    # read which button was pressed
+    form = await request.form
+    button = form.get("button", type=str)
+
+    if button == "book":
+        ciarc_api.book_slot(slot_id=slot_id, enabled=True)
+    else:
+        ciarc_api.book_slot(slot_id=slot_id, enabled=False)
+
+    update_telemetry()
+
+    return redirect(url_for("new_index"))
 
 # Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
@@ -141,17 +159,8 @@ async def satellite_handler() -> Response:
         case _:
             logger.error(f"Unknown button pressed: {button}")
     
-
-    new_tel = ciarc_api.live_observation()
-    if new_tel:
-        console.live_telemetry = new_tel
-        console.user_speed_multiplier = new_tel.simulation_speed
-
-        if console.live_telemetry.state != State.Transition:
-            console.next_state = State.Unknown
-
+    update_telemetry()
     return redirect(url_for("new_index"))
-
 
 # Wrapper for all Simulation Manipulation buttons
 @app.route("/control_handler", methods=["POST"])
@@ -215,6 +224,20 @@ async def control_handler() -> Response:
             logger.error(f"Unknown button pressed: {button}")
 
     return redirect(url_for("new_index"))
+
+# Pulls API after some changes
+def update_telemetry():
+    global console
+    (new_tel, slots_used, slots) = ciarc_api.live_observation()
+    if new_tel:
+        console.live_telemetry = new_tel
+        console.slots_used = slots_used
+        console.slots = slots
+        console.user_speed_multiplier = new_tel.simulation_speed
+
+        if console.live_telemetry.state != State.Transition:
+            console.next_state = State.Unknown
+
 
 
 # OLD CODE!

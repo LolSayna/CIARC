@@ -47,6 +47,21 @@ def calc_distance(a: int, b: int) -> int:
 
     return abs(a, b)
 
+class Slot(BaseModel):
+    id: int
+    start: datetime.datetime
+    end: datetime.datetime
+    enabled: bool
+
+    def parse_api(data: dict):
+        slots_used = data["communication_slots_used"]
+        slots = []
+        for s in data["slots"]:
+            slots.append(Slot(**s))
+
+        # logger.debug(f"Deparsed Slot API used: {slots_used} - {slots}")
+        return (slots_used, slots)
+
 
 class ZonedObjective(BaseModel):
     id: int  # could be null acording to Dto

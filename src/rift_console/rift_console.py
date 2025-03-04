@@ -4,7 +4,7 @@ from typing import Optional
 
 import datetime
 
-from shared.models import BaseTelemetry, State
+from shared.models import BaseTelemetry, Slot, State
 
 
 class RiftConsole:
@@ -15,3 +15,5 @@ class RiftConsole:
     live_telemetry: Optional[BaseTelemetry] = None
     prev_state: State = State.Unknown
     next_state: State = State.Unknown
+    slots_used: Optional[int] = None
+    slots: Optional[list[Slot]] = None

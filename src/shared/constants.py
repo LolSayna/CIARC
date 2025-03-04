@@ -31,6 +31,8 @@ BEACON_ENDPOINT = f"{BASE_URL}beacon"
 RESET_ENDPOINT = f"{BASE_URL}reset"
 SIMULATION_ENDPOINT = f"{BASE_URL}simulation"
 BACKUP_ENDPOINT = f"{BASE_URL}backup"
+SLOTS_ENDPOINT = f"{BASE_URL}slots"
+ACHIEVEMENTS_ENDPOINT = f"{BASE_URL}achievements"
 
 # [From User Manual]
 STATE_TRANSITION_TIME = 3 * 60  # Seconds for regular state transitions
