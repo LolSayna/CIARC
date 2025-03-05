@@ -5,7 +5,16 @@ from enum import Enum
 from loguru import logger
 
 import shared.constants as con
-from shared.models import CameraAngle, BaseTelemetry, State, Slot
+from shared.models import (
+    Achievement,
+    BeaconObjective,
+    BeaconObjective,
+    CameraAngle,
+    BaseTelemetry,
+    State,
+    Slot,
+    ZonedObjective
+)
 
 
 class HttpCode(Enum):
@@ -96,8 +105,11 @@ def live_observation() -> BaseTelemetry:
     if d and s and o and a:
         b = BaseTelemetry(**d)
         (slots_used, slots) = Slot.parse_api(s)
+        zoned_objectives = ZonedObjective.parse_api(o)
+        beacon_objectives = BeaconObjective.parse_api(o)
+        achievements = Achievement.parse_api(a)
         logger.info(f"Console: received live telemetry\n{b}.")
-        return (b, slots_used, slots)
+        return (b, slots_used, slots, zoned_objectives, beacon_objectives, achievements)
     else:
         logger.warning("Live telemtry failed.")
         return None

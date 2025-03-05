@@ -6,7 +6,7 @@ import shared.constants as con
 import datetime
 
 from rift_console.rift_telemetry import RiftTelemetry
-from shared.models import State, CameraAngle, parse_objective_api
+from shared.models import State, CameraAngle, ZonedObjective
 
 ### ALL METHODS SO FAR ONLY WORK IF NETWORK SIMULATION IS DISABLED ###
 # TODO file aufteilung von Riftconsole???
@@ -117,7 +117,7 @@ def update_telemetry(melvin: RiftTelemetry) -> None:
     if melvin.state != State.Transition:
         melvin.planed_transition_state = State.Unknown
 
-    melvin.z_obj_list = parse_objective_api(objective_list.json())
+    melvin.z_obj_list = ZonedObjective.parse_api(objective_list.json())
 
     melvin.drawnObjectives = []
     for obj in melvin.z_obj_list:

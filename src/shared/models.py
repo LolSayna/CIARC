@@ -78,6 +78,72 @@ class ZonedObjective(BaseModel):
     # sprite is ignored as said in email
 
 
+    # extracts and parses objective format from the format given from its matching api endpoint
+    def parse_api(
+        data: dict,
+    ) -> list:
+        z_obj_list = []
+        # parse objective list
+        for obj in data["zoned_objectives"]:
+            if type(obj["zone"]) is str:
+                zone = None
+            else:
+                zone = (
+                    int(obj["zone"][0]),
+                    int(obj["zone"][1]),
+                    int(obj["zone"][2]),
+                    int(obj["zone"][3]),
+                )
+
+            z_obj_list.append(
+                ZonedObjective(
+                    id=obj["id"],
+                    name=obj["name"],
+                    start=datetime.datetime.fromisoformat(obj["start"]),
+                    end=datetime.datetime.fromisoformat(obj["end"]),
+                    decrease_rate=obj["decrease_rate"],
+                    zone=zone,
+                    optic_required=CameraAngle(obj["optic_required"]),
+                    coverage_required=obj["coverage_required"],
+                    description=obj["description"],
+                    secret=obj["secret"],
+                )
+            )
+
+        return sorted(z_obj_list, key=lambda event: event.start)
+
+
+class BeaconObjective(BaseModel):
+    id: int
+    name: str
+    start: datetime.datetime
+    end: datetime.datetime
+    decrease_rate: float
+    attempts_made: int
+    description: str
+
+    def parse_api(data: dict) -> list:
+        beacon_obj = []
+        for b in data["beacon_objectives"]:
+            beacon_obj.append(BeaconObjective(**b))
+
+        return beacon_obj
+
+class Achievement(BaseModel):
+    name: str
+    done: bool
+    points: int
+    description: str
+    goal_parameter_threshold: bool
+    goal_parameter: bool
+
+    def parse_api(data: dict):
+        achv = []
+        for a in data["achievements"]:
+            achv.append(Achievement(**a))
+
+        return achv
+
 # TODO test if this actually works as intentend???
 def boxes_overlap_in_grid(box1, box2):
     grid_width = con.WORLD_X
@@ -122,40 +188,6 @@ def lens_size_by_angle(angle: CameraAngle) -> int:
             lens_size = 1000
     return lens_size
 
-
-# extracts and parses objective format from the format given from its matching api endpoint
-def parse_objective_api(
-    objective_list: requests.models.Response,
-) -> list[ZonedObjective]:
-    z_obj_list = []
-    # parse objective list
-    for obj in objective_list["zoned_objectives"]:
-        if type(obj["zone"]) is str:
-            zone = None
-        else:
-            zone = (
-                int(obj["zone"][0]),
-                int(obj["zone"][1]),
-                int(obj["zone"][2]),
-                int(obj["zone"][3]),
-            )
-
-        z_obj_list.append(
-            ZonedObjective(
-                id=obj["id"],
-                name=obj["name"],
-                start=datetime.datetime.fromisoformat(obj["start"]),
-                end=datetime.datetime.fromisoformat(obj["end"]),
-                decrease_rate=obj["decrease_rate"],
-                zone=zone,
-                optic_required=CameraAngle(obj["optic_required"]),
-                coverage_required=obj["coverage_required"],
-                description=obj["description"],
-                secret=obj["secret"],
-            )
-        )
-
-    return sorted(z_obj_list, key=lambda event: event.start)
 
 
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung

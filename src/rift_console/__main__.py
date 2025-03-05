@@ -78,6 +78,9 @@ async def new_index():
             next_state=console.next_state,  # if in transition
             slots_used=console.slots_used,
             slots=console.slots,
+            zoned_objectives=console.zoned_objectives,
+            beacon_objectives=console.beacon_objectives,
+            achievements=console.achievements
         )
     else:
         return await render_template(
@@ -176,17 +179,11 @@ async def control_handler() -> Response:
         case "reset":
             ciarc_api.reset()
             console = rift_console.rift_console.RiftConsole()
-            new_tel = ciarc_api.live_observation()
-            if new_tel:
-                console.live_telemetry = new_tel
-                console.user_speed_multiplier = new_tel.simulation_speed
+            update_telemetry()
         case "load":
             ciarc_api.load_backup(console.last_backup_date)
             console.live_telemetry = None
-            new_tel = ciarc_api.live_observation()
-            if new_tel:
-                console.live_telemetry = new_tel
-                console.user_speed_multiplier = new_tel.simulation_speed
+            update_telemetry()
         case "save":
             ciarc_api.save_backup()
             console.last_backup_date = ciarc_api.save_backup()
@@ -230,11 +227,14 @@ async def control_handler() -> Response:
 # Pulls API after some changes
 def update_telemetry():
     global console
-    (new_tel, slots_used, slots) = ciarc_api.live_observation()
+    (new_tel, slots_used, slots, zoned_objectives, beacon_objectives, achievements) = ciarc_api.live_observation()
     if new_tel:
         console.live_telemetry = new_tel
         console.slots_used = slots_used
         console.slots = slots
+        console.zoned_objectives = zoned_objectives
+        console.beacon_objectives = beacon_objectives
+        console.achievements = achievements
         console.user_speed_multiplier = new_tel.simulation_speed
 
         if console.live_telemetry.state != State.Transition:

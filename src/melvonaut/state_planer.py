@@ -23,7 +23,6 @@ from shared.models import (
     ZonedObjective,
     lens_size_by_angle,
     limited_log,
-    parse_objective_api,
     Event,
 )
 from loguru import logger
@@ -581,7 +580,7 @@ class StatePlanner(BaseModel):
             async with session.get(con.OBJECTIVE_ENDPOINT) as response:
                 if response.status == 200:
                     json_response = await response.json()
-                    self._z_obj_list: list[ZonedObjective] = parse_objective_api(
+                    self._z_obj_list: list[ZonedObjective] = ZonedObjective.parse_api(
                         json_response
                     )
                     logger.info(

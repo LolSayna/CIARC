@@ -1,10 +1,9 @@
 # shared imports
-# from shared.models import State, Telemetry, CameraAngle, ZonedObjective
 from typing import Optional
 
 import datetime
 
-from shared.models import BaseTelemetry, Slot, State
+from shared.models import Achievement, BaseTelemetry, BeaconObjective, Slot, State, ZonedObjective
 
 
 class RiftConsole:
@@ -16,4 +15,7 @@ class RiftConsole:
     prev_state: State = State.Unknown
     next_state: State = State.Unknown
     slots_used: Optional[int] = None
-    slots: Optional[list[Slot]] = None
+    slots: list[Slot] = []
+    zoned_objectives: list[ZonedObjective] = []
+    beacon_objectives: list[BeaconObjective] = []
+    achievements: list[Achievement] = []
