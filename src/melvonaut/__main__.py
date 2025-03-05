@@ -66,6 +66,10 @@ state_planner = StatePlanner()
 async def get_observations() -> None:
     """Async get observations from the Melvin API and update the state planner
 
+    This function establishes a session with the API and retrieves observation data. 
+    If the response is successful, it updates the telemetry state. 
+    If any errors occur, they are logged accordingly.
+
     Returns:
         None
 
@@ -89,6 +93,14 @@ async def get_observations() -> None:
 
 
 async def run_get_observations() -> None:
+    """Runs the observation fetching function in a loop.
+
+    This function repeatedly fetches observations based on a specified refresh rate,
+    adjusting for simulation speed.
+
+    Returns:
+        None
+    """
     await get_observations()
     while True:
         logger.debug("Submitted observations request")
@@ -102,6 +114,14 @@ async def run_get_observations() -> None:
 
 # currently not in use
 async def get_announcements() -> None:
+    """Fetches real-time announcements from the Melvin API.
+
+    This function opens a session with the announcements API endpoint,
+    reads and logs any received messages.
+
+    Returns:
+        None
+    """
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -119,6 +139,17 @@ async def get_announcements() -> None:
 
 
 async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
+    """Fetches announcements asynchronously with event-stream handling.
+
+    This function continuously listens for new announcements from the API and processes them.
+    If announcements are received, they are logged and stored.
+
+    Args:
+        last_id (Optional[str]): The ID of the last processed event to resume from, if applicable.
+
+    Returns:
+        Optional[str]: The ID of the last received announcement, or None if an error occurs.
+    """
     headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
     if last_id:
         headers["Last-Event-ID"] = last_id
@@ -179,6 +210,13 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
 
 # Irgendwie restartet der sich alle 5 sekunden, und glaube überlastet die API
 async def run_get_announcements() -> None:
+    """Continuously fetches announcements from the API.
+
+    This function runs in an infinite loop, restarting the subscription when needed.
+
+    Returns:
+        None
+    """
     logger.warning("Started announcements subscription")
     while True:
         await asyncio.gather(get_announcements2())
@@ -187,6 +225,14 @@ async def run_get_announcements() -> None:
 
 # not in use, can be removed
 async def read_images() -> AsyncIterable[MelvinImage]:
+    """Reads image files asynchronously from a designated directory.
+
+    This function iterates over stored images, extracts metadata from filenames, and 
+    yields `MelvinImage` objects.
+
+    Yields:
+        MelvinImage: An image object containing extracted metadata.
+    """
     if not os.path.exists(con.IMAGE_PATH):
         logger.warning(f"{con.IMAGE_PATH} does not exist.")
         return
@@ -226,17 +272,35 @@ async def read_images() -> AsyncIterable[MelvinImage]:
 
 
 async def run_read_images() -> None:
+    """Log all receives images.
+
+    Returns:
+        None
+    """
     async for image in read_images():
         logger.debug(f"Received image: {image}")
 
 
 def cancel_tasks() -> None:
+    """Cancels all tasks and event loop.
+
+    Returns:
+        None
+    """
     for task in asyncio.all_tasks():
         task.cancel()
     loop.stop()
 
 
 def start_event_loop() -> None:
+    """Initializes and starts the asynchronous event loop.
+
+    This function sets up signal handlers, registers tasks for fetching observations, 
+    announcements, and API interactions, and starts the event loop.
+
+    Returns:
+        None
+    """
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, cancel_tasks)
 

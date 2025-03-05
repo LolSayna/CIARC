@@ -14,10 +14,26 @@ from melvonaut.settings import setup_file_logging
 
 
 async def health(request: web.Request):
+    """Check if the API is running and healthy.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: A response with status 200 and text "OK".
+    """
     return web.Response(status=200, text="OK")
 
 
 async def get_disk_usage(request: web.Request):
+    """Retrieve disk usage statistics for root and home directories.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: JSON response containing disk usage data.
+    """
     logger.debug("Getting disk usage")
     disk_root = psutil.disk_usage("/")
     disk_home = psutil.disk_usage("/home")
@@ -27,12 +43,28 @@ async def get_disk_usage(request: web.Request):
 
 
 async def get_memory_usage(request: web.Request):
+    """Retrieve memory usage statistics.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: JSON response containing memory usage data.
+    """
     logger.debug("Getting memory usage")
     memory_usage = psutil.virtual_memory()
     return web.json_response(memory_usage._asdict(), status=200)
 
 
 async def get_cpu_usage(request: web.Request):
+    """Retrieve CPU usage statistics.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: JSON response containing CPU usage data including user, system, idle time, percent usage, core count, and frequency.
+    """
     logger.debug("Getting CPU usage")
     cpu_usage = psutil.cpu_times()
     cpu_percent = psutil.cpu_percent()
@@ -52,10 +84,31 @@ async def get_cpu_usage(request: web.Request):
 
 
 async def get_restart_melvin(request: web.Request):
+    """Handles a request to restart the Melvin service.
+
+    This endpoint is not yet implemented and always returns a 501 Not Implemented response.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: A response indicating that the operation is not implemented.
+    """
     return web.Response(status=501, text="Not Implemented")
 
 
 async def get_shutdown_melvin(request: web.Request):
+    """Handles a request to shut down the Melvin service.
+
+    If `settings.DO_ACTUALLY_EXIT` is set to True, the event loop is stopped, 
+    all pending tasks are canceled, and the process exits. Otherwise, a warning is logged.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: A response with status 200 indicating the shutdown request was received.
+    """
     try:
         return web.Response(status=200, text="OK")
     finally:
@@ -71,6 +124,14 @@ async def get_shutdown_melvin(request: web.Request):
 
 
 async def post_execute_command(request: web.Request):
+    """Execute a shell command asynchronously.
+    
+    Args:
+        request (web.Request): The incoming HTTP request containing JSON data with the command to execute.
+    
+    Returns:
+        web.Response: JSON response containing command output and return code.
+    """
     data = await request.json()
     cmd = data.get("cmd")
     logger.debug(f"Executing command: {cmd}")
@@ -99,12 +160,28 @@ async def post_execute_command(request: web.Request):
 
 
 async def get_melvin_version(request: web.Request):
+    """Retrieve the current version of the Melvin service.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: JSON response containing the Melvin service version.
+    """
     return web.json_response(
         {"version": importlib.metadata.version("ciarc")}, status=200
     )
 
 
 async def get_list_log_files(request: web.Request):
+    """Retrieve a list of log files from the log directory.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: JSON response containing a list of log filenames.
+    """
     logger.debug("Listing log files")
     log_files = []
     folder = pathlib.Path(con.MEL_LOG_PATH)
@@ -121,6 +198,14 @@ async def get_list_log_files(request: web.Request):
 
 
 async def post_download_log(request: web.Request):
+    """Handles log file download requests.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the log file name in JSON format.
+
+    Returns:
+        web.Response: The requested log file if it exists, otherwise a 404 response.
+    """
     data = await request.json()
     logger.debug(f"Downloading log: {data}")
     log_file = pathlib.Path(con.MEL_LOG_PATH) / data.get("file")
@@ -131,6 +216,14 @@ async def post_download_log(request: web.Request):
 
 
 async def post_download_log_and_clear(request: web.Request):
+    """Handles log file download requests and deletes the file after serving it.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the log file name in JSON format.
+
+    Returns:
+        web.Response: The requested log file if it exists, otherwise a 404 response.
+    """
     data = await request.json()
     logger.debug(f"Downloading log and clearing: {data}")
     log_file = pathlib.Path(con.MEL_LOG_PATH) / data.get("file")
@@ -146,6 +239,14 @@ async def post_download_log_and_clear(request: web.Request):
 
 
 async def post_clear_log(request: web.Request):
+    """Handles log file deletion requests.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the log file name in JSON format.
+
+    Returns:
+        web.Response: A success response if the log file is cleared, otherwise an error response.
+    """
     data = await request.json()
     logger.debug(f"Clearing log: {data}")
     log_file = pathlib.Path(con.MEL_LOG_PATH) / data.get("file")
@@ -162,6 +263,14 @@ async def post_clear_log(request: web.Request):
 
 
 async def get_clear_all_logs(request: web.Request):
+    """Clears all log files in the system.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: JSON response containing a list of cleared log files.
+    """
     try:
         logger.debug("Clearing all log files")
         log_files = []
@@ -182,6 +291,14 @@ async def get_clear_all_logs(request: web.Request):
 
 # Download telemetry
 async def get_download_telemetry(request: web.Request):
+    """Handles telemetry data download requests.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: The telemetry file if it exists, otherwise a 404 response.
+    """
     logger.debug("Downloading telemetry")
     telemetry_file = pathlib.Path(con.TELEMETRY_LOCATION_CSV)
     if telemetry_file.exists():
@@ -191,6 +308,14 @@ async def get_download_telemetry(request: web.Request):
 
 
 async def get_download_telemetry_and_clear(request: web.Request):
+    """Handles telemetry data download requests and deletes the file after serving it.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: The telemetry file if it exists, otherwise a 404 response.
+    """
     logger.debug("Downloading telemetry and clearing")
     telemetry_file = pathlib.Path(con.TELEMETRY_LOCATION_CSV)
     if telemetry_file.exists():
@@ -204,6 +329,14 @@ async def get_download_telemetry_and_clear(request: web.Request):
 
 
 async def get_clear_telemetry(request: web.Request):
+    """Clears the telemetry data file.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: A success response if the file is deleted, otherwise a 404 response.
+    """
     logger.debug("Clearing telemetry")
     telemetry_file = pathlib.Path(con.TELEMETRY_LOCATION_CSV)
     if telemetry_file.exists():
@@ -215,6 +348,15 @@ async def get_clear_telemetry(request: web.Request):
 
 # Download events
 async def get_download_events(request: web.Request):
+    """Handles the download of event logs.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.FileResponse: The requested event log file if it exists.
+        web.Response: A 404 response if the file is not found.
+    """
     logger.debug("Downloading events")
     events_file = pathlib.Path(con.EVENT_LOCATION_CSV)
     if events_file.exists():
@@ -224,6 +366,18 @@ async def get_download_events(request: web.Request):
 
 
 async def get_download_events_and_clear(request: web.Request):
+    """Downloads and clears the event log file.
+
+    This function retrieves the event log file, sends its content as a response,
+    and then deletes the file from the system.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: A response containing the event log content if found.
+        web.Response: A 404 response if the file is not found.
+    """
     logger.debug("Downloading events and clearing")
     events_file = pathlib.Path(con.EVENT_LOCATION_CSV)
     if events_file.exists():
@@ -237,6 +391,17 @@ async def get_download_events_and_clear(request: web.Request):
 
 
 async def get_clear_events(request: web.Request):
+    """Deletes the event log file from the system.
+
+    If the event log file exists, it is deleted. If it does not exist, a 404 response is returned.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: A 200 response if the file is successfully deleted.
+        web.Response: A 404 response if the file is not found.
+    """
     logger.debug("Clearing events")
     events_file = pathlib.Path(con.EVENT_LOCATION_CSV)
     if events_file.exists():
@@ -247,6 +412,14 @@ async def get_clear_events(request: web.Request):
 
 
 async def get_list_images(request: web.Request):
+    """Lists all available image files.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: JSON response containing a list of image filenames.
+    """
     logger.debug("Listing images")
     folder = pathlib.Path(con.IMAGE_PATH_BASE)
     if not folder.exists():
@@ -256,6 +429,14 @@ async def get_list_images(request: web.Request):
 
 
 async def post_download_image(request: web.Request):
+    """Handles image file download requests.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the image filename in JSON format.
+
+    Returns:
+        web.Response: The requested image file if it exists, otherwise a 404 response.
+    """
     data = await request.json()
     logger.debug(f"Downloading image: {data}")
     image_file = pathlib.Path(con.IMAGE_PATH_BASE) / data.get("file")
@@ -266,6 +447,14 @@ async def post_download_image(request: web.Request):
 
 
 async def post_download_image_and_clear(request: web.Request):
+    """Handles image file download requests and deletes the file after serving it.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the image filename in JSON format.
+
+    Returns:
+        web.Response: The requested image file if it exists, otherwise a 404 response.
+    """
     data = await request.json()
     logger.debug(f"Downloading image and clearing: {data}")
     image_file = pathlib.Path(con.IMAGE_PATH_BASE) / data.get("file")
@@ -280,6 +469,14 @@ async def post_download_image_and_clear(request: web.Request):
 
 
 async def get_clear_all_images(request: web.Request):
+    """Clears all stored images.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: JSON response containing a list of cleared images.
+    """
     logger.debug("Clearing all images")
     folder = pathlib.Path(con.IMAGE_PATH_BASE)
     images = [str(file) for file in folder.rglob("*.png") if file.is_file()]
@@ -289,6 +486,14 @@ async def get_clear_all_images(request: web.Request):
 
 
 async def post_set_melvin_task(request: web.Request):
+    """Sets a task for Melvin (a task management system).
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the task details in JSON format.
+
+    Returns:
+        web.Response: A success response if the task is set.
+    """
     data = await request.json()
     logger.debug(f"Setting melvin task: {data}")
     task = data.get("task", None)
@@ -308,12 +513,28 @@ async def post_set_melvin_task(request: web.Request):
 
 
 async def get_reset_settings(request: web.Request):
+    """Resets all settings to their default values.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+
+    Returns:
+        web.Response: A success response confirming the reset.
+    """
     logger.debug("Resetting settings")
     await p_settings.clear_settings()
     return web.Response(status=200, text="OK")
 
 
 async def post_set_setting(request: web.Request):
+    """Sets a new configuration setting.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing settings in JSON format.
+
+    Returns:
+        web.Response: A success response if the setting is applied.
+    """
     logger.debug("Setting settings")
     data = await request.json()
     logger.debug(f"Setting settings: {data}")
@@ -322,6 +543,14 @@ async def post_set_setting(request: web.Request):
 
 
 async def post_clear_setting(request: web.Request):
+    """Clears a specific setting.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the setting name in JSON format.
+
+    Returns:
+        web.Response: A success response if the setting is cleared.
+    """
     logger.debug("Clearing settings")
     data = await request.json()
     logger.debug(f"Clearing settings: {data}")
@@ -330,6 +559,14 @@ async def post_clear_setting(request: web.Request):
 
 
 async def post_get_setting(request: web.Request):
+    """Retrieves a specific setting.
+
+    Args:
+        request (web.Request): The incoming HTTP request containing the setting name in JSON format.
+
+    Returns:
+        web.Response: JSON response containing the requested setting value.
+    """
     logger.debug("Getting settings")
     data = await request.json()
     logger.debug(f"Requested settings: {data}")
@@ -346,6 +583,14 @@ async def post_get_setting(request: web.Request):
 
 
 async def get_all_settings(request: web.Request):
+    """Retrieve all settings configured in the system.
+    
+    Args:
+        request (web.Request): The incoming HTTP request.
+    
+    Returns:
+        web.Response: JSON response containing all system settings.
+    """
     logger.debug("Getting all settings")
     attrs = [key for key in dir(settings) if not key.startswith("_") and key.isupper()]
     all_settings = {}
@@ -364,6 +609,11 @@ async def get_all_settings(request: web.Request):
 
 
 def setup_routes(app) -> None:
+    """Sets up API routes for the web application.
+
+    Args:
+        app (web.Application): The web application instance.
+    """
     app.router.add_post("/api/download_log", post_download_log)
     app.router.add_get("/api/download_telemetry", get_download_telemetry)
     app.router.add_get("/api/download_events", get_download_events)
@@ -398,6 +648,11 @@ def setup_routes(app) -> None:
 
 
 async def run_api() -> None:
+    """Starts the web API server.
+    
+    Returns:
+        None
+    """
     logger.debug("Setting up API server")
     await p_settings.init_settings()
     app = web.Application()
