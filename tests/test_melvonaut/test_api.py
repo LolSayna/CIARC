@@ -1,5 +1,4 @@
 import asyncio
-
 import pytest
 from aiohttp import web, ClientSession
 from aiohttp.test_utils import TestClient
@@ -112,7 +111,7 @@ async def test_get_cpu_usage(client: TestClient):
 
 
 async def test_get_restart_melvin(client: TestClient):
-    resp = await client.get("/api/restart_melvin")
+    resp = await client.get("/api/get_restart_melvin")
     assert resp.status == 501
     assert await resp.text() == "Not Implemented"
 
@@ -120,14 +119,14 @@ async def test_get_restart_melvin(client: TestClient):
 async def test_get_shutdown_melvin(client: TestClient, caplog):
     caplog.set_level("WARNING")
     settings.DO_ACTUALLY_EXIT = False
-    resp = await client.get("/api/shutdown_melvin")
+    resp = await client.get("/api/get_shutdown_melvin")
     assert resp.status == 200
     assert await resp.text() == "OK"
     assert "Requested shutdown, but not actually exiting" in caplog.text
 
 
 async def test_post_execute_command(client: TestClient):
-    resp = await client.post("/api/execute_command", json={"cmd": "echo hello"})
+    resp = await client.post("/api/post_execute_command", json={"cmd": "echo hello"})
     assert resp.status == 200
     data = await resp.json()
     assert "output" in data
@@ -146,7 +145,7 @@ async def test_get_melvin_version(client: TestClient):
 async def test_get_list_log_files(client: TestClient):
     async with logs_test_lock:
         logger.info("test_get_list_log_files")
-        resp = await client.get("/api/list_log_files")
+        resp = await client.get("/api/get_list_log_files")
         assert resp.status == 200, await resp.text()
         data = await resp.json()
         assert "log_files" in data
@@ -155,34 +154,34 @@ async def test_get_list_log_files(client: TestClient):
 async def test_post_download_log(client: TestClient):
     async with logs_test_lock:
         logger.info("test_post_download_log")
-        resp = await client.get("/api/list_log_files")
+        resp = await client.get("/api/get_list_log_files")
         assert resp.status == 200
         log_file = (await resp.json())["log_files"][0]
-        resp = await client.post("/api/download_log", json={"file": log_file})
+        resp = await client.post("/api/post_download_log", json={"file": log_file})
         assert resp.status == 200
         data = await resp.text()
-        assert "Listing log files" in data
+        assert "test_post_download_log" in data
 
 
 async def test_post_download_log_and_clear(client: TestClient):
     async with logs_test_lock:
         logger.info("test_post_download_log_and_clear")
-        resp = await client.get("/api/list_log_files")
+        resp = await client.get("/api/get_list_log_files")
         assert resp.status == 200
         log_file = (await resp.json())["log_files"][0]
-        resp = await client.post("/api/download_log_and_clear", json={"file": log_file})
+        resp = await client.post("/api/post_download_log_and_clear", json={"file": log_file})
         assert resp.status == 200, await resp.text() + " " + log_file
         data = await resp.text()
-        assert "Listing log files" in data
+        assert "test_post_download_log_and_clear" in data
 
 
 async def test_post_clear_log(client: TestClient):
     async with logs_test_lock:
         logger.info("test_post_clear_log")
-        resp = await client.get("/api/list_log_files")
+        resp = await client.get("/api/get_list_log_files")
         assert resp.status == 200
         log_file = (await resp.json())["log_files"][0]
-        resp = await client.post("/api/clear_log", json={"file": log_file})
+        resp = await client.post("/api/post_clear_log", json={"file": log_file})
         assert resp.status == 200, await resp.text()
         assert log_file in await resp.text()
 
@@ -190,11 +189,11 @@ async def test_post_clear_log(client: TestClient):
 async def test_get_clear_all_logs(client: TestClient):
     async with logs_test_lock:
         logger.info("test_get_clear_all_logs")
-        resp = await client.get("/api/list_log_files")
+        resp = await client.get("/api/get_list_log_files")
         assert resp.status == 200
         data = await resp.json()
         log_file = data["log_files"][0]
-        resp = await client.get("/api/clear_all_logs")
+        resp = await client.get("/api/get_clear_all_logs")
         assert resp.status == 200, await resp.text()
         data = await resp.json()
         assert "Cleared_files" in data
@@ -203,7 +202,7 @@ async def test_get_clear_all_logs(client: TestClient):
 
 async def test_get_download_telemetry(client: TestClient):
     await mel_telemetry.store_observation_csv()
-    resp = await client.get("/api/download_telemetry")
+    resp = await client.get("/api/get_download_telemetry")
     assert resp.status == 200
     data = await resp.text()
     assert (
@@ -215,7 +214,7 @@ async def test_get_download_telemetry(client: TestClient):
 
 async def test_get_download_telemetry_and_clear(client: TestClient):
     await mel_telemetry.store_observation_csv()
-    resp = await client.get("/api/download_telemetry_and_clear")
+    resp = await client.get("/api/get_download_telemetry_and_clear")
     assert resp.status == 200
     data = await resp.text()
     assert (
@@ -229,16 +228,16 @@ async def test_get_download_telemetry_and_clear(client: TestClient):
 
 async def test_get_clear_telemetry(client: TestClient):
     await mel_telemetry.store_observation_csv()
-    resp = await client.get("/api/clear_telemetry")
+    resp = await client.get("/api/get_clear_telemetry")
     assert resp.status == 200
     assert await resp.text() == "OK"
-    resp = await client.get("/api/download_telemetry")
+    resp = await client.get("/api/get_download_telemetry")
     assert resp.status == 404
 
 
 async def test_get_download_events(client: TestClient):
     await event.to_csv()
-    resp = await client.get("/api/download_events")
+    resp = await client.get("/api/get_download_events")
     assert resp.status == 200
     data = await resp.text()
     assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
@@ -246,7 +245,7 @@ async def test_get_download_events(client: TestClient):
 
 async def test_get_download_events_and_clear(client: TestClient):
     await event.to_csv()
-    resp = await client.get("/api/download_events_and_clear")
+    resp = await client.get("/api/get_download_events_and_clear")
     assert resp.status == 200
     data = await resp.text()
     assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
@@ -256,16 +255,16 @@ async def test_get_download_events_and_clear(client: TestClient):
 
 async def test_get_clear_events(client: TestClient):
     await event.to_csv()
-    resp = await client.get("/api/clear_events")
+    resp = await client.get("/api/get_clear_events")
     assert resp.status == 200
     assert await resp.text() == "OK"
-    resp = await client.get("/api/download_events")
+    resp = await client.get("/api/get_download_events")
     assert resp.status == 404
 
 
 async def test_get_list_images(client: TestClient):
     generate_test_image()
-    resp = await client.get("/api/list_images")
+    resp = await client.get("/api/get_list_images")
     assert resp.status == 200, await resp.text()
     data = await resp.json()
     assert "images" in data
@@ -274,10 +273,10 @@ async def test_get_list_images(client: TestClient):
 
 async def test_post_download_image(client: TestClient):
     generate_test_image()
-    resp = await client.get("/api/list_images")
+    resp = await client.get("/api/get_list_images")
     assert resp.status == 200
     image_file = (await resp.json())["images"][0]
-    resp = await client.post("/api/download_image", json={"file": image_file})
+    resp = await client.post("/api/post_download_image", json={"file": image_file})
     assert resp.status == 200, await resp.text()
     buffer = b""
     async for chunk in resp.content.iter_any():
@@ -289,10 +288,10 @@ async def test_post_download_image(client: TestClient):
 
 async def test_post_download_image_and_clear(client: TestClient):
     generate_test_image()
-    resp = await client.get("/api/list_images")
+    resp = await client.get("/api/get_list_images")
     assert resp.status == 200
     image_file = (await resp.json())["images"][0]
-    resp = await client.post("/api/download_image_and_clear", json={"file": image_file})
+    resp = await client.post("/api/post_download_image_and_clear", json={"file": image_file})
     assert resp.status == 200
     buffer = b""
     async for chunk in resp.content.iter_any():
@@ -300,7 +299,7 @@ async def test_post_download_image_and_clear(client: TestClient):
     im = Image.open(BytesIO(buffer))
     assert im.mode == "RGB"
     assert im.size == (100, 100)
-    resp = await client.get("/api/list_images")
+    resp = await client.get("/api/get_list_images")
     assert resp.status == 200
     data = await resp.json()
     assert image_file not in data["images"]
@@ -308,19 +307,19 @@ async def test_post_download_image_and_clear(client: TestClient):
 
 async def test_get_clear_all_images(client: TestClient):
     generate_test_image()
-    resp = await client.get("/api/list_images")
+    resp = await client.get("/api/get_list_images")
     assert resp.status == 200
     image_file = (await resp.json())["images"][0]
-    resp = await client.get("/api/clear_images")
+    resp = await client.get("/api/get_clear_all_images")
     assert resp.status == 200
-    resp = await client.get("/api/list_images")
+    resp = await client.get("/api/get_list_images")
     assert resp.status == 200
     data = await resp.json()
     assert image_file not in data["images"]
 
 
 async def test_post_set_melvin_task(client: TestClient):
-    resp = await client.post("/api/get_setting", json={"CURRENT_MELVIN_TASK": ""})
+    resp = await client.post("/api/post_get_setting", json={"CURRENT_MELVIN_TASK": ""})
     assert resp.status == 200
     data = await resp.json()
     assert "CURRENT_MELVIN_TASK" in data
@@ -329,9 +328,9 @@ async def test_post_set_melvin_task(client: TestClient):
         new_task = "mapping"
     else:
         new_task = "ebt"
-    resp = await client.post("/api/set_melvin_task", json={"task": new_task})
+    resp = await client.post("/api/post_set_melvin_task", json={"task": new_task})
     assert resp.status == 200, await resp.text()
-    resp = await client.post("/api/get_setting", json={"CURRENT_MELVIN_TASK": ""})
+    resp = await client.post("/api/post_get_setting", json={"CURRENT_MELVIN_TASK": ""})
     assert resp.status == 200
     data = await resp.json()
     assert "CURRENT_MELVIN_TASK" in data
@@ -340,12 +339,12 @@ async def test_post_set_melvin_task(client: TestClient):
 
 async def test_get_reset_settings(client: TestClient):
     resp = await client.post(
-        "/api/set_setting",
+        "/api/post_set_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "wide", "DISTANCE_BETWEEN_IMAGES": 0},
     )
     assert resp.status == 200
     resp = await client.post(
-        "/api/get_setting",
+        "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200
@@ -354,10 +353,10 @@ async def test_get_reset_settings(client: TestClient):
     assert "DISTANCE_BETWEEN_IMAGES" in data
     assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == "wide"
     assert data["DISTANCE_BETWEEN_IMAGES"] == 0
-    resp = await client.get("/api/reset_settings")
+    resp = await client.get("/api/get_reset_settings")
     assert resp.status == 200
     resp = await client.post(
-        "/api/get_setting",
+        "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200
@@ -370,12 +369,12 @@ async def test_get_reset_settings(client: TestClient):
 
 async def test_post_set_setting(client: TestClient):
     resp = await client.post(
-        "/api/set_setting",
+        "/api/post_set_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "wide", "DISTANCE_BETWEEN_IMAGES": 0},
     )
     assert resp.status == 200
     resp = await client.post(
-        "/api/get_setting",
+        "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200
@@ -388,12 +387,12 @@ async def test_post_set_setting(client: TestClient):
 
 async def test_post_clear_setting(client: TestClient):
     resp = await client.post(
-        "/api/set_setting",
+        "/api/post_set_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "wide", "DISTANCE_BETWEEN_IMAGES": 0},
     )
     assert resp.status == 200
     resp = await client.post(
-        "/api/get_setting",
+        "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200
@@ -403,12 +402,12 @@ async def test_post_clear_setting(client: TestClient):
     assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == "wide"
     assert data["DISTANCE_BETWEEN_IMAGES"] == 0
     resp = await client.post(
-        "/api/clear_setting",
+        "/api/post_clear_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200
     resp = await client.post(
-        "/api/get_setting",
+        "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200
@@ -419,9 +418,9 @@ async def test_post_clear_setting(client: TestClient):
     assert data["DISTANCE_BETWEEN_IMAGES"] == 350
 
 
-async def test_get_setting(client: TestClient):
+async def test_post_get_setting(client: TestClient):
     resp = await client.post(
-        "/api/get_setting",
+        "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
     assert resp.status == 200

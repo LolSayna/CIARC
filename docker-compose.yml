@@ -11,9 +11,9 @@ services:
     environment:
       - FLASK_ENV=production
     ports:
-      - "8000:3000"
+      - "3000:3000"
     volumes:
-      - ./data:/app/data
+      #- ./data:/app/data
       - ./.env:/app/.env
 
   nginx:

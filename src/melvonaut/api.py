@@ -15,10 +15,10 @@ from melvonaut.settings import setup_file_logging
 
 async def health(request: web.Request):
     """Check if the API is running and healthy.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: A response with status 200 and text "OK".
     """
@@ -27,10 +27,10 @@ async def health(request: web.Request):
 
 async def get_disk_usage(request: web.Request):
     """Retrieve disk usage statistics for root and home directories.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: JSON response containing disk usage data.
     """
@@ -44,10 +44,10 @@ async def get_disk_usage(request: web.Request):
 
 async def get_memory_usage(request: web.Request):
     """Retrieve memory usage statistics.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: JSON response containing memory usage data.
     """
@@ -58,10 +58,10 @@ async def get_memory_usage(request: web.Request):
 
 async def get_cpu_usage(request: web.Request):
     """Retrieve CPU usage statistics.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: JSON response containing CPU usage data including user, system, idle time, percent usage, core count, and frequency.
     """
@@ -100,7 +100,7 @@ async def get_restart_melvin(request: web.Request):
 async def get_shutdown_melvin(request: web.Request):
     """Handles a request to shut down the Melvin service.
 
-    If `settings.DO_ACTUALLY_EXIT` is set to True, the event loop is stopped, 
+    If `settings.DO_ACTUALLY_EXIT` is set to True, the event loop is stopped,
     all pending tasks are canceled, and the process exits. Otherwise, a warning is logged.
 
     Args:
@@ -125,10 +125,10 @@ async def get_shutdown_melvin(request: web.Request):
 
 async def post_execute_command(request: web.Request):
     """Execute a shell command asynchronously.
-    
+
     Args:
         request (web.Request): The incoming HTTP request containing JSON data with the command to execute.
-    
+
     Returns:
         web.Response: JSON response containing command output and return code.
     """
@@ -161,10 +161,10 @@ async def post_execute_command(request: web.Request):
 
 async def get_melvin_version(request: web.Request):
     """Retrieve the current version of the Melvin service.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: JSON response containing the Melvin service version.
     """
@@ -175,10 +175,10 @@ async def get_melvin_version(request: web.Request):
 
 async def get_list_log_files(request: web.Request):
     """Retrieve a list of log files from the log directory.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: JSON response containing a list of log filenames.
     """
@@ -584,10 +584,10 @@ async def post_get_setting(request: web.Request):
 
 async def get_all_settings(request: web.Request):
     """Retrieve all settings configured in the system.
-    
+
     Args:
         request (web.Request): The incoming HTTP request.
-    
+
     Returns:
         web.Response: JSON response containing all system settings.
     """
@@ -614,48 +614,55 @@ def setup_routes(app) -> None:
     Args:
         app (web.Application): The web application instance.
     """
-    app.router.add_post("/api/download_log", post_download_log)
-    app.router.add_get("/api/download_telemetry", get_download_telemetry)
-    app.router.add_get("/api/download_events", get_download_events)
-    app.router.add_post("/api/download_image", post_download_image)
-    app.router.add_post("/api/set_melvin_task", post_set_melvin_task)
-    app.router.add_get("/api/reset_settings", get_reset_settings)
-    app.router.add_post("/api/set_setting", post_set_setting)
-    app.router.add_post("/api/clear_setting", post_clear_setting)
-    app.router.add_post("/api/clear_log", post_clear_log)
-    app.router.add_post("/api/get_setting", post_get_setting)
+    app.router.add_post("/api/post_download_log", post_download_log)
+    app.router.add_get("/api/get_download_telemetry", get_download_telemetry)
+    app.router.add_get("/api/get_download_events", get_download_events)
+    app.router.add_post("/api/post_download_image", post_download_image)
+    app.router.add_post("/api/post_set_melvin_task", post_set_melvin_task)
+    app.router.add_get("/api/get_reset_settings", get_reset_settings)
+    app.router.add_post("/api/post_set_setting", post_set_setting)
+    app.router.add_post("/api/post_clear_setting", post_clear_setting)
+    app.router.add_post("/api/post_clear_log", post_clear_log)
+    app.router.add_post("/api/post_get_setting", post_get_setting)
     app.router.add_get("/api/get_all_settings", get_all_settings)
-    app.router.add_post("/api/download_log_and_clear", post_download_log_and_clear)
+    app.router.add_post("/api/post_download_log_and_clear", post_download_log_and_clear)
     app.router.add_get(
-        "/api/download_telemetry_and_clear", get_download_telemetry_and_clear
+        "/api/get_download_telemetry_and_clear", get_download_telemetry_and_clear
     )
-    app.router.add_get("/api/download_events_and_clear", get_download_events_and_clear)
-    app.router.add_post("/api/download_image_and_clear", post_download_image_and_clear)
-    app.router.add_get("/api/clear_all_logs", get_clear_all_logs)
-    app.router.add_get("/api/clear_telemetry", get_clear_telemetry)
-    app.router.add_get("/api/clear_events", get_clear_events)
-    app.router.add_get("/api/clear_images", get_clear_all_images)
+    app.router.add_get("/api/get_download_events_and_clear", get_download_events_and_clear)
+    app.router.add_post("/api/post_download_image_and_clear", post_download_image_and_clear)
+    app.router.add_get("/api/get_clear_all_logs", get_clear_all_logs)
+    app.router.add_get("/api/get_clear_telemetry", get_clear_telemetry)
+    app.router.add_get("/api/get_clear_events", get_clear_events)
+    app.router.add_get("/api/get_clear_all_images", get_clear_all_images)
     app.router.add_get("/api/health", health)
     app.router.add_get("/api/get_disk_usage", get_disk_usage)
     app.router.add_get("/api/get_memory_usage", get_memory_usage)
     app.router.add_get("/api/get_cpu_usage", get_cpu_usage)
-    app.router.add_get("/api/restart_melvin", get_restart_melvin)
-    app.router.add_get("/api/shutdown_melvin", get_shutdown_melvin)
-    app.router.add_post("/api/execute_command", post_execute_command)
+    app.router.add_get("/api/get_restart_melvin", get_restart_melvin)
+    app.router.add_get("/api/get_shutdown_melvin", get_shutdown_melvin)
+    app.router.add_post("/api/post_execute_command", post_execute_command)
     app.router.add_get("/api/get_melvin_version", get_melvin_version)
-    app.router.add_get("/api/list_log_files", get_list_log_files)
-    app.router.add_get("/api/list_images", get_list_images)
+    app.router.add_get("/api/get_list_log_files", get_list_log_files)
+    app.router.add_get("/api/get_list_images", get_list_images)
+
+
+@web.middleware
+async def compression_middleware(request, handler):
+    response = await handler(request)
+    response.enable_compression()
+    return response
 
 
 async def run_api() -> None:
     """Starts the web API server.
-    
+
     Returns:
         None
     """
     logger.debug("Setting up API server")
     await p_settings.init_settings()
-    app = web.Application()
+    app = web.Application(middlewares=[compression_middleware])
     setup_routes(app)
     runner = web.AppRunner(app)
     await runner.setup()

@@ -16,7 +16,7 @@ COPY . .
 
 RUN poetry install --no-interaction
 
-EXPOSE 8000
+EXPOSE 3000
 
 #CMD ["rift-console", "run-server"]
-CMD ["gunicorn", "--pythonpath", "./src", "rift_console.__main__:app", "-k", "uvicorn.workers.UvicornWorker", "--workers", "4", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "--pythonpath", "./src", "rift_console.__main__:app", "-k", "uvicorn.workers.UvicornWorker", "--workers", "4", "--bind", "0.0.0.0:3000", "-t", "0"]

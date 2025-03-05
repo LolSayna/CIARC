@@ -68,7 +68,7 @@ async def index():
             data_volume_sent=console.live_telemetry.data_volume.data_volume_sent,
             data_volume_received=console.live_telemetry.data_volume.data_volume_received,
             # keep track of state history
-            prev_state=console.prev_state,  
+            prev_state=console.prev_state,
             next_state=console.next_state,
             slots_used=console.slots_used,
             # tables
@@ -108,7 +108,7 @@ async def results() -> Response:
                 await flash(f"Cant upload world map, file: {image_path} does not exist.")
                 logger.warning(f"Cant upload world map, file: {image_path} does not exist.")
                 return redirect(url_for("index"))
-            
+
             res = ciarc_api.upload_worldmap(image_path=image_path)
 
             # TODO testing
@@ -123,7 +123,7 @@ async def results() -> Response:
                 await flash(f"Cant upload objective {id}, file: {image_path} does not exist.")
                 logger.warning(f"Cant upload objective {id}, file: {image_path} does not exist.")
                 return redirect(url_for("index"))
-            
+
             res = ciarc_api.upload_objective(image_path=image_path, objective_id=id)
 
             # TODO testing
@@ -377,7 +377,7 @@ def run_server() -> None:
     click.echo("Updated Telemetry")
     ciarc_api.live_observation()
 
-    app.run(port=8000, debug=True)
+    app.run(port=3000, debug=True, host="0.0.0.0")
 
 @main.command()
 def cli_only() -> None:
