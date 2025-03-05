@@ -1,7 +1,12 @@
 import importlib.metadata
+
 import psutil
-from aiohttp import web
+from aiohttp import web, hdrs
 from io import StringIO, BytesIO
+
+from aiohttp.web_request import Request
+from aiohttp.web_response import ContentCoding
+
 import melvonaut.settings as settings
 import melvonaut.persistent_settings as p_settings
 from shared import constants as con
@@ -649,9 +654,20 @@ def setup_routes(app) -> None:
 
 @web.middleware
 async def compression_middleware(request, handler):
-    response = await handler(request)
-    response.enable_compression()
-    return response
+
+    accept_encoding = request.headers.get(hdrs.ACCEPT_ENCODING, "").lower()
+
+    if ContentCoding.gzip.value in accept_encoding:
+        compressor = ContentCoding.gzip.value
+    elif ContentCoding.deflate.value in accept_encoding:
+        compressor = ContentCoding.deflate.value
+    else:
+        return await handler(request)
+
+    resp = await handler(request)
+    resp.headers[hdrs.CONTENT_ENCODING] = compressor
+    resp.enable_compression()
+    return resp
 
 
 async def run_api() -> None:
