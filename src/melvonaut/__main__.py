@@ -9,7 +9,7 @@ import io
 import os
 import re
 import signal
-import sys
+
 from typing import Optional, AsyncIterable
 from datetime import datetime, timezone
 
@@ -34,22 +34,6 @@ if settings.TRACING:
     import tracemalloc
 
     tracemalloc.start(5)
-
-##### LOGGING #####
-logger.remove()
-logger.add(
-    sink=sys.stdout,
-    level=settings.TERMINAL_LOGGING_LEVEL,
-    backtrace=True,
-    diagnose=True,
-)
-logger.add(
-    sink=con.MEL_LOG_LOCATION,
-    rotation="00:00",
-    level=settings.FILE_LOGGING_LEVEL,
-    backtrace=True,
-    diagnose=True,
-)
 
 
 @apprise.decorators.notify(on="melvin")
@@ -277,6 +261,7 @@ def start_event_loop() -> None:
 @click.version_option()
 def main() -> None:
     """Melvonaut."""
+    settings.setup_logging()
     logger.info("Starting Melvonaut...")
 
     start_event_loop()

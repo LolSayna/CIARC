@@ -41,7 +41,7 @@ logger.add(
 
 
 app = Quart(__name__)
-app.secret_key = "yoursecret_key" 
+app.secret_key = "yoursecret_key"
 melvin = rift_console.rift_telemetry.RiftTelemetry()
 console = rift_console.rift_console.RiftConsole()
 
@@ -75,9 +75,9 @@ async def new_index():
             data_volume_sent=console.live_telemetry.data_volume.data_volume_sent,
             data_volume_received=console.live_telemetry.data_volume.data_volume_received,
             prev_state=console.prev_state,  # keep track of history
-            next_state=console.next_state,   # if in transition
+            next_state=console.next_state,  # if in transition
             slots_used=console.slots_used,
-            slots=console.slots
+            slots=console.slots,
         )
     else:
         return await render_template(
@@ -87,13 +87,12 @@ async def new_index():
             user_speed_multiplier=console.user_speed_multiplier,
             prev_state=State.Unknown,
             next_state=State.Unknown,
-            state=State.Unknown
+            state=State.Unknown,
         )
 
 
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
-
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
@@ -106,6 +105,7 @@ async def book_slot(slot_id: int) -> Response:
     update_telemetry()
 
     return redirect(url_for("new_index"))
+
 
 # Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
@@ -158,9 +158,10 @@ async def satellite_handler() -> Response:
                 await flash("Could not change Velocity")
         case _:
             logger.error(f"Unknown button pressed: {button}")
-    
+
     update_telemetry()
     return redirect(url_for("new_index"))
+
 
 # Wrapper for all Simulation Manipulation buttons
 @app.route("/control_handler", methods=["POST"])
@@ -225,6 +226,7 @@ async def control_handler() -> Response:
 
     return redirect(url_for("new_index"))
 
+
 # Pulls API after some changes
 def update_telemetry():
     global console
@@ -237,7 +239,6 @@ def update_telemetry():
 
         if console.live_telemetry.state != State.Transition:
             console.next_state = State.Unknown
-
 
 
 # OLD CODE!

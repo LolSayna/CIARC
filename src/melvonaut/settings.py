@@ -1,12 +1,46 @@
-## [General Settings]
 # Our settings, could be changed later
 import datetime
 from dotenv import load_dotenv
 import os
 from shared.models import CameraAngle, MELVINTask
+import sys
+from loguru import logger
+import shared.constants as con
 
 load_dotenv()
 
+
+## [Logging]
+def setup_logging() -> None:
+    logger.remove()
+    logger.add(
+        sink=sys.stdout,
+        level=TERMINAL_LOGGING_LEVEL,
+        backtrace=True,
+        diagnose=True,
+        enqueue=True,
+    )
+    setup_file_logging()
+
+
+file_log_handler_id = None
+
+
+def setup_file_logging() -> None:
+    global file_log_handler_id
+    if file_log_handler_id:
+        logger.remove(file_log_handler_id)
+    file_log_handler_id = logger.add(
+        sink=con.MEL_LOG_LOCATION,
+        rotation="00:00",
+        level=FILE_LOGGING_LEVEL,
+        backtrace=True,
+        diagnose=True,
+        enqueue=True,
+    )
+
+
+## [General Settings]
 
 OBSERVATION_REFRESH_RATE = 5  # Seconds between observation requests
 BATTERY_LOW_THRESHOLD = 20
@@ -75,3 +109,5 @@ CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.EBT
 DO_TIMING_CHECK = False
 START_TIME = datetime.datetime(2025, 1, 2, 12, 00, tzinfo=datetime.timezone.utc)
 STOP_TIME = datetime.datetime(2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc)
+
+DO_ACTUALLY_EXIT = True

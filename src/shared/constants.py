@@ -4,7 +4,9 @@ from os import cpu_count
 RIFT_LOG_LEVEL = "INFO"
 
 # [PATHS]
-MEL_LOG_LOCATION = "logs/melvonaut/log_melvonaut_{time:YYYY-MM-DD_HH}.log"
+MEL_LOG_PATH = "logs/melvonaut/"
+MEL_LOG_FORMAT = "log_melvonaut_{time:YYYY-MM-DD_HH}.log"
+MEL_LOG_LOCATION = MEL_LOG_PATH + MEL_LOG_FORMAT
 TELEMETRY_LOCATION_JSON = "logs/melvonaut/telemetry_melvonaut.json"
 TELEMETRY_LOCATION_CSV = "logs/melvonaut/telemetry_melvonaut.csv"
 EVENT_LOCATION_CSV = "logs/melvonaut/event_melvonaut.csv"

@@ -47,6 +47,7 @@ def calc_distance(a: int, b: int) -> int:
 
     return abs(a, b)
 
+
 class Slot(BaseModel):
     id: int
     start: datetime.datetime

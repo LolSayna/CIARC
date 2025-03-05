@@ -5,12 +5,7 @@ from enum import Enum
 from loguru import logger
 
 import shared.constants as con
-from shared.models import (
-    CameraAngle,
-    BaseTelemetry,
-    State,
-    Slot
-)
+from shared.models import CameraAngle, BaseTelemetry, State, Slot
 
 
 class HttpCode(Enum):
@@ -100,7 +95,7 @@ def live_observation() -> BaseTelemetry:
     a = console_api(method=HttpCode.GET, endpoint=con.ACHIEVEMENTS_ENDPOINT)
     if d and s and o and a:
         b = BaseTelemetry(**d)
-        (slots_used, slots) = Slot.parse_api(s) 
+        (slots_used, slots) = Slot.parse_api(s)
         logger.info(f"Console: received live telemetry\n{b}.")
         return (b, slots_used, slots)
     else:
@@ -196,7 +191,6 @@ def change_velocity(vel_x: float, vel_y: float) -> dict:
 
 
 def book_slot(slot_id: int, enabled: bool):
-
     params = {
         "slot_id": slot_id,
         "enabled": str(enabled).lower(),

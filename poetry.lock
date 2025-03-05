@@ -2098,6 +2098,25 @@ pluggy = ">=1.5,<2"
 dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-aiohttp"
+version = "1.1.0"
+description = "Pytest plugin for aiohttp support"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "pytest_aiohttp-1.1.0-py3-none-any.whl", hash = "sha256:f39a11693a0dce08dd6c542d241e199dd8047a6e6596b2bcfa60d373f143456d"},
+    {file = "pytest_aiohttp-1.1.0.tar.gz", hash = "sha256:147de8cb164f3fc9d7196967f109ab3c0b93ea3463ab50631e56438eab7b5adc"},
+]
+
+[package.dependencies]
+aiohttp = ">=3.11.0b0"
+pytest = ">=6.1.0"
+pytest-asyncio = ">=0.17.2"
+
+[package.extras]
+testing = ["coverage (==6.2)", "mypy (==1.12.1)"]
+
+[[package]]
 name = "pytest-asyncio"
 version = "0.24.0"
 description = "Pytest support for asyncio"
@@ -2980,4 +2999,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "48426a207faac7ce36970bb1f3fc9a8a035d8dca162085309f42e75c59f8cd51"
+content-hash = "a4ef37699de285266aa490eb6395652d1a1ba55f61199869e3bb13668dd01c1a"

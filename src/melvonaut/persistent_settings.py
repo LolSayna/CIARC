@@ -7,6 +7,9 @@ from shared import constants as con
 
 # load settings
 async def load_settings() -> dict:
+    if not pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
+        logger.debug("Settings don't exist")
+        return {}
     async with async_open(con.MEL_PERSISTENT_SETTINGS, "r") as afp:
         return json.loads(await afp.read())
 
