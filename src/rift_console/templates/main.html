@@ -80,11 +80,9 @@
         </div>
       </div>
     </div>
-    <ul>
-      {% for message in get_flashed_messages() %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
+    {% for message in get_flashed_messages() %}
+      <h2 style="color: orange">Warning: {{ message }}</h2>
+    {% endfor %}
       <!-- Content Section -->
     <div class="container-fluid mt-2">
       <div class="row">
@@ -109,10 +107,12 @@
             <p>data-s/r={{data_volume_sent}}/{{data_volume_received}}</p>
             <p>slots_used={{slots_used}}</p>
         </div>
+        
         <!-- Main Content -->
         <div class="col-md-7">
-            <h2>World Map</h2>
-            <p>This is the main content area where you can add any information, links, images, or other elements you'd like.</p>
+          <h2>World Map</h2>
+          <p>This is the main content area where you can add any information, links, images, or other elements you'd like.</p>
+          <h1>TODO draw</h1>
         </div>
 
         <!-- Buttons -->
@@ -434,7 +434,7 @@
                 <td>{{ obj.decrease_rate }}</td>
                 <td>
                   <form action="{{ url_for('del_obj', obj_id=obj.id) }}" method="post">
-                    <button type="submit" class="btn btn-danger" onclick="confirmAction(event)"" name="button" value="delete">Delete</button>
+                    <button type="submit" class="btn btn-danger" onclick="confirmAction(event)" name="button" value="delete">Delete</button>
                   </form>
                 </td>
               </tr>
@@ -443,7 +443,55 @@
           </table>
         </div>
         <div id="upload" class="tab-pane fade">
-          <h2>Upload here</h2>
+          <form action="{{ url_for('results') }}" method="post">
+            <div class="row mt-2">
+              <h3>World Map</h2>
+                <div class="col-md-1"></div>
+                <div class="col-md-3">
+                  <label for="path">Path: (starting in root of repo)</label>
+                  <input type="text" class="form-control" name="path" placeholder="media/test.png" value="media/test.png">
+                </div>
+                <div class="col-md-1"></div>
+                <div class="col-md-3 mt-3">
+                  <button type="submit" class="btn btn-success" name="button" value="worldmap">Upload</button>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <h3>Zoned Objective</h2>
+                <div class="col-md-1"></div>
+                <div class="col-md-3">
+                  <label for="path">Path: (starting in root of repo)</label>
+                  <input type="text" class="form-control" name="path" placeholder="media/test.png" value="media/test.png">
+                </div>
+                <div class="col-md-1">
+                  <label for="objective_id">Id:</label>
+                  <input type="text" class="form-control" name="objective_id" placeholder="1" value="1">
+                </div>
+                <div class="col-md-3 mt-3">
+                  <button type="submit" class="btn btn-success" name="button" value="obj">Upload</button>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <h3>Beacon Position</h2>
+                <div class="col-md-1"></div>
+                <div class="col-md-2">
+                  <label for="beacon_id">Id:</label>
+                  <input type="text" class="form-control" name="beacon_id" placeholder="1" value="1">
+                </div>
+                <div class="col-md-2">
+                  <label for="height">Heigth:</label>
+                  <input type="text" class="form-control" name="height" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-2">
+                  <label for="width">Width:</label>
+                  <input type="text" class="form-control" name="width" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-3 mt-3">
+                  <button type="submit" class="btn btn-success" name="button" value="beacon">Guess</button>
+              </div>
+            </div>
+          </form>
+
 
         </div>
         <div id="achv" class="tab-pane fade">

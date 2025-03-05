@@ -21,11 +21,13 @@ class HttpCode(Enum):
     GET = "get"
     PUT = "put"
     DELETE = "delete"
+    POST = "post"
 
 
 # wrapper with error handling for ciarc api
 def console_api(
-    method: HttpCode, endpoint: str, params: dict = {}, json: dict = {}
+    method: HttpCode, endpoint: str, params: dict = {}, json: dict = {},
+    files: dict = {}
 ) -> dict:
     try:
         with requests.Session() as s:
@@ -36,6 +38,8 @@ def console_api(
                     r = s.put(endpoint, params=params, json=json)
                 case HttpCode.DELETE:
                     r = s.delete(endpoint, params=params)
+                case HttpCode.POST:
+                    r = s.post(endpoint, params=params, files=files)
 
     except requests.exceptions.ConnectionError:
         logger.error("Console: ConnectionError - possible no VPN?")
@@ -55,6 +59,12 @@ def console_api(
             # this happens for an illegal control request, for example accelerating while not in acquisition
             logger.warning(
                 f"Console: API Unprocessable Content- {r.status_code} - {type(r.json())} - {r.json()}."
+            )
+            return {}
+        case 500:
+            # this happens with an bug on the api side? TODO
+            logger.warning(
+                f"Console: API File not found - {r.status_code} - {type(r.json())} - {r.json()}."
             )
             return {}
         case _:
@@ -233,7 +243,7 @@ def delete_objective(id: int) -> None:
 def add_modify_zoned_objective(
         id: int, name: str, start: datetime.datetime, end: datetime.datetime, 
         zone: tuple[int,int,int,int], optic_required: CameraAngle, coverage_required: float, 
-        description: str, secret: bool):
+        description: str, secret: bool) -> None:
     
     json = { 
         "zoned_objectives": [
@@ -269,7 +279,7 @@ def add_modify_zoned_objective(
 
 def add_modify_ebt_objective(
         id: int, name: str, start: datetime.datetime, end: datetime.datetime, 
-        description: str, beacon_height: int, beacon_width: int):
+        description: str, beacon_height: int, beacon_width: int) -> None:
     
     json = { 
         "zoned_objectives": [],
@@ -295,3 +305,43 @@ def add_modify_ebt_objective(
     else:
         logger.warning(f"Console: could not add/modifyed ebt objective {id}/{name}")
 
+def send_beacon(beacon_id: int, height: int, width: int) -> dict:
+    params = {
+        "beacon_id": beacon_id,
+        "height": height,
+        "width": width
+    }
+    d = console_api(method=HttpCode.PUT, endpoint=con.BEACON_ENDPOINT, params=params)
+    if d:
+        logger.info(f"Console: send_beacon - {d}.")
+        return d
+    else:
+        logger.warning(f"Console: could not send_beacon - {id}")
+        return {}
+
+def upload_worldmap(image_path:str) -> str:
+    files = {
+        "image": (image_path, open(image_path, "rb"), "image/png")
+    }
+    d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
+    if d:
+        logger.info(f"Console: Uploaded world map - {d}.")
+        return d
+    else:
+        logger.warning(f"Console: could not upload world map")
+        return ""
+
+def upload_objective(image_path:str, objective_id:int) -> str:
+    params = {
+        "objective_id": objective_id,
+    }
+    files = {
+        "image": (image_path, open(image_path, "rb"), "image/png")
+    }
+    d = console_api(method=HttpCode.POST, endpoint=con.IMAGE_ENDPOINT, params=params, files=files)
+    if d:
+        logger.info(f"Console: Uploaded objective - {d}.")
+        return d
+    else:
+        logger.warning(f"Console: could not upload objective")
+        return ""

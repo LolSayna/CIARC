@@ -35,6 +35,7 @@ SIMULATION_ENDPOINT = f"{BASE_URL}simulation"
 BACKUP_ENDPOINT = f"{BASE_URL}backup"
 SLOTS_ENDPOINT = f"{BASE_URL}slots"
 ACHIEVEMENTS_ENDPOINT = f"{BASE_URL}achievements"
+DAILYMAP_ENDPOINT = f"{BASE_URL}dailyMap"
 
 # [From User Manual]
 STATE_TRANSITION_TIME = 3 * 60  # Seconds for regular state transitions

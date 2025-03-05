@@ -93,6 +93,67 @@ async def new_index():
             state=State.Unknown,
         )
 
+
+# Upload world map/images/beacon position
+@app.route("/results", methods=["POST"])
+async def results() -> Response:
+
+    # read which button was pressed
+    form = await request.form
+    button = form.get("button", type=str)
+
+    match button:
+        case "worldmap":
+            image_path = form.get("path", type=str)
+            if not os.path.isfile(image_path):
+                await flash(f"Cant upload world map, file: {image_path} does not exist.")
+                logger.warning(f"Cant upload world map, file: {image_path} does not exist.")
+                return redirect(url_for("new_index"))
+            
+            res = ciarc_api.upload_worldmap(image_path=image_path)
+
+            # TODO testing
+            if res:
+                flash(res)
+
+        case "obj":
+            image_path = form.get("path", type=str)
+            id = form.get("objective_id", type=int)
+
+            if not os.path.isfile(image_path):
+                await flash(f"Cant upload objective {id}, file: {image_path} does not exist.")
+                logger.warning(f"Cant upload objective {id}, file: {image_path} does not exist.")
+                return redirect(url_for("new_index"))
+            
+            res = ciarc_api.upload_objective(image_path=image_path, objective_id=id)
+
+            # TODO testing
+            if res:
+                flash(res)
+
+        case "beacon":
+            id = form.get("beacon_id", type=int)
+            height = form.get("height", type=int)
+            width = form.get("width", type=int)
+            res = ciarc_api.send_beacon(
+                    beacon_id=id,
+                    height=height,
+                    width=width,
+            )
+            if res:
+                await flash(res["status"])
+                if res["status"].startswith("The beacon could not be found around the given location"):
+                    await flash(f"Attempts made: {res["attempts_made"]} of 3, Location was ({height},{width})")
+                if res["status"].startswith("No more rescue attempts left"):
+                    await flash(f"for EBT: {id}")
+
+        case _:
+            logger.error(f"Unknown button pressed: {button}")
+
+    update_telemetry()
+
+    return redirect(url_for("new_index"))
+
 # Add/Modify zoned_objectives
 @app.route("/obj_mod", methods=["POST"])
 async def obj_mod() -> Response:
@@ -101,42 +162,45 @@ async def obj_mod() -> Response:
     form = await request.form
     button = form.get("button", type=str)
 
-    if button == "zoned":
-        secret = form.get("secret", type=str)
-        if secret == "True":
-            ciarc_api.add_modify_zoned_objective(
+    match button:
+        case "zoned":
+            secret = form.get("secret", type=str)
+            if secret == "True":
+                ciarc_api.add_modify_zoned_objective(
+                    id=form.get("obj_id", type=int),
+                    name=form.get("name", type=str),
+                    start=datetime.datetime.fromisoformat(form.get("start", type=str)),
+                    end=datetime.datetime.fromisoformat(form.get("end", type=str)),
+                    optic_required=CameraAngle(form.get("angle", type=str)),
+                    secret=True,
+                    zone=(0,0,0,0),
+                    coverage_required=form.get("coverage_required", type=str),
+                    description=form.get("description", type=str)
+                )
+            else:
+                ciarc_api.add_modify_zoned_objective(
+                    id=form.get("obj_id", type=int),
+                    name=form.get("name", type=str),
+                    start=datetime.datetime.fromisoformat(form.get("start", type=str)),
+                    end=datetime.datetime.fromisoformat(form.get("end", type=str)),
+                    optic_required=CameraAngle(form.get("angle", type=str)),
+                    secret=False,
+                    zone=(form.get("x1", type=str),form.get("y1", type=str),form.get("x2", type=str),form.get("y2", type=str)),
+                    coverage_required=form.get("coverage_required", type=str),
+                    description=form.get("description", type=str)
+                )
+        case "ebt":
+            ciarc_api.add_modify_ebt_objective(
                 id=form.get("obj_id", type=int),
                 name=form.get("name", type=str),
-                start=datetime.datetime.fromisoformat(form.get("start", type=str)),
-                end=datetime.datetime.fromisoformat(form.get("end", type=str)),
-                optic_required=CameraAngle(form.get("angle", type=str)),
-                secret=True,
-                zone=(0,0,0,0),
-                coverage_required=form.get("coverage_required", type=str),
-                description=form.get("description", type=str)
+                start=datetime.datetime.fromisoformat(form.get("start_ebt", type=str)),
+                end=datetime.datetime.fromisoformat(form.get("end_ebt", type=str)),
+                description=form.get("description", type=str),
+                beacon_height=form.get("beacon_height", type=int),
+                beacon_width=form.get("beacon_width", type=int),
             )
-        else:
-            ciarc_api.add_modify_zoned_objective(
-                id=form.get("obj_id", type=int),
-                name=form.get("name", type=str),
-                start=datetime.datetime.fromisoformat(form.get("start", type=str)),
-                end=datetime.datetime.fromisoformat(form.get("end", type=str)),
-                optic_required=CameraAngle(form.get("angle", type=str)),
-                secret=False,
-                zone=(form.get("x1", type=str),form.get("y1", type=str),form.get("x2", type=str),form.get("y2", type=str)),
-                coverage_required=form.get("coverage_required", type=str),
-                description=form.get("description", type=str)
-            )
-    elif button == "ebt":
-        ciarc_api.add_modify_ebt_objective(
-            id=form.get("obj_id", type=int),
-            name=form.get("name", type=str),
-            start=datetime.datetime.fromisoformat(form.get("start_ebt", type=str)),
-            end=datetime.datetime.fromisoformat(form.get("end_ebt", type=str)),
-            description=form.get("description", type=str),
-            beacon_height=form.get("beacon_height", type=int),
-            beacon_width=form.get("beacon_width", type=int),
-        )
+        case _:
+            logger.error(f"Unknown button pressed: {button}")
 
     update_telemetry()
 
@@ -160,8 +224,6 @@ async def book_slot(slot_id: int) -> Response:
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
 async def del_obj(obj_id: int) -> Response:
-    # read which button was pressed
-    form = await request.form
 
     ciarc_api.delete_objective(id=obj_id)
     update_telemetry()
@@ -516,18 +578,8 @@ def run_server() -> None:
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
 
-    #ciarc_api.live_observation()
-    # ciarc_api.change_velocity(5.4,4.2)
-
-    #drsApi.update_telemetry(melvin)
     click.echo("Updated Telemetry")
-    # used to disable network simulation at start time
-    #if melvin.is_network_simulation_active:
-    #    drsApi.change_simulation_speed(
-    #        melvin=melvin,
-     #       is_network_simulation=False,
-     #       user_speed_multiplier=melvin.simulation_speed,
-      #  )
+    ciarc_api.live_observation()
 
     app.run(port=8000, debug=True)
 
