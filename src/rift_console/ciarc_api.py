@@ -20,6 +20,7 @@ from shared.models import (
 class HttpCode(Enum):
     GET = "get"
     PUT = "put"
+    DELETE = "delete"
 
 
 # wrapper with error handling for ciarc api
@@ -33,6 +34,8 @@ def console_api(
                     r = s.get(endpoint)
                 case HttpCode.PUT:
                     r = s.put(endpoint, params=params, json=json)
+                case HttpCode.DELETE:
+                    r = s.delete(endpoint, params=params)
 
     except requests.exceptions.ConnectionError:
         logger.error("Console: ConnectionError - possible no VPN?")
@@ -218,3 +221,13 @@ def book_slot(slot_id: int, enabled: bool):
     else:
         logger.warning("Console: could not book slot, not in acquisition?")
         return {}
+
+def delete_objective(id: int):
+    params = {
+        "id": str(id),
+    }
+    d = console_api(method=HttpCode.DELETE, endpoint=con.OBJECTIVE_ENDPOINT, params=params)
+    if d:
+        logger.info(f"Console: removed objective with id - {id}.")
+    else:
+        logger.warning(f"Console: could not delete objective with id - {id}")

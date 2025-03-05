@@ -89,7 +89,7 @@
     <div class="container-fluid mt-2">
       <div class="row">
         <!-- Navigation Sidebar -->
-        <div class="col-md-3">
+        <div class="col-md-3 border">
             <h2>Live Telemetry</h2>
             <p>{{timestamp}}</p>
             <div class="progress mt-2">
@@ -123,12 +123,12 @@
             <form action="{{ url_for('control_handler') }}" method="post">
               <div class="row">
                 <div class="col-md-12">
-                  <button type="submit" class="btn btn-danger w-100" name="button" value="reset">Reset Sim</button>
+                  <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="reset">Reset Sim</button>
                 </div>
               </div>
               <div class="row">
                 <div class="col-md-6">
-                  <button type="submit" class="btn btn-danger w-100" name="button" value="save">Save State</button>
+                  <button type="submit" class="btn btn-warning w-100" onclick="confirmAction(event)" name="button" value="save">Save State</button>
                 </div>
                 <div class="col-md-6">
                   <button type="submit" class="btn btn-danger w-100" name="button" value="load">Load State</button>
@@ -274,6 +274,7 @@
                 <th>Coverage %</th>
                 <th>Coordinates</th>
                 <th>decrease_rate</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -289,6 +290,11 @@
                 <td>{{ obj.coverage_required }}</td>
                 <td>{{ obj.zone }}</td>
                 <td>{{ obj.decrease_rate }}</td>
+                <td>
+                  <form action="{{ url_for('del_obj', obj_id=obj.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger" onclick="confirmAction(event)"" name="button" value="delete">Delete</button>
+                  </form>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -305,6 +311,7 @@
                 <th>End</th>
                 <th>attempts_made</th>
                 <th>decrease_rate</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -317,6 +324,11 @@
                 <td>{{ obj.end.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
                 <td>{{ obj.attempts_made }}</td>
                 <td>{{ obj.decrease_rate }}</td>
+                <td>
+                  <form action="{{ url_for('del_obj', obj_id=obj.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger" onclick="confirmAction(event)"" name="button" value="delete">Delete</button>
+                  </form>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -358,6 +370,18 @@
 
   <!-- Java Script -->
   <script>
+
+    // Add popup for dangerous buttons
+    function confirmAction(event) {
+      event.preventDefault();
+      
+      let userConfirmed = confirm("Are you sure?");
+      
+      if (userConfirmed) {
+          event.target.form.submit();
+      }
+    }
+
     // get current utc time
     function updateTime() {
         const now = new Date();

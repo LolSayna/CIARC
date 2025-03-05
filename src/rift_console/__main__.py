@@ -110,6 +110,17 @@ async def book_slot(slot_id: int) -> Response:
     return redirect(url_for("new_index"))
 
 
+@app.route("/del_obj/<int:obj_id>", methods=["POST"])
+async def del_obj(obj_id: int) -> Response:
+    # read which button was pressed
+    form = await request.form
+
+    ciarc_api.delete_objective(id=obj_id)
+    update_telemetry()
+
+    return redirect(url_for("new_index"))
+
+
 # Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
 async def satellite_handler() -> Response:
