@@ -205,7 +205,7 @@ def change_velocity(vel_x: float, vel_y: float) -> dict:
         return {}
 
 
-def book_slot(slot_id: int, enabled: bool):
+def book_slot(slot_id: int, enabled: bool) -> None:
     params = {
         "slot_id": slot_id,
         "enabled": str(enabled).lower(),
@@ -214,15 +214,13 @@ def book_slot(slot_id: int, enabled: bool):
 
     if d:
         if d["enabled"]:
-            logger.info(f"Console: booked communication slot ({d["id"]}.")
+            logger.info(f"Console: booked communication slot {d["id"]}.")
         else:
             logger.info(f"Console: cancled communication slot {d["id"]}")
-        return d
     else:
         logger.warning("Console: could not book slot, not in acquisition?")
-        return {}
 
-def delete_objective(id: int):
+def delete_objective(id: int) -> None:
     params = {
         "id": str(id),
     }
@@ -231,3 +229,69 @@ def delete_objective(id: int):
         logger.info(f"Console: removed objective with id - {id}.")
     else:
         logger.warning(f"Console: could not delete objective with id - {id}")
+
+def add_modify_zoned_objective(
+        id: int, name: str, start: datetime.datetime, end: datetime.datetime, 
+        zone: tuple[int,int,int,int], optic_required: CameraAngle, coverage_required: float, 
+        description: str, secret: bool):
+    
+    json = { 
+        "zoned_objectives": [
+            {
+                "id": id,
+                "name": name,
+                "start": start.replace(tzinfo=datetime.timezone.utc).isoformat(),
+                "end": end.replace(tzinfo=datetime.timezone.utc).isoformat(),
+                "decrease_rate": 0.99,    # hardcoded since not in use
+                "zone": [
+                    zone[0],
+                    zone[1],
+                    zone[2],
+                    zone[3]
+                ],
+                "optic_required": optic_required,
+                "coverage_required": coverage_required,
+                "description": description,
+                "sprite": "string",    # hardcoded since not in use
+                "secret": secret
+            }
+        ],
+        "beacon_objectives": []
+    }
+
+    d = console_api(method=HttpCode.PUT, endpoint=con.OBJECTIVE_ENDPOINT, json=json)
+
+    if d:
+        logger.info(f"Console: add/modifyed zoned objective {id}/{name}.")
+    else:
+        logger.warning(f"Console: could not add/modifyed zoned objective {id}/{name}")
+
+
+def add_modify_ebt_objective(
+        id: int, name: str, start: datetime.datetime, end: datetime.datetime, 
+        description: str, beacon_height: int, beacon_width: int):
+    
+    json = { 
+        "zoned_objectives": [],
+        "beacon_objectives": [
+            {
+                "id": id,
+                "name": name,
+                "start": start.replace(tzinfo=datetime.timezone.utc).isoformat(),
+                "end": end.replace(tzinfo=datetime.timezone.utc).isoformat(),
+                "decrease_rate": 0.99,    # hardcoded since not in use
+                "description": description,
+                "beacon_height": beacon_height,
+                "beacon_width": beacon_width,
+                "attempts_made": 0      # did not change anything in API
+            }
+        ]
+    }
+
+    d = console_api(method=HttpCode.PUT, endpoint=con.OBJECTIVE_ENDPOINT, json=json)
+
+    if d:
+        logger.info(f"Console: add/modifyed ebt objective {id}/{name}.")
+    else:
+        logger.warning(f"Console: could not add/modifyed ebt objective {id}/{name}")
+

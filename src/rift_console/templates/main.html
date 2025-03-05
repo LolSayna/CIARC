@@ -128,13 +128,13 @@
               </div>
               <div class="row">
                 <div class="col-md-6">
-                  <button type="submit" class="btn btn-warning w-100" onclick="confirmAction(event)" name="button" value="save">Save State</button>
+                  <button type="submit" class="btn btn-warning w-100" name="button" value="save">Save State</button>
                 </div>
                 <div class="col-md-6">
-                  <button type="submit" class="btn btn-danger w-100" name="button" value="load">Load State</button>
+                  <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="load">Load State</button>
                 </div>
               </div>
-              <div class="row">
+              <div class="row mt-2">
                 <h6>Network Simulation:</h6>
                 <div class="col-md-6">
                   <button type="submit" class="btn btn-warning w-100" name="button" value="on_sim">On</button>
@@ -214,14 +214,11 @@
     </div>
 
     <!-- [Arrays] -->
-        
-        
-
     <!-- nav-tab - toggable tables -->
     <div class="container-fluid mt-1">
       <ul class="nav nav-tabs">
         <li class="active"><a data-toggle="tab" href="#slots">Slots</a></li>
-        <li><a data-toggle="tab" href="#obs">Objectives</a></li>
+        <li><a data-toggle="tab" href="#obj">Objectives</a></li>
         <li><a data-toggle="tab" href="#ebt">EBT</a></li>
         <li><a data-toggle="tab" href="#upload">Upload</a></li>
         <li><a data-toggle="tab" href="#achv">Achievements</a></li>
@@ -260,7 +257,77 @@
             </tbody>
           </table>
         </div>
-        <div id="obs" class="tab-pane fade">
+        <div id="obj" class="tab-pane fade">
+
+          <!-- Add/Modify objective-->
+          <div class="container">
+            <form action="{{ url_for('obj_mod') }}" method="post">
+              <div class="row">
+                <div class="col-md-1">
+                  <label for="obj_id">Id:</label>
+                  <input type="text" class="form-control" name="obj_id" placeholder="1" value="1">
+                </div>
+                <div class="col-md-2">
+                  <label for="name">Name:</label>
+                  <input type="text" class="form-control" name="name" placeholder="Test1" value="Test1">
+                </div>
+                <div class="col-md-2">
+                  <label for="start">Start:</label>
+                  <input type="text" class="form-control" name="start" id="start">
+                </div>
+                <div class="col-md-2">
+                  <label for="end">End:</label>
+                  <input type="text" class="form-control" name="end" id="end">
+                </div>
+                <div class="col-md-2">
+                  <label for="angle">Camera Angle:</label>
+                  <select name="angle" id="angle" class="form-control">
+                    {% for option in ["narrow", "normal", "wide"] %}
+                        <option value="{{ option }}" {% if selected_value == option %}selected{% endif %}>{{ option|capitalize }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-1">
+                  <label for="secret">Secret?:</label>
+                  <select name="secret" id="secret" class="form-control">
+                    {% for option in ["False", "True"] %}
+                        <option value="{{ option }}" {% if selected_value == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-1">
+                  <label for="coverage_required">Coverage:</label>
+                  <input type="text" class="form-control" name="coverage_required" placeholder="0.5" value="0.5">
+                </div>
+                <div class="col-md-3">
+                  <label for="description">Description:</label>
+                  <input type="text" class="form-control" name="description" placeholder="Blub" value="Blub">
+                </div>
+                <div class="col-md-1">
+                  <label for="x1">X_1:</label>
+                  <input type="text" class="form-control" name="x1" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-1">
+                  <label for="y1">Y_1:</label>
+                  <input type="text" class="form-control" name="y1" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-1">
+                  <label for="x2">X_2:</label>
+                  <input type="text" class="form-control" name="x2" placeholder="2000" value="2000">
+                </div>
+                <div class="col-md-1">
+                  <label for="x2">Y_2:</label>
+                  <input type="text" class="form-control" name="x2" placeholder="2000" value="2000">
+                </div>
+                <div class="col-md-2 mt-4">
+                  <button type="submit" class="btn btn-secondary w-100" name="button" value="zoned"">Confirm</button>
+                </div>
+              </div>
+            </form>
+          </div>
           <table> 
             <thead>
               <tr>
@@ -292,7 +359,7 @@
                 <td>{{ obj.decrease_rate }}</td>
                 <td>
                   <form action="{{ url_for('del_obj', obj_id=obj.id) }}" method="post">
-                    <button type="submit" class="btn btn-danger" onclick="confirmAction(event)"" name="button" value="delete">Delete</button>
+                    <button type="submit" class="btn btn-danger" onclick="confirmAction(event)">Delete</button>
                   </form>
                 </td>
               </tr>
@@ -301,6 +368,47 @@
           </table>
         </div>
         <div id="ebt" class="tab-pane fade">
+          <!-- Add/Modify objective-->
+          <div class="container">
+            <form action="{{ url_for('obj_mod') }}" method="post">
+              <div class="row">
+                <div class="col-md-1">
+                  <label for="obj_id">Id:</label>
+                  <input type="text" class="form-control" name="obj_id" placeholder="100" value="100">
+                </div>
+                <div class="col-md-2">
+                  <label for="name">Name:</label>
+                  <input type="text" class="form-control" name="name" placeholder="EBT 1" value="EBT 1">
+                </div>
+                <div class="col-md-3">
+                  <label for="start">Start:</label>
+                  <input type="text" class="form-control" name="start_ebt" id="start_ebt">
+                </div>
+                <div class="col-md-3">
+                  <label for="end">End:</label>
+                  <input type="text" class="form-control" name="end_ebt" id="end_ebt">
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-3">
+                  <label for="description">Description:</label>
+                  <input type="text" class="form-control" name="description" placeholder="Blub" value="Blub">
+                </div>
+                <div class="col-md-1">
+                  <label for="beacon_height">heigth:</label>
+                  <input type="text" class="form-control" name="beacon_height" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-1">
+                  <label for="beacon_width">width:</label>
+                  <input type="text" class="form-control" name="beacon_width" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-2 mt-4">
+                  <button type="submit" class="btn btn-secondary w-100" name="button" value="ebt">Confirm</button>
+                </div>
+              </div>
+            </form>
+          </div>
           <table> 
             <thead>
               <tr>
@@ -373,12 +481,8 @@
 
     // Add popup for dangerous buttons
     function confirmAction(event) {
-      event.preventDefault();
-      
-      let userConfirmed = confirm("Are you sure?");
-      
-      if (userConfirmed) {
-          event.target.form.submit();
+      if(!confirm('Are you sure?')) {
+        event.preventDefault();
       }
     }
 
@@ -389,8 +493,28 @@
         const formattedString = isoString.slice(0, 19);
         document.getElementById('time').textContent = `Live UTC: ${formattedString}`;
     }
+
+    // get time for form
+    function updateFormTime() {
+      const now = new Date();
+      const isoString = now.toISOString();
+      const startS = isoString.slice(0, 16);
+      document.getElementById('start').placeholder = `${startS}`;
+      document.getElementById('start').value = `${startS}`;
+      document.getElementById('start_ebt').placeholder = `${startS}`;
+      document.getElementById('start_ebt').value = `${startS}`;
+
+      now.setUTCDate(now.getUTCDate() + 1);
+      endS = now.toISOString();
+      const endShort = endS.slice(0, 16);
+      document.getElementById('end').placeholder = `${endShort}`;
+      document.getElementById('end').value = `${endShort}`;
+      document.getElementById('end_ebt').placeholder = `${endShort}`;
+      document.getElementById('end_ebt').value = `${endShort}`;
+    }
     // Initial call
     updateTime();
+    updateFormTime();
     // Update every second
     setInterval(updateTime, 1000);
   </script>

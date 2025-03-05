@@ -93,6 +93,54 @@ async def new_index():
             state=State.Unknown,
         )
 
+# Add/Modify zoned_objectives
+@app.route("/obj_mod", methods=["POST"])
+async def obj_mod() -> Response:
+
+    # read which button was pressed
+    form = await request.form
+    button = form.get("button", type=str)
+
+    if button == "zoned":
+        secret = form.get("secret", type=str)
+        if secret == "True":
+            ciarc_api.add_modify_zoned_objective(
+                id=form.get("obj_id", type=int),
+                name=form.get("name", type=str),
+                start=datetime.datetime.fromisoformat(form.get("start", type=str)),
+                end=datetime.datetime.fromisoformat(form.get("end", type=str)),
+                optic_required=CameraAngle(form.get("angle", type=str)),
+                secret=True,
+                zone=(0,0,0,0),
+                coverage_required=form.get("coverage_required", type=str),
+                description=form.get("description", type=str)
+            )
+        else:
+            ciarc_api.add_modify_zoned_objective(
+                id=form.get("obj_id", type=int),
+                name=form.get("name", type=str),
+                start=datetime.datetime.fromisoformat(form.get("start", type=str)),
+                end=datetime.datetime.fromisoformat(form.get("end", type=str)),
+                optic_required=CameraAngle(form.get("angle", type=str)),
+                secret=False,
+                zone=(form.get("x1", type=str),form.get("y1", type=str),form.get("x2", type=str),form.get("y2", type=str)),
+                coverage_required=form.get("coverage_required", type=str),
+                description=form.get("description", type=str)
+            )
+    elif button == "ebt":
+        ciarc_api.add_modify_ebt_objective(
+            id=form.get("obj_id", type=int),
+            name=form.get("name", type=str),
+            start=datetime.datetime.fromisoformat(form.get("start_ebt", type=str)),
+            end=datetime.datetime.fromisoformat(form.get("end_ebt", type=str)),
+            description=form.get("description", type=str),
+            beacon_height=form.get("beacon_height", type=int),
+            beacon_width=form.get("beacon_width", type=int),
+        )
+
+    update_telemetry()
+
+    return redirect(url_for("new_index"))
 
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
@@ -184,17 +232,15 @@ async def control_handler() -> Response:
 
     # read which button was pressed
     form = await request.form
-    button = form.get("button", type=str)
+    button = form.get("button")
 
     match button:
         case "reset":
             ciarc_api.reset()
             console = rift_console.rift_console.RiftConsole()
-            update_telemetry()
         case "load":
             ciarc_api.load_backup(console.last_backup_date)
             console.live_telemetry = None
-            update_telemetry()
         case "save":
             ciarc_api.save_backup()
             console.last_backup_date = ciarc_api.save_backup()
@@ -232,14 +278,16 @@ async def control_handler() -> Response:
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
+    update_telemetry()
     return redirect(url_for("new_index"))
 
 
 # Pulls API after some changes
 def update_telemetry():
     global console
-    (new_tel, slots_used, slots, zoned_objectives, beacon_objectives, achievements) = ciarc_api.live_observation()
-    if new_tel:
+    res = ciarc_api.live_observation()
+    if res:
+        (new_tel, slots_used, slots, zoned_objectives, beacon_objectives, achievements) = res
         console.live_telemetry = new_tel
         console.slots_used = slots_used
         console.slots = slots
@@ -468,18 +516,18 @@ def run_server() -> None:
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
 
-    ciarc_api.live_observation()
+    #ciarc_api.live_observation()
     # ciarc_api.change_velocity(5.4,4.2)
 
-    drsApi.update_telemetry(melvin)
+    #drsApi.update_telemetry(melvin)
     click.echo("Updated Telemetry")
     # used to disable network simulation at start time
-    if melvin.is_network_simulation_active:
-        drsApi.change_simulation_speed(
-            melvin=melvin,
-            is_network_simulation=False,
-            user_speed_multiplier=melvin.simulation_speed,
-        )
+    #if melvin.is_network_simulation_active:
+    #    drsApi.change_simulation_speed(
+    #        melvin=melvin,
+     #       is_network_simulation=False,
+     #       user_speed_multiplier=melvin.simulation_speed,
+      #  )
 
     app.run(port=8000, debug=True)
 
