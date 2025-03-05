@@ -63,9 +63,10 @@
     <div class="container-fluid mt-3">
       <div class="container-fluid row border">
 
-        <div class="col-md-6 mt-3">
+        <div class="col-md-3 mt-2">
           <h1 class="text-center text-primary">Rift Console</h1>
-        </div>
+        </div>        
+        
         <div class="col-md-3 mt-2">
           <div class="button-container">
             <img src="{{ url_for('static', filename='images/' + prev_state + '.png') }}" alt="prev_state" class="smaller_img">
@@ -75,8 +76,12 @@
             <img src="{{ url_for('static', filename='images/' + next_state + '.png') }}" alt="next_state" class="smaller_img">
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <h2 class="col text-center text-secondary" id="time">Loading UTC Time...</h2>
+        </div>
+        <div class="col-md-2 mt-3">
+          <h4>Next Com: {{next_slot_start}}</h4>
+          <h4>End of Com: {{slot_ends}}</h4>
         </div>
       </div>
     </div>

@@ -20,13 +20,6 @@ import rift_console.rift_telemetry
 import rift_console.image_processing
 import rift_console.ciarc_api as ciarc_api
 
-# TODO-s
-# - Autorefresh (maybe javascript)
-# - Map schöner machen
-# - Elemente kleiner machen
-# - restliche API endpoints
-
-
 ##### LOGGING #####
 con.RIFT_LOG_LEVEL = "INFO"
 logger.remove()
@@ -42,18 +35,18 @@ logger.add(
 
 app = Quart(__name__)
 app.secret_key = "yoursecret_key"
-melvin = rift_console.rift_telemetry.RiftTelemetry()
 console = rift_console.rift_console.RiftConsole()
 
 
-@app.route("/main", methods=["GET"])
-async def new_index():
+@app.route("/", methods=["GET"])
+async def index():
     if console.live_telemetry:
         return await render_template(
             "main.html",
             last_backup_date=console.last_backup_date,
             is_network_simulation=console.is_network_simulation,
             user_speed_multiplier=console.user_speed_multiplier,
+            # live telemtry
             timestamp=console.live_telemetry.timestamp.isoformat(),
             state=console.live_telemetry.state,
             angle=console.live_telemetry.angle,
@@ -74,13 +67,19 @@ async def new_index():
             objectives_points=console.live_telemetry.objectives_points,
             data_volume_sent=console.live_telemetry.data_volume.data_volume_sent,
             data_volume_received=console.live_telemetry.data_volume.data_volume_received,
-            prev_state=console.prev_state,  # keep track of history
-            next_state=console.next_state,  # if in transition
+            # keep track of state history
+            prev_state=console.prev_state,  
+            next_state=console.next_state,
             slots_used=console.slots_used,
+            # tables
             slots=console.slots,
             zoned_objectives=console.zoned_objectives,
             beacon_objectives=console.beacon_objectives,
-            achievements=console.achievements
+            achievements=console.achievements,
+            # slot times
+            # TODO testing
+            next_slot_start=console.slots[0].start.strftime("%H:%M:%S"),
+            slot_ends=console.slots[0].end.strftime("%H:%M:%S"),
         )
     else:
         return await render_template(
@@ -108,7 +107,7 @@ async def results() -> Response:
             if not os.path.isfile(image_path):
                 await flash(f"Cant upload world map, file: {image_path} does not exist.")
                 logger.warning(f"Cant upload world map, file: {image_path} does not exist.")
-                return redirect(url_for("new_index"))
+                return redirect(url_for("index"))
             
             res = ciarc_api.upload_worldmap(image_path=image_path)
 
@@ -123,7 +122,7 @@ async def results() -> Response:
             if not os.path.isfile(image_path):
                 await flash(f"Cant upload objective {id}, file: {image_path} does not exist.")
                 logger.warning(f"Cant upload objective {id}, file: {image_path} does not exist.")
-                return redirect(url_for("new_index"))
+                return redirect(url_for("index"))
             
             res = ciarc_api.upload_objective(image_path=image_path, objective_id=id)
 
@@ -152,7 +151,7 @@ async def results() -> Response:
 
     update_telemetry()
 
-    return redirect(url_for("new_index"))
+    return redirect(url_for("index"))
 
 # Add/Modify zoned_objectives
 @app.route("/obj_mod", methods=["POST"])
@@ -204,7 +203,7 @@ async def obj_mod() -> Response:
 
     update_telemetry()
 
-    return redirect(url_for("new_index"))
+    return redirect(url_for("index"))
 
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
@@ -219,7 +218,7 @@ async def book_slot(slot_id: int) -> Response:
 
     update_telemetry()
 
-    return redirect(url_for("new_index"))
+    return redirect(url_for("index"))
 
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
@@ -228,7 +227,7 @@ async def del_obj(obj_id: int) -> Response:
     ciarc_api.delete_objective(id=obj_id)
     update_telemetry()
 
-    return redirect(url_for("new_index"))
+    return redirect(url_for("index"))
 
 
 # Wrapper to change Melvin Status
@@ -284,7 +283,7 @@ async def satellite_handler() -> Response:
             logger.error(f"Unknown button pressed: {button}")
 
     update_telemetry()
-    return redirect(url_for("new_index"))
+    return redirect(url_for("index"))
 
 
 # Wrapper for all Simulation Manipulation buttons
@@ -341,7 +340,7 @@ async def control_handler() -> Response:
             logger.error(f"Unknown button pressed: {button}")
 
     update_telemetry()
-    return redirect(url_for("new_index"))
+    return redirect(url_for("index"))
 
 
 # Pulls API after some changes
@@ -361,13 +360,43 @@ def update_telemetry():
         if console.live_telemetry.state != State.Transition:
             console.next_state = State.Unknown
 
+@click.group()
+@click.version_option()
+def main() -> None:
+    """Rift Console."""
+    pass
+
+@main.command()
+def run_server() -> None:
+    """Run the Flask development server on port 8000."""
+    click.echo("Starting Quart development server on port 8000...")
+
+    # thread = threading.Thread(target=call_telemetry)
+    # thread.start()
+
+    click.echo("Updated Telemetry")
+    ciarc_api.live_observation()
+
+    app.run(port=8000, debug=True)
+
+@main.command()
+def cli_only() -> None:
+    """Original Rift Console CLI command"""
+    click.echo("Rift Console CLI.")
+
+
+if __name__ == "__main__":
+    main(prog_name="Rift Console")  # pragma: no cover
+
 
 # OLD CODE!
+# to be removed! TODO
+# also remove drs_api
 
-
+melvin = rift_console.rift_telemetry.RiftTelemetry()
 # Main Page
-@app.route("/", methods=["GET"])
-async def index() -> str:
+@app.route("/old", methods=["GET"])
+async def old() -> str:
     # ciarc_api.load_backup(datetime.datetime.now())
     # ciarc_api.change_simulation_speed(user_speed_multiplier=5)
     # ciarc_api.set_network_sim(is_network_simulation=False)
@@ -458,7 +487,7 @@ async def image_stitch_button() -> Response:
     # logging inside image_processing
 
     # afterwards refresh page (which includes updating telemetry)
-    return redirect(url_for("index"))
+    return redirect(url_for("old"))
 
 
 # Wrapper for all Image Stichting and Copying
@@ -495,7 +524,7 @@ async def image_pull_button() -> Response:
     logger.warning(f"Copied {file_count} Images from console.")
 
     # afterwards refresh page (which includes updating telemetry)
-    return redirect(url_for("index"))
+    return redirect(url_for("old"))
 
 
 # Wrapper for all Simulation Manipulation buttons
@@ -515,7 +544,7 @@ async def sim_manip_buttons() -> Response:
             drsApi.load_backup()
 
     # afterwards refresh page (which includes updating telemetry)
-    return redirect(url_for("index"))
+    return redirect(url_for("old"))
 
 
 # Slider
@@ -535,7 +564,7 @@ async def slider_button() -> Response:
     ciarc_api.change_simulation_speed(user_speed_multiplier=slider_value)
     ciarc_api.change_network_sim(is_network_simulation=is_network_simulation)
 
-    return redirect(url_for("index"))
+    return redirect(url_for("old"))
 
 
 # State Changer
@@ -560,35 +589,5 @@ async def state_buttons() -> Response:
         melvin=melvin, vel_x=vx, vel_y=vy, cameraAngle=lens, target_state=State(state)
     )
 
-    return redirect(url_for("index"))
+    return redirect(url_for("old"))
 
-
-@click.group()
-@click.version_option()
-def main() -> None:
-    """Rift Console."""
-    pass
-
-
-@main.command()
-def run_server() -> None:
-    """Run the Flask development server on port 8000."""
-    click.echo("Starting Quart development server on port 8000...")
-
-    # thread = threading.Thread(target=call_telemetry)
-    # thread.start()
-
-    click.echo("Updated Telemetry")
-    ciarc_api.live_observation()
-
-    app.run(port=8000, debug=True)
-
-
-@main.command()
-def cli_only() -> None:
-    """Original Rift Console CLI command"""
-    click.echo("Rift Console CLI.")
-
-
-if __name__ == "__main__":
-    main(prog_name="Rift Console")  # pragma: no cover
