@@ -114,3 +114,8 @@ def test_settings_load_empty_json(settings):
         f.write("{}")
     new_settings = Settings()
     assert new_settings.OVERRIDES == {}
+
+
+def test_get_default_setting(settings):
+    settings.BATTERY_LOW_THRESHOLD = 10
+    assert settings.get_default_setting("BATTERY_LOW_THRESHOLD") == 20

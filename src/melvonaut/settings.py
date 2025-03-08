@@ -162,6 +162,9 @@ class Settings(BaseModel):
         self.OVERRIDES = None
         # logger.debug(f"{self.OVERRIDES=}")
 
+    def get_default_setting(self, key):
+        return super().__getattribute__(key)
+
     def __init__(self):
         super().__init__()
         if not self.init_settings():
