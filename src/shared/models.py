@@ -411,3 +411,24 @@ class Event(BaseModel):
                 writer = csv.DictWriter(afp, fieldnames=event_dict.keys())
                 await writer.writerow(event_dict)
             logger.debug(f"Writing to {con.EVENT_LOCATION_CSV}")
+
+    @staticmethod
+    def load_events_from_csv() -> list["Event"]:
+        events = []
+        if not Path(con.EVENT_LOCATION_CSV).is_file():
+            logger.warning(f"No event file found under {con.EVENT_LOCATION_CSV}")
+        else:
+            with open(con.EVENT_LOCATION_CSV, "r") as f:
+                for row in csv.DictReader(f):
+                    read_event = Event(
+                        data=row["data"],
+                        event=row["event"],
+                        retry=bool(row["retry"]),
+                        id=row["id"],
+                        timestamp=datetime.datetime.fromisoformat(row["timestamp"]),
+                        current_x=row["current_x"],
+                        current_y=row["current_y"],
+                    )
+                    events.append(read_event)
+            logger.info(f"Loaded {len(events)} events from {con.EVENT_LOCATION_CSV}")
+        return events

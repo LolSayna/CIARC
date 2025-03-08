@@ -1,12 +1,8 @@
 import asyncio
-import os
-import pathlib
-
 import pytest
 from aiohttp import web, ClientSession
 from aiohttp.test_utils import TestClient
-from melvonaut import utils
-from melvonaut.settings import settings, Settings
+from melvonaut.settings import settings
 from shared import constants as con
 from melvonaut.api import setup_routes, compression_middleware, catcher_middleware
 from loguru import logger

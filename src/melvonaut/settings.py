@@ -16,6 +16,8 @@ from loguru import logger
 
 load_dotenv()
 
+file_log_handler_id = None
+
 
 class Settings(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -86,10 +88,10 @@ class Settings(BaseModel):
 
     # To set a custom time window to be active, or to disable all timing checks
     DO_TIMING_CHECK: bool = False
-    START_TIME: datetime = datetime.datetime(
+    START_TIME: datetime.datetime = datetime.datetime(
         2025, 1, 2, 12, 00, tzinfo=datetime.timezone.utc
     )
-    STOP_TIME: datetime = datetime.datetime(
+    STOP_TIME: datetime.datetime = datetime.datetime(
         2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc
     )
 
@@ -115,23 +117,23 @@ class Settings(BaseModel):
             # logger.debug(f"{self.OVERRIDES=}")
 
     # save settings
-    def save_settings(self):
+    def save_settings(self) -> None:
         with open(con.MEL_PERSISTENT_SETTINGS, "w") as f:
             f.write(json.dumps(self.OVERRIDES))
 
     # get settings
-    def get_setting(self, key, default):
+    def get_setting(self, key: str, default: Any = None) -> Any:
         return self.OVERRIDES.get(key.upper(), default)
 
     # set setting
-    def set_setting(self, key, value):
+    def set_setting(self, key: str, value: Any) -> None:
         # logger.debug(f"Setting {key.upper()} to {value}")
         # logger.debug(f"{self.OVERRIDES=}")
         self.OVERRIDES[key.upper()] = value
         # logger.debug(f"{self.OVERRIDES=}")
         self.save_settings()
 
-    def set_settings(self, key_values: dict):
+    def set_settings(self, key_values: dict[str, Any]) -> None:
         # logger.debug(f"Setting {self.OVERRIDES}")
         if len(key_values.keys()) == 0:
             logger.debug("Clearing settings")
@@ -142,14 +144,14 @@ class Settings(BaseModel):
         # logger.debug(f"Setting {self.OVERRIDES}")
         self.save_settings()
 
-    def delete_settings(self, keys: list):
+    def delete_settings(self, keys: list[str]) -> None:
         # logger.debug(f"Deleting {keys}")
         for key in keys:
             del self.OVERRIDES[key.upper()]
         # logger.debug(f"{self.OVERRIDES=}")
         self.save_settings()
 
-    def init_settings(self):
+    def init_settings(self) -> bool:
         if pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
             logger.debug("Settings already exist")
             return False
@@ -158,19 +160,19 @@ class Settings(BaseModel):
         return True
 
     # clear settings
-    def clear_settings(self):
-        self.OVERRIDES = None
+    def clear_settings(self) -> None:
+        self.OVERRIDES = None  # type: ignore
         # logger.debug(f"{self.OVERRIDES=}")
 
-    def get_default_setting(self, key):
+    def get_default_setting(self, key: str) -> Any:
         return super().__getattribute__(key)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         if not self.init_settings():
             self.load_settings()
 
-    def __getattribute__(self, item):
+    def __getattribute__(self, item: str) -> Any:
         if item.startswith("__"):
             return super().__getattribute__(item)
         # logger.debug(f"Getting {item}")
@@ -179,7 +181,7 @@ class Settings(BaseModel):
             return overrides[item.upper()]
         return super().__getattribute__(item)
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
         # logger.debug(f"Setting {key} to {value}")
         if key == "OVERRIDES" and value is None:
             self.OVERRIDES.clear()

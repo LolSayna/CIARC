@@ -1,11 +1,11 @@
-from melvonaut.settings import settings
 
+from melvonaut.settings import settings
 import importlib.metadata
 import psutil
 from aiohttp import web, hdrs
 from io import StringIO, BytesIO
 from aiohttp.web_response import ContentCoding
-
+from typing import Callable, Any, Awaitable
 from melvonaut import utils
 from shared import constants as con
 from loguru import logger
@@ -15,7 +15,10 @@ import shared.models as models
 import datetime
 
 
-async def health(request: web.Request):
+Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
+
+
+async def health(request: web.Request) -> web.Response:
     """Check if the API is running and healthy.
 
     Args:
@@ -27,7 +30,7 @@ async def health(request: web.Request):
     return web.Response(status=200, text="OK")
 
 
-async def get_disk_usage(request: web.Request):
+async def get_disk_usage(request: web.Request) -> web.Response:
     """Retrieve disk usage statistics for root and home directories.
 
     Args:
@@ -44,7 +47,7 @@ async def get_disk_usage(request: web.Request):
     )
 
 
-async def get_memory_usage(request: web.Request):
+async def get_memory_usage(request: web.Request) -> web.Response:
     """Retrieve memory usage statistics.
 
     Args:
@@ -58,7 +61,7 @@ async def get_memory_usage(request: web.Request):
     return web.json_response(memory_usage._asdict(), status=200)
 
 
-async def get_cpu_usage(request: web.Request):
+async def get_cpu_usage(request: web.Request) -> web.Response:
     """Retrieve CPU usage statistics.
 
     Args:
@@ -85,7 +88,7 @@ async def get_cpu_usage(request: web.Request):
     return web.json_response(cpu, status=200)
 
 
-async def get_restart_melvin(request: web.Request):
+async def get_restart_melvin(request: web.Request) -> web.Response:
     """Handles a request to restart the Melvin service.
 
     This endpoint is not yet implemented and always returns a 501 Not Implemented response.
@@ -99,7 +102,7 @@ async def get_restart_melvin(request: web.Request):
     return web.Response(status=501, text="Not Implemented")
 
 
-async def get_shutdown_melvin(request: web.Request):
+async def get_shutdown_melvin(request: web.Request) -> web.Response:
     """Handles a request to shut down the Melvin service.
 
     If `settings.DO_ACTUALLY_EXIT` is set to True, the event loop is stopped,
@@ -125,7 +128,7 @@ async def get_shutdown_melvin(request: web.Request):
             logger.warning("Requested shutdown, but not actually exiting")
 
 
-async def post_execute_command(request: web.Request):
+async def post_execute_command(request: web.Request) -> web.Response:
     """Execute a shell command asynchronously.
 
     Args:
@@ -143,10 +146,11 @@ async def post_execute_command(request: web.Request):
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         while True:
-            line = await process.stdout.readline()
-            if not line:
-                break
-            output.append(line.decode())
+            if process.stdout:
+                line = await process.stdout.readline()
+                if not line:
+                    break
+                output.append(line.decode())
         await process.wait()
         return_code = process.returncode
         logger.debug(f"Command output: {output}")
@@ -161,7 +165,7 @@ async def post_execute_command(request: web.Request):
         return web.json_response({"output": output, "error": str(e)}, status=500)
 
 
-async def get_melvin_version(request: web.Request):
+async def get_melvin_version(request: web.Request) -> web.Response:
     """Retrieve the current version of the Melvin service.
 
     Args:
@@ -175,7 +179,7 @@ async def get_melvin_version(request: web.Request):
     )
 
 
-async def get_list_log_files(request: web.Request):
+async def get_list_log_files(request: web.Request) -> web.Response:
     """Retrieve a list of log files from the log directory.
 
     Args:
@@ -199,7 +203,7 @@ async def get_list_log_files(request: web.Request):
     return web.json_response({"log_files": log_files}, status=200)
 
 
-async def post_download_log(request: web.Request):
+async def post_download_log(request: web.Request) -> web.Response | web.FileResponse:
     """Handles log file download requests.
 
     Args:
@@ -217,7 +221,7 @@ async def post_download_log(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def post_download_log_and_clear(request: web.Request):
+async def post_download_log_and_clear(request: web.Request) -> web.Response:
     """Handles log file download requests and deletes the file after serving it.
 
     Args:
@@ -240,7 +244,7 @@ async def post_download_log_and_clear(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def post_clear_log(request: web.Request):
+async def post_clear_log(request: web.Request) -> web.Response:
     """Handles log file deletion requests.
 
     Args:
@@ -264,7 +268,7 @@ async def post_clear_log(request: web.Request):
         return web.Response(status=404, text=f"{log_file} not found")
 
 
-async def get_clear_all_logs(request: web.Request):
+async def get_clear_all_logs(request: web.Request) -> web.Response:
     """Clears all log files in the system.
 
     Args:
@@ -292,7 +296,9 @@ async def get_clear_all_logs(request: web.Request):
 
 
 # Download telemetry
-async def get_download_telemetry(request: web.Request):
+async def get_download_telemetry(
+    request: web.Request,
+) -> web.Response | web.FileResponse:
     """Handles telemetry data download requests.
 
     Args:
@@ -309,7 +315,7 @@ async def get_download_telemetry(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def get_download_telemetry_and_clear(request: web.Request):
+async def get_download_telemetry_and_clear(request: web.Request) -> web.Response:
     """Handles telemetry data download requests and deletes the file after serving it.
 
     Args:
@@ -330,7 +336,7 @@ async def get_download_telemetry_and_clear(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def get_clear_telemetry(request: web.Request):
+async def get_clear_telemetry(request: web.Request) -> web.Response:
     """Clears the telemetry data file.
 
     Args:
@@ -349,7 +355,7 @@ async def get_clear_telemetry(request: web.Request):
 
 
 # Download events
-async def get_download_events(request: web.Request):
+async def get_download_events(request: web.Request) -> web.Response | web.FileResponse:
     """Handles the download of event logs.
 
     Args:
@@ -367,7 +373,7 @@ async def get_download_events(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def get_download_events_and_clear(request: web.Request):
+async def get_download_events_and_clear(request: web.Request) -> web.Response:
     """Downloads and clears the event log file.
 
     This function retrieves the event log file, sends its content as a response,
@@ -392,7 +398,7 @@ async def get_download_events_and_clear(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def get_clear_events(request: web.Request):
+async def get_clear_events(request: web.Request) -> web.Response:
     """Deletes the event log file from the system.
 
     If the event log file exists, it is deleted. If it does not exist, a 404 response is returned.
@@ -413,7 +419,7 @@ async def get_clear_events(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def get_list_images(request: web.Request):
+async def get_list_images(request: web.Request) -> web.Response:
     """Lists all available image files.
 
     Args:
@@ -430,7 +436,7 @@ async def get_list_images(request: web.Request):
     return web.json_response({"images": images}, status=200)
 
 
-async def post_download_image(request: web.Request):
+async def post_download_image(request: web.Request) -> web.Response | web.FileResponse:
     """Handles image file download requests.
 
     Args:
@@ -448,7 +454,7 @@ async def post_download_image(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def post_download_image_and_clear(request: web.Request):
+async def post_download_image_and_clear(request: web.Request) -> web.Response:
     """Handles image file download requests and deletes the file after serving it.
 
     Args:
@@ -470,7 +476,7 @@ async def post_download_image_and_clear(request: web.Request):
         return web.Response(status=404, text="File not found")
 
 
-async def get_clear_all_images(request: web.Request):
+async def get_clear_all_images(request: web.Request) -> web.Response:
     """Clears all stored images.
 
     Args:
@@ -487,7 +493,7 @@ async def get_clear_all_images(request: web.Request):
     return web.Response(status=200, text="OK")
 
 
-async def post_set_melvin_task(request: web.Request):
+async def post_set_melvin_task(request: web.Request) -> web.Response:
     """Sets a task for Melvin (a task management system).
 
     Args:
@@ -514,7 +520,7 @@ async def post_set_melvin_task(request: web.Request):
     return web.Response(status=200, text="OK")
 
 
-async def get_reset_settings(request: web.Request):
+async def get_reset_settings(request: web.Request) -> web.Response:
     """Resets all settings to their default values.
 
     Args:
@@ -528,7 +534,7 @@ async def get_reset_settings(request: web.Request):
     return web.Response(status=200, text="OK")
 
 
-async def post_set_setting(request: web.Request):
+async def post_set_setting(request: web.Request) -> web.Response:
     """Sets a new configuration setting.
 
     Args:
@@ -544,7 +550,7 @@ async def post_set_setting(request: web.Request):
     return web.Response(status=200, text="OK")
 
 
-async def post_clear_setting(request: web.Request):
+async def post_clear_setting(request: web.Request) -> web.Response:
     """Clears a specific setting.
 
     Args:
@@ -560,7 +566,7 @@ async def post_clear_setting(request: web.Request):
     return web.Response(status=200, text="OK")
 
 
-async def post_get_setting(request: web.Request):
+async def post_get_setting(request: web.Request) -> web.Response:
     """Retrieves a specific setting.
 
     Args:
@@ -582,7 +588,7 @@ async def post_get_setting(request: web.Request):
     return web.json_response(response_settings, status=200)
 
 
-async def get_all_settings(request: web.Request):
+async def get_all_settings(request: web.Request) -> web.Response:
     """Retrieve all settings configured in the system.
 
     Args:
@@ -593,9 +599,9 @@ async def get_all_settings(request: web.Request):
     """
     logger.debug("Getting all settings")
     attrs = [key for key in dir(settings) if not key.startswith("_") and key.isupper()]
-    all_settings = {}
+    all_settings: dict[str, Any] = {}
     for attr in attrs:
-        value = getattr(settings, attr)
+        value = settings.__getattribute__(attr)
         if type(value) is float or type(value) is int:
             all_settings[attr] = value
         elif type(value) is datetime.datetime:
@@ -605,7 +611,7 @@ async def get_all_settings(request: web.Request):
     return web.json_response(all_settings, status=200)
 
 
-def setup_routes(app) -> None:
+def setup_routes(app: web.Application) -> None:
     """Sets up API routes for the web application.
 
     Args:
@@ -649,7 +655,7 @@ def setup_routes(app) -> None:
 
 
 @web.middleware
-async def compression_middleware(request, handler):
+async def compression_middleware(request: web.Request, handler: Handler) -> Any:
     accept_encoding = request.headers.get(hdrs.ACCEPT_ENCODING, "").lower()
 
     if ContentCoding.gzip.value in accept_encoding:
@@ -666,7 +672,7 @@ async def compression_middleware(request, handler):
 
 
 @web.middleware
-async def catcher_middleware(request, handler):
+async def catcher_middleware(request: web.Request, handler: Handler) -> Any:
     try:
         return await handler(request)
     except Exception as e:

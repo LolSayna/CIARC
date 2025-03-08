@@ -2626,6 +2626,17 @@ doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphin
 test = ["coverage[toml] (>=7)", "mypy (>=1.2.0)", "pytest (>=7)"]
 
 [[package]]
+name = "types-psutil"
+version = "7.0.0.20250218"
+description = "Typing stubs for psutil"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "types_psutil-7.0.0.20250218-py3-none-any.whl", hash = "sha256:1447a30c282aafefcf8941ece854e1100eee7b0296a9d9be9977292f0269b121"},
+    {file = "types_psutil-7.0.0.20250218.tar.gz", hash = "sha256:1e642cdafe837b240295b23b1cbd4691d80b08a07d29932143cbbae30eb0db9c"},
+]
+
+[[package]]
 name = "types-requests"
 version = "2.32.0.20250301"
 description = "Typing stubs for requests"
@@ -2999,4 +3010,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "a4ef37699de285266aa490eb6395652d1a1ba55f61199869e3bb13668dd01c1a"
+content-hash = "9c8fca3e9a841bbe1466dd7772089f516adb7857fb285d785c2b2e29aeee016f"

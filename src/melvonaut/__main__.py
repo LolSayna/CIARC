@@ -12,6 +12,7 @@ import io
 import os
 import re
 import signal
+import uvloop
 
 from typing import Optional, AsyncIterable
 from datetime import datetime, timezone
@@ -25,11 +26,10 @@ from aiofile import async_open
 from loguru import logger
 
 from melvonaut.mel_telemetry import MelTelemetry
-from melvonaut.state_planer import StatePlanner
+from melvonaut.state_planer import state_planner
 from melvonaut import api, utils
 import shared.constants as con
 from shared.models import Timer, Event, MelvinImage, CameraAngle
-from melvonaut.loop_config import loop
 
 if settings.TRACING:
     import tracemalloc
@@ -45,8 +45,6 @@ aiodebug.log_slow_callbacks.enable(0.05)
 
 
 # tracemalloc.start()
-
-state_planner = StatePlanner()
 
 
 async def get_observations() -> None:
@@ -154,15 +152,17 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                     await session.close()
                     return None
                 else:
-                    lines = []
+                    lines: list[str] = []
                     async for line in response.content:
-                        line = line.decode("utf-8")
+                        line_decoded = line.decode("utf-8")
                         # logger.warning(f"Received announcement {line}")
                         # logger.warning(f"Location is: {state_planner.calc_current_location()}")
 
-                        logger.warning(f"Received announcement with content:{line}")
-                        line = line.replace("data:", "")
-                        if line in {"\n", "\r\n", " \r\n", "\r"}:
+                        logger.warning(
+                            f"Received announcement with content:{line_decoded}"
+                        )
+                        line_filtered = line_decoded.replace("data:", "")
+                        if line_filtered in {"\n", "\r\n", " \r\n", "\r"}:
                             if not lines:
                                 continue
                             if lines[0] == ":ok\n":
@@ -182,8 +182,10 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                             last_id = current_event.id
                             lines = []
                         else:
-                            logger.debug(f"Appending event line: {line}/{repr(line)}")
-                            lines.append(line)
+                            logger.debug(
+                                f"Appending event line: {line_filtered}/{repr(line_filtered)}"
+                            )
+                            lines.append(line_filtered)
         except TimeoutError:
             logger.error("Announcements subscription timed out")
         finally:
@@ -275,6 +277,7 @@ def cancel_tasks() -> None:
     """
     for task in asyncio.all_tasks():
         task.cancel()
+    loop = asyncio.get_running_loop()
     loop.stop()
 
 
@@ -287,6 +290,8 @@ def start_event_loop() -> None:
     Returns:
         None
     """
+    loop = uvloop.new_event_loop()
+
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, cancel_tasks)
 

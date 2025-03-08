@@ -3,7 +3,7 @@ import math
 from loguru import logger
 
 import shared.constants as con
-import melvonaut.settings as settings
+from melvonaut.settings import settings
 
 ##### LOGGING #####
 logger.remove()

@@ -1,4 +1,5 @@
 ##### TELEMETRY #####
+import asyncio
 import datetime
 import json
 from typing import Any
@@ -9,7 +10,6 @@ import csv
 
 import shared.constants as con
 from shared.models import BaseTelemetry
-from melvonaut.loop_config import loop
 from loguru import logger
 
 
@@ -69,4 +69,5 @@ class MelTelemetry(BaseTelemetry):
         logger.debug("Observation stored")
 
     def model_post_init(self, __context__: Any) -> None:
+        loop = asyncio.get_event_loop()
         loop.create_task(self.store_observation_csv())

@@ -81,6 +81,7 @@ mkdocs = "^1.6.1"
 pydocstyle = "^6.3.0"
 vulture = "^2.14"
 pytest-aiohttp = "^1.1.0"
+types-psutil = "^7.0.0.20250218"
 
 [tool.poetry.scripts]
 melvonaut = "melvonaut.__main__:main"

@@ -1,19 +1,17 @@
 ##### State machine #####
 import asyncio
-import csv
 import subprocess
 import datetime
 import math
 import threading
 import tracemalloc
-from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 from aiofile import async_open
 import aiohttp
 from pydantic import BaseModel
 
 import shared.constants as con
-import melvonaut.settings as settings
+from melvonaut.settings import settings
 from melvonaut.mel_telemetry import MelTelemetry
 from shared.models import (
     CameraAngle,
@@ -29,19 +27,6 @@ from loguru import logger
 import random
 
 
-async def load_events_from_csv() -> list[Event]:
-    events = []
-    if not Path(con.EVENT_LOCATION_CSV).is_file():
-        logger.warning(f"No event file found under {con.EVENT_LOCATION_CSV}")
-    else:
-        async with async_open(con.EVENT_LOCATION_CSV, "r") as afp:
-            reader = csv.DictReader(afp)
-            for row in reader:
-                events.append(Event(**row))
-        logger.info(f"Loaded {len(events)} events from {con.EVENT_LOCATION_CSV}")
-    return events
-
-
 class StatePlanner(BaseModel):
     melv_id: int = random.randint(0, 9999)
     current_telemetry: Optional[MelTelemetry] = None
@@ -54,8 +39,6 @@ class StatePlanner(BaseModel):
 
     target_state: Optional[State] = None
 
-    recent_events: list[Event] = load_events_from_csv()
-
     _accelerating: bool = False
 
     _run_get_image_task: Optional[asyncio.Task[None]] = None
@@ -67,7 +50,12 @@ class StatePlanner(BaseModel):
 
     _z_obj_list: list[ZonedObjective] = []
 
+    recent_events: list[Event] = []
+
     _current_obj_name: str = ""
+
+    def model_post_init(self, __context__: Any) -> None:
+        self.recent_events = Event.load_events_from_csv()
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:
@@ -599,15 +587,15 @@ class StatePlanner(BaseModel):
         # In this task look for the given string
         elif settings.CURRENT_MELVIN_TASK == MELVINTask.Fixed_objective:
             for obj in self._z_obj_list:
-                if obj.name == con.FIXED_OBJECTIVE:
+                if obj.name == settings.FIXED_OBJECTIVE:
                     logger.error(f"Using fixed_objective, current task: {obj}")
                     current_obj = obj
                     break
 
         if current_obj:
-            con.START_TIME = current_obj.start
-            con.STOP_TIME = current_obj.end
-            con.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
+            settings.START_TIME = current_obj.start
+            settings.STOP_TIME = current_obj.end
+            settings.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
 
             self._current_obj_name = str(current_obj.id) + current_obj.name.replace(
                 " ", ""
@@ -631,7 +619,7 @@ class StatePlanner(BaseModel):
         await self.trigger_camera_angle_change(settings.TARGET_CAMERA_ANGLE_ACQUISITION)
 
         # TODO stop velocity change if battery is low
-        if self.current_telemetry.battery < 25:
+        if self.current_telemetry and self.current_telemetry.battery < 25:
             logger.error("Battery low, TODO")
 
         match settings.TARGET_CAMERA_ANGLE_ACQUISITION:
@@ -649,3 +637,6 @@ class StatePlanner(BaseModel):
                 )
             case _:
                 pass
+
+
+state_planner = StatePlanner()

@@ -5,6 +5,7 @@ from melvonaut.settings import Settings
 from shared import constants as con
 import os
 
+
 @pytest.fixture(scope="session", autouse=True)
 def enable_logging():
     utils.setup_logging()

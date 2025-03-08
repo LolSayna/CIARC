@@ -1,9 +1,6 @@
-import pytest
 import json
 from melvonaut.settings import Settings
 from shared import constants as con
-import os
-import pathlib
 
 from loguru import logger
 
