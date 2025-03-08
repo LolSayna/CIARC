@@ -1,21 +1,18 @@
-import importlib.metadata
+from melvonaut.settings import settings
 
+import importlib.metadata
 import psutil
 from aiohttp import web, hdrs
 from io import StringIO, BytesIO
-
-from aiohttp.web_request import Request
 from aiohttp.web_response import ContentCoding
 
-import melvonaut.settings as settings
-import melvonaut.persistent_settings as p_settings
+from melvonaut import utils
 from shared import constants as con
 from loguru import logger
 import asyncio
 import pathlib
 import shared.models as models
 import datetime
-from melvonaut.settings import setup_file_logging
 
 
 async def health(request: web.Request):
@@ -238,7 +235,7 @@ async def post_download_log_and_clear(request: web.Request):
             return web.Response(body=log_file_content, status=200)
         finally:
             log_file.unlink()
-            setup_file_logging()
+            utils.setup_file_logging()
     else:
         return web.Response(status=404, text="File not found")
 
@@ -261,7 +258,7 @@ async def post_clear_log(request: web.Request):
         if not log_file.name.endswith(".log"):
             return web.Response(status=400, text=f"{log_file} is not a log file")
         log_file.unlink()
-        setup_file_logging()
+        utils.setup_file_logging()
         return web.Response(status=200, text=f"{log_file} cleared")
     else:
         return web.Response(status=404, text=f"{log_file} not found")
@@ -287,7 +284,7 @@ async def get_clear_all_logs(request: web.Request):
                 continue
             log_files.append(file.name)
             file.unlink()
-        setup_file_logging()
+        utils.setup_file_logging()
         return web.json_response({"Cleared_files": log_files}, status=200)
     except Exception as e:
         logger.exception(e)
@@ -513,7 +510,7 @@ async def post_set_melvin_task(request: web.Request):
     except Exception as e:
         logger.warning(f"Error setting melvin task: {e}")
         return web.Response(status=500, text=str(e))
-    await p_settings.set_settings({"CURRENT_MELVIN_TASK": melvin_task})
+    settings.set_settings({"CURRENT_MELVIN_TASK": melvin_task})
     return web.Response(status=200, text="OK")
 
 
@@ -527,7 +524,7 @@ async def get_reset_settings(request: web.Request):
         web.Response: A success response confirming the reset.
     """
     logger.debug("Resetting settings")
-    await p_settings.clear_settings()
+    settings.clear_settings()
     return web.Response(status=200, text="OK")
 
 
@@ -543,7 +540,7 @@ async def post_set_setting(request: web.Request):
     logger.debug("Setting settings")
     data = await request.json()
     logger.debug(f"Setting settings: {data}")
-    await p_settings.set_settings(data)
+    settings.set_settings(data)
     return web.Response(status=200, text="OK")
 
 
@@ -559,7 +556,7 @@ async def post_clear_setting(request: web.Request):
     logger.debug("Clearing settings")
     data = await request.json()
     logger.debug(f"Clearing settings: {data}")
-    await p_settings.delete_settings(data.keys())
+    settings.delete_settings(data.keys())
     return web.Response(status=200, text="OK")
 
 
@@ -576,14 +573,12 @@ async def post_get_setting(request: web.Request):
     data = await request.json()
     logger.debug(f"Requested settings: {data}")
     response_settings = {}
-    loaded_settings = await p_settings.load_settings()
-    for key, value in data.items():
-        try:
-            response_settings[key] = loaded_settings.get(
-                key, getattr(settings, key.upper())
-            )
-        except AttributeError:
-            return web.Response(status=404, text=f"Setting not found: {key}")
+    try:
+        for key in data.keys():
+            response_settings[key] = settings.__getattribute__(key)
+    except AttributeError:
+        return web.Response(status=404, text=f"Setting not found: {key}")
+    logger.debug(f"Response settings: {response_settings}")
     return web.json_response(response_settings, status=200)
 
 
@@ -607,9 +602,6 @@ async def get_all_settings(request: web.Request):
             all_settings[attr] = value.isoformat()
         else:
             all_settings[attr] = str(value)
-    additional_settings = await p_settings.load_settings()
-    for key, value in additional_settings.items():
-        all_settings[key] = value
     return web.json_response(all_settings, status=200)
 
 
@@ -634,8 +626,12 @@ def setup_routes(app) -> None:
     app.router.add_get(
         "/api/get_download_telemetry_and_clear", get_download_telemetry_and_clear
     )
-    app.router.add_get("/api/get_download_events_and_clear", get_download_events_and_clear)
-    app.router.add_post("/api/post_download_image_and_clear", post_download_image_and_clear)
+    app.router.add_get(
+        "/api/get_download_events_and_clear", get_download_events_and_clear
+    )
+    app.router.add_post(
+        "/api/post_download_image_and_clear", post_download_image_and_clear
+    )
     app.router.add_get("/api/get_clear_all_logs", get_clear_all_logs)
     app.router.add_get("/api/get_clear_telemetry", get_clear_telemetry)
     app.router.add_get("/api/get_clear_events", get_clear_events)
@@ -654,7 +650,6 @@ def setup_routes(app) -> None:
 
 @web.middleware
 async def compression_middleware(request, handler):
-
     accept_encoding = request.headers.get(hdrs.ACCEPT_ENCODING, "").lower()
 
     if ContentCoding.gzip.value in accept_encoding:
@@ -670,6 +665,15 @@ async def compression_middleware(request, handler):
     return resp
 
 
+@web.middleware
+async def catcher_middleware(request, handler):
+    try:
+        return await handler(request)
+    except Exception as e:
+        logger.exception(e)
+        return web.Response(status=500, text=str(e))
+
+
 async def run_api() -> None:
     """Starts the web API server.
 
@@ -677,8 +681,8 @@ async def run_api() -> None:
         None
     """
     logger.debug("Setting up API server")
-    await p_settings.init_settings()
-    app = web.Application(middlewares=[compression_middleware])
+    settings.init_settings()
+    app = web.Application(middlewares=[compression_middleware, catcher_middleware])
     setup_routes(app)
     runner = web.AppRunner(app)
     await runner.setup()

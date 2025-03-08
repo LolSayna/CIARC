@@ -96,7 +96,6 @@ async def index():
 # Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
 async def results() -> Response:
-
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
@@ -105,8 +104,12 @@ async def results() -> Response:
         case "worldmap":
             image_path = form.get("path", type=str)
             if not os.path.isfile(image_path):
-                await flash(f"Cant upload world map, file: {image_path} does not exist.")
-                logger.warning(f"Cant upload world map, file: {image_path} does not exist.")
+                await flash(
+                    f"Cant upload world map, file: {image_path} does not exist."
+                )
+                logger.warning(
+                    f"Cant upload world map, file: {image_path} does not exist."
+                )
                 return redirect(url_for("index"))
 
             res = ciarc_api.upload_worldmap(image_path=image_path)
@@ -120,8 +123,12 @@ async def results() -> Response:
             id = form.get("objective_id", type=int)
 
             if not os.path.isfile(image_path):
-                await flash(f"Cant upload objective {id}, file: {image_path} does not exist.")
-                logger.warning(f"Cant upload objective {id}, file: {image_path} does not exist.")
+                await flash(
+                    f"Cant upload objective {id}, file: {image_path} does not exist."
+                )
+                logger.warning(
+                    f"Cant upload objective {id}, file: {image_path} does not exist."
+                )
                 return redirect(url_for("index"))
 
             res = ciarc_api.upload_objective(image_path=image_path, objective_id=id)
@@ -135,14 +142,18 @@ async def results() -> Response:
             height = form.get("height", type=int)
             width = form.get("width", type=int)
             res = ciarc_api.send_beacon(
-                    beacon_id=id,
-                    height=height,
-                    width=width,
+                beacon_id=id,
+                height=height,
+                width=width,
             )
             if res:
                 await flash(res["status"])
-                if res["status"].startswith("The beacon could not be found around the given location"):
-                    await flash(f"Attempts made: {res["attempts_made"]} of 3, Location was ({height},{width})")
+                if res["status"].startswith(
+                    "The beacon could not be found around the given location"
+                ):
+                    await flash(
+                        f"Attempts made: {res["attempts_made"]} of 3, Location was ({height},{width})"
+                    )
                 if res["status"].startswith("No more rescue attempts left"):
                     await flash(f"for EBT: {id}")
 
@@ -153,10 +164,10 @@ async def results() -> Response:
 
     return redirect(url_for("index"))
 
+
 # Add/Modify zoned_objectives
 @app.route("/obj_mod", methods=["POST"])
 async def obj_mod() -> Response:
-
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
@@ -172,9 +183,9 @@ async def obj_mod() -> Response:
                     end=datetime.datetime.fromisoformat(form.get("end", type=str)),
                     optic_required=CameraAngle(form.get("angle", type=str)),
                     secret=True,
-                    zone=(0,0,0,0),
+                    zone=(0, 0, 0, 0),
                     coverage_required=form.get("coverage_required", type=str),
-                    description=form.get("description", type=str)
+                    description=form.get("description", type=str),
                 )
             else:
                 ciarc_api.add_modify_zoned_objective(
@@ -184,9 +195,14 @@ async def obj_mod() -> Response:
                     end=datetime.datetime.fromisoformat(form.get("end", type=str)),
                     optic_required=CameraAngle(form.get("angle", type=str)),
                     secret=False,
-                    zone=(form.get("x1", type=str),form.get("y1", type=str),form.get("x2", type=str),form.get("y2", type=str)),
+                    zone=(
+                        form.get("x1", type=str),
+                        form.get("y1", type=str),
+                        form.get("x2", type=str),
+                        form.get("y2", type=str),
+                    ),
                     coverage_required=form.get("coverage_required", type=str),
-                    description=form.get("description", type=str)
+                    description=form.get("description", type=str),
                 )
         case "ebt":
             ciarc_api.add_modify_ebt_objective(
@@ -204,6 +220,7 @@ async def obj_mod() -> Response:
     update_telemetry()
 
     return redirect(url_for("index"))
+
 
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
@@ -223,7 +240,6 @@ async def book_slot(slot_id: int) -> Response:
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
 async def del_obj(obj_id: int) -> Response:
-
     ciarc_api.delete_objective(id=obj_id)
     update_telemetry()
 
@@ -348,7 +364,14 @@ def update_telemetry():
     global console
     res = ciarc_api.live_observation()
     if res:
-        (new_tel, slots_used, slots, zoned_objectives, beacon_objectives, achievements) = res
+        (
+            new_tel,
+            slots_used,
+            slots,
+            zoned_objectives,
+            beacon_objectives,
+            achievements,
+        ) = res
         console.live_telemetry = new_tel
         console.slots_used = slots_used
         console.slots = slots
@@ -360,11 +383,13 @@ def update_telemetry():
         if console.live_telemetry.state != State.Transition:
             console.next_state = State.Unknown
 
+
 @click.group()
 @click.version_option()
 def main() -> None:
     """Rift Console."""
     pass
+
 
 @main.command()
 def run_server() -> None:
@@ -378,6 +403,7 @@ def run_server() -> None:
     ciarc_api.live_observation()
 
     app.run(port=3000, debug=True, host="0.0.0.0")
+
 
 @main.command()
 def cli_only() -> None:
@@ -394,6 +420,8 @@ if __name__ == "__main__":
 # also remove drs_api
 
 melvin = rift_console.rift_telemetry.RiftTelemetry()
+
+
 # Main Page
 @app.route("/old", methods=["GET"])
 async def old() -> str:
@@ -590,4 +618,3 @@ async def state_buttons() -> Response:
     )
 
     return redirect(url_for("old"))
-

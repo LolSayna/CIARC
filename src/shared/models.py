@@ -5,7 +5,6 @@ import re
 import time
 from pathlib import Path
 
-import requests
 from enum import StrEnum
 from typing import Callable, Awaitable, Any, Final
 
@@ -77,7 +76,6 @@ class ZonedObjective(BaseModel):
     secret: bool
     # sprite is ignored as said in email
 
-
     # extracts and parses objective format from the format given from its matching api endpoint
     def parse_api(
         data: dict,
@@ -129,6 +127,7 @@ class BeaconObjective(BaseModel):
 
         return beacon_obj
 
+
 class Achievement(BaseModel):
     name: str
     done: bool
@@ -143,6 +142,7 @@ class Achievement(BaseModel):
             achv.append(Achievement(**a))
 
         return achv
+
 
 # TODO test if this actually works as intentend???
 def boxes_overlap_in_grid(box1, box2):
@@ -187,7 +187,6 @@ def lens_size_by_angle(angle: CameraAngle) -> int:
         case CameraAngle.Wide:
             lens_size = 1000
     return lens_size
-
 
 
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung

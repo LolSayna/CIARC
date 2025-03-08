@@ -3,6 +3,9 @@ Melvonaut
 :author: Jonathan Decker
 """
 
+# Load settings first to ensure the overrides are available
+from melvonaut.settings import settings
+
 import asyncio
 import concurrent.futures
 import io
@@ -15,7 +18,6 @@ from datetime import datetime, timezone
 
 import aiohttp
 import click
-import apprise
 
 import aiodebug.log_slow_callbacks  # type: ignore
 from PIL import Image
@@ -24,9 +26,8 @@ from loguru import logger
 
 from melvonaut.mel_telemetry import MelTelemetry
 from melvonaut.state_planer import StatePlanner
-from melvonaut import api
+from melvonaut import api, utils
 import shared.constants as con
-import melvonaut.settings as settings
 from shared.models import Timer, Event, MelvinImage, CameraAngle
 from melvonaut.loop_config import loop
 
@@ -34,21 +35,6 @@ if settings.TRACING:
     import tracemalloc
 
     tracemalloc.start(5)
-
-
-@apprise.decorators.notify(on="melvin")
-def melvin_notifier(body, title, notify_type, *args, **kwargs):
-    print("MELVIN HERE!")
-
-
-notifier = apprise.Apprise()
-if settings.DISCORD_WEBHOOK_TOKEN and settings.DISCORD_ALERTS_ENABLED:
-    notifier.add(f"discord://{settings.DISCORD_WEBHOOK_TOKEN}")
-    logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
-
-if settings.NETWORK_SIM_ENABLED:
-    notifier.add("melvin://")
-    logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
 
 
 ##### Global Variables #####
@@ -66,8 +52,8 @@ state_planner = StatePlanner()
 async def get_observations() -> None:
     """Async get observations from the Melvin API and update the state planner
 
-    This function establishes a session with the API and retrieves observation data. 
-    If the response is successful, it updates the telemetry state. 
+    This function establishes a session with the API and retrieves observation data.
+    If the response is successful, it updates the telemetry state.
     If any errors occur, they are logged accordingly.
 
     Returns:
@@ -227,7 +213,7 @@ async def run_get_announcements() -> None:
 async def read_images() -> AsyncIterable[MelvinImage]:
     """Reads image files asynchronously from a designated directory.
 
-    This function iterates over stored images, extracts metadata from filenames, and 
+    This function iterates over stored images, extracts metadata from filenames, and
     yields `MelvinImage` objects.
 
     Yields:
@@ -295,7 +281,7 @@ def cancel_tasks() -> None:
 def start_event_loop() -> None:
     """Initializes and starts the asynchronous event loop.
 
-    This function sets up signal handlers, registers tasks for fetching observations, 
+    This function sets up signal handlers, registers tasks for fetching observations,
     announcements, and API interactions, and starts the event loop.
 
     Returns:
@@ -325,7 +311,7 @@ def start_event_loop() -> None:
 @click.version_option()
 def main() -> None:
     """Melvonaut."""
-    settings.setup_logging()
+    utils.setup_logging()
     logger.info("Starting Melvonaut...")
 
     start_event_loop()

@@ -1,10 +1,14 @@
 import asyncio
+import os
+import pathlib
+
 import pytest
 from aiohttp import web, ClientSession
 from aiohttp.test_utils import TestClient
-from melvonaut import settings
+from melvonaut import utils
+from melvonaut.settings import settings, Settings
 from shared import constants as con
-from melvonaut.api import setup_routes, compression_middleware
+from melvonaut.api import setup_routes, compression_middleware, catcher_middleware
 from loguru import logger
 from melvonaut.mel_telemetry import MelTelemetry
 from shared.models import CameraAngle, State, Event
@@ -55,9 +59,16 @@ def generate_test_image():
     im.save(image_path, "png")
 
 
+@pytest.fixture(scope="function", autouse=True)
+def prepare_settings():
+    if pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
+        os.remove(con.MEL_PERSISTENT_SETTINGS)
+    return Settings()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def enable_logging():
-    settings.setup_logging()
+    utils.setup_logging()
 
 
 @pytest.fixture
@@ -69,7 +80,7 @@ def caplog(caplog):
 
 @pytest.fixture
 async def client(aiohttp_client: ClientSession) -> TestClient:
-    app = web.Application(middlewares=[compression_middleware])
+    app = web.Application(middlewares=[compression_middleware, catcher_middleware])
     setup_routes(app)
     return await aiohttp_client(app)
 
@@ -169,7 +180,9 @@ async def test_post_download_log_and_clear(client: TestClient):
         resp = await client.get("/api/get_list_log_files")
         assert resp.status == 200
         log_file = (await resp.json())["log_files"][0]
-        resp = await client.post("/api/post_download_log_and_clear", json={"file": log_file})
+        resp = await client.post(
+            "/api/post_download_log_and_clear", json={"file": log_file}
+        )
         assert resp.status == 200, await resp.text() + " " + log_file
         data = await resp.text()
         assert len(data) > 0
@@ -222,7 +235,7 @@ async def test_get_download_telemetry_and_clear(client: TestClient):
         "data_volume_data_volume_received,data_volume_data_volume_sent,distance_covered,fuel,width_x,height_y,"
         "images_taken,max_battery,objectives_done,objectives_points,simulation_speed,state,timestamp,vx,vy"
     ) in data, data
-    resp = await client.get("/api/download_telemetry")
+    resp = await client.get("/api/get_download_telemetry")
     assert resp.status == 404
 
 
@@ -249,7 +262,7 @@ async def test_get_download_events_and_clear(client: TestClient):
     assert resp.status == 200
     data = await resp.text()
     assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
-    resp = await client.get("/api/download_events")
+    resp = await client.get("/api/get_download_events")
     assert resp.status == 404
 
 
@@ -291,7 +304,9 @@ async def test_post_download_image_and_clear(client: TestClient):
     resp = await client.get("/api/get_list_images")
     assert resp.status == 200
     image_file = (await resp.json())["images"][0]
-    resp = await client.post("/api/post_download_image_and_clear", json={"file": image_file})
+    resp = await client.post(
+        "/api/post_download_image_and_clear", json={"file": image_file}
+    )
     assert resp.status == 200
     buffer = b""
     async for chunk in resp.content.iter_any():
@@ -347,7 +362,7 @@ async def test_get_reset_settings(client: TestClient):
         "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
     )
-    assert resp.status == 200
+    assert resp.status == 200, await resp.text()
     data = await resp.json()
     assert "TARGET_CAMERA_ANGLE_ACQUISITION" in data
     assert "DISTANCE_BETWEEN_IMAGES" in data
@@ -445,16 +460,19 @@ async def test_get_all_settings(client: TestClient):
 
 async def test_compression(client: TestClient):
     await event.to_csv()
-    resp = await client.get("/api/get_download_events", headers={"Accept-Encoding": "gzip"})
+    resp = await client.get(
+        "/api/get_download_events", headers={"Accept-Encoding": "gzip"}
+    )
     assert resp.status == 200
     data = await resp.text()
     assert "Content-Encoding" in resp.headers, resp.headers
     assert resp.headers["Content-Encoding"] == "gzip", resp.headers
     assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
-    resp = await client.get("/api/get_download_events", headers={"Accept-Encoding": "deflate"})
+    resp = await client.get(
+        "/api/get_download_events", headers={"Accept-Encoding": "deflate"}
+    )
     assert resp.status == 200
     data = await resp.text()
     assert "Content-Encoding" in resp.headers, resp.headers
     assert resp.headers["Content-Encoding"] == "deflate", resp.headers
     assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
-

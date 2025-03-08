@@ -8,12 +8,11 @@ import shared.constants as con
 from shared.models import (
     Achievement,
     BeaconObjective,
-    BeaconObjective,
     CameraAngle,
     BaseTelemetry,
     State,
     Slot,
-    ZonedObjective
+    ZonedObjective,
 )
 
 
@@ -26,8 +25,11 @@ class HttpCode(Enum):
 
 # wrapper with error handling for ciarc api
 def console_api(
-    method: HttpCode, endpoint: str, params: dict = {}, json: dict = {},
-    files: dict = {}
+    method: HttpCode,
+    endpoint: str,
+    params: dict = {},
+    json: dict = {},
+    files: dict = {},
 ) -> dict:
     try:
         with requests.Session() as s:
@@ -230,43 +232,48 @@ def book_slot(slot_id: int, enabled: bool) -> None:
     else:
         logger.warning("Console: could not book slot, not in acquisition?")
 
+
 def delete_objective(id: int) -> None:
     params = {
         "id": str(id),
     }
-    d = console_api(method=HttpCode.DELETE, endpoint=con.OBJECTIVE_ENDPOINT, params=params)
+    d = console_api(
+        method=HttpCode.DELETE, endpoint=con.OBJECTIVE_ENDPOINT, params=params
+    )
     if d:
         logger.info(f"Console: removed objective with id - {id}.")
     else:
         logger.warning(f"Console: could not delete objective with id - {id}")
 
+
 def add_modify_zoned_objective(
-        id: int, name: str, start: datetime.datetime, end: datetime.datetime, 
-        zone: tuple[int,int,int,int], optic_required: CameraAngle, coverage_required: float, 
-        description: str, secret: bool) -> None:
-    
-    json = { 
+    id: int,
+    name: str,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    zone: tuple[int, int, int, int],
+    optic_required: CameraAngle,
+    coverage_required: float,
+    description: str,
+    secret: bool,
+) -> None:
+    json = {
         "zoned_objectives": [
             {
                 "id": id,
                 "name": name,
                 "start": start.replace(tzinfo=datetime.timezone.utc).isoformat(),
                 "end": end.replace(tzinfo=datetime.timezone.utc).isoformat(),
-                "decrease_rate": 0.99,    # hardcoded since not in use
-                "zone": [
-                    zone[0],
-                    zone[1],
-                    zone[2],
-                    zone[3]
-                ],
+                "decrease_rate": 0.99,  # hardcoded since not in use
+                "zone": [zone[0], zone[1], zone[2], zone[3]],
                 "optic_required": optic_required,
                 "coverage_required": coverage_required,
                 "description": description,
-                "sprite": "string",    # hardcoded since not in use
-                "secret": secret
+                "sprite": "string",  # hardcoded since not in use
+                "secret": secret,
             }
         ],
-        "beacon_objectives": []
+        "beacon_objectives": [],
     }
 
     d = console_api(method=HttpCode.PUT, endpoint=con.OBJECTIVE_ENDPOINT, json=json)
@@ -278,10 +285,15 @@ def add_modify_zoned_objective(
 
 
 def add_modify_ebt_objective(
-        id: int, name: str, start: datetime.datetime, end: datetime.datetime, 
-        description: str, beacon_height: int, beacon_width: int) -> None:
-    
-    json = { 
+    id: int,
+    name: str,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    description: str,
+    beacon_height: int,
+    beacon_width: int,
+) -> None:
+    json = {
         "zoned_objectives": [],
         "beacon_objectives": [
             {
@@ -289,13 +301,13 @@ def add_modify_ebt_objective(
                 "name": name,
                 "start": start.replace(tzinfo=datetime.timezone.utc).isoformat(),
                 "end": end.replace(tzinfo=datetime.timezone.utc).isoformat(),
-                "decrease_rate": 0.99,    # hardcoded since not in use
+                "decrease_rate": 0.99,  # hardcoded since not in use
                 "description": description,
                 "beacon_height": beacon_height,
                 "beacon_width": beacon_width,
-                "attempts_made": 0      # did not change anything in API
+                "attempts_made": 0,  # did not change anything in API
             }
-        ]
+        ],
     }
 
     d = console_api(method=HttpCode.PUT, endpoint=con.OBJECTIVE_ENDPOINT, json=json)
@@ -305,12 +317,9 @@ def add_modify_ebt_objective(
     else:
         logger.warning(f"Console: could not add/modifyed ebt objective {id}/{name}")
 
+
 def send_beacon(beacon_id: int, height: int, width: int) -> dict:
-    params = {
-        "beacon_id": beacon_id,
-        "height": height,
-        "width": width
-    }
+    params = {"beacon_id": beacon_id, "height": height, "width": width}
     d = console_api(method=HttpCode.PUT, endpoint=con.BEACON_ENDPOINT, params=params)
     if d:
         logger.info(f"Console: send_beacon - {d}.")
@@ -319,29 +328,29 @@ def send_beacon(beacon_id: int, height: int, width: int) -> dict:
         logger.warning(f"Console: could not send_beacon - {id}")
         return {}
 
-def upload_worldmap(image_path:str) -> str:
-    files = {
-        "image": (image_path, open(image_path, "rb"), "image/png")
-    }
+
+def upload_worldmap(image_path: str) -> str:
+    files = {"image": (image_path, open(image_path, "rb"), "image/png")}
     d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
     if d:
         logger.info(f"Console: Uploaded world map - {d}.")
         return d
     else:
-        logger.warning(f"Console: could not upload world map")
+        logger.warning("Console: could not upload world map")
         return ""
 
-def upload_objective(image_path:str, objective_id:int) -> str:
+
+def upload_objective(image_path: str, objective_id: int) -> str:
     params = {
         "objective_id": objective_id,
     }
-    files = {
-        "image": (image_path, open(image_path, "rb"), "image/png")
-    }
-    d = console_api(method=HttpCode.POST, endpoint=con.IMAGE_ENDPOINT, params=params, files=files)
+    files = {"image": (image_path, open(image_path, "rb"), "image/png")}
+    d = console_api(
+        method=HttpCode.POST, endpoint=con.IMAGE_ENDPOINT, params=params, files=files
+    )
     if d:
         logger.info(f"Console: Uploaded objective - {d}.")
         return d
     else:
-        logger.warning(f"Console: could not upload objective")
+        logger.warning("Console: could not upload objective")
         return ""

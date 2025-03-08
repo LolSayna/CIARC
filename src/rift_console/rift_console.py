@@ -3,7 +3,14 @@ from typing import Optional
 
 import datetime
 
-from shared.models import Achievement, BaseTelemetry, BeaconObjective, Slot, State, ZonedObjective
+from shared.models import (
+    Achievement,
+    BaseTelemetry,
+    BeaconObjective,
+    Slot,
+    State,
+    ZonedObjective,
+)
 
 
 class RiftConsole:
