@@ -59,18 +59,6 @@ def generate_test_image():
     im.save(image_path, "png")
 
 
-@pytest.fixture(scope="function", autouse=True)
-def prepare_settings():
-    if pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
-        os.remove(con.MEL_PERSISTENT_SETTINGS)
-    return Settings()
-
-
-@pytest.fixture(scope="session", autouse=True)
-def enable_logging():
-    utils.setup_logging()
-
-
 @pytest.fixture
 def caplog(caplog):
     handler_id = logger.add(caplog.handler, format="{message}")
