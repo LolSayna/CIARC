@@ -324,8 +324,8 @@
                   <input type="text" class="form-control" name="x2" placeholder="2000" value="2000">
                 </div>
                 <div class="col-md-1">
-                  <label for="x2">Y_2:</label>
-                  <input type="text" class="form-control" name="x2" placeholder="2000" value="2000">
+                  <label for="y2">Y_2:</label>
+                  <input type="text" class="form-control" name="y2" placeholder="2000" value="2000">
                 </div>
                 <div class="col-md-2 mt-4">
                   <button type="submit" class="btn btn-secondary w-100" name="button" value="zoned"">Confirm</button>
@@ -453,8 +453,8 @@
               <h3>World Map</h2>
                 <div class="col-md-1"></div>
                 <div class="col-md-3">
-                  <label for="path">Path: (starting in root of repo)</label>
-                  <input type="text" class="form-control" name="path" placeholder="media/test.png" value="media/test.png">
+                  <label for="path_world">Path: (starting in root of repo)</label>
+                  <input type="text" class="form-control" name="path_world" placeholder="media/test.png" value="media/test.png">
                 </div>
                 <div class="col-md-1"></div>
                 <div class="col-md-3 mt-3">
@@ -465,8 +465,8 @@
               <h3>Zoned Objective</h2>
                 <div class="col-md-1"></div>
                 <div class="col-md-3">
-                  <label for="path">Path: (starting in root of repo)</label>
-                  <input type="text" class="form-control" name="path" placeholder="media/test.png" value="media/test.png">
+                  <label for="path_obj">Path: (starting in root of repo)</label>
+                  <input type="text" class="form-control" name="path_obj" placeholder="media/test.png" value="media/test.png">
                 </div>
                 <div class="col-md-1">
                   <label for="objective_id">Id:</label>
@@ -484,17 +484,19 @@
                   <input type="text" class="form-control" name="beacon_id" placeholder="1" value="1">
                 </div>
                 <div class="col-md-2">
-                  <label for="height">Heigth:</label>
-                  <input type="text" class="form-control" name="height" placeholder="1000" value="1000">
+                  <label for="width">X-Width (0-21600):</label>
+                  <input type="text" class="form-control" name="width" placeholder="1000" value="1000">
                 </div>
                 <div class="col-md-2">
-                  <label for="width">Width:</label>
-                  <input type="text" class="form-control" name="width" placeholder="1000" value="1000">
+                  <label for="height">Y-Heigth (0-10800):</label>
+                  <input type="text" class="form-control" name="height" placeholder="1000" value="1000">
                 </div>
                 <div class="col-md-3 mt-3">
                   <button type="submit" class="btn btn-success" name="button" value="beacon">Guess</button>
               </div>
             </div>
+            <!-- small spacer -->
+            <div class="row mt-5"></div>
           </form>
 
 

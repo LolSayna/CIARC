@@ -77,7 +77,6 @@ async def index():
             beacon_objectives=console.beacon_objectives,
             achievements=console.achievements,
             # slot times
-            # TODO testing
             next_slot_start=console.slots[0].start.strftime("%H:%M:%S"),
             slot_ends=console.slots[0].end.strftime("%H:%M:%S"),
         )
@@ -102,7 +101,7 @@ async def results() -> Response:
 
     match button:
         case "worldmap":
-            image_path = form.get("path", type=str)
+            image_path = form.get("path_world", type=str)
             if not os.path.isfile(image_path):
                 await flash(
                     f"Cant upload world map, file: {image_path} does not exist."
@@ -114,12 +113,14 @@ async def results() -> Response:
 
             res = ciarc_api.upload_worldmap(image_path=image_path)
 
-            # TODO testing
             if res:
-                flash(res)
+                await flash(res)
+                if res.startswith("Image uploaded successfully"):
+                    await flash(f"Worldmap - {image_path} - {datetime.datetime.now(datetime.timezone.utc).strftime("%d/%m/%Y")}.")
+                    logger.warning(f"Worldmap uploaded - {image_path} - {datetime.datetime.now(datetime.timezone.utc).strftime("%d/%m/%Y")}.")
 
         case "obj":
-            image_path = form.get("path", type=str)
+            image_path = form.get("path_obj", type=str)
             id = form.get("objective_id", type=int)
 
             if not os.path.isfile(image_path):
@@ -133,9 +134,14 @@ async def results() -> Response:
 
             res = ciarc_api.upload_objective(image_path=image_path, objective_id=id)
 
-            # TODO testing
             if res:
-                flash(res)
+                await flash(res)
+                if res.startswith("Image uploaded successfully"):
+                    await flash(f"Objective {id} - {image_path}")
+                    logger.warning(f"Objective {id} uploaded - {image_path}")
+            else:
+                await flash(f"Could not upload objective {id} - {image_path}")
+
 
         case "beacon":
             id = form.get("beacon_id", type=int)

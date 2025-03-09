@@ -11,7 +11,7 @@ from typing import Callable, Awaitable, Any, Final
 from PIL import Image
 from aiofile import async_open
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, Union
 
 
 import shared.constants as con
@@ -59,6 +59,7 @@ class Slot(BaseModel):
         for s in data["slots"]:
             slots.append(Slot(**s))
 
+        slots.sort(key=lambda slot: slot.start)
         # logger.debug(f"Deparsed Slot API used: {slots_used} - {slots}")
         return (slots_used, slots)
 
@@ -125,7 +126,7 @@ class BeaconObjective(BaseModel):
         for b in data["beacon_objectives"]:
             beacon_obj.append(BeaconObjective(**b))
 
-        return beacon_obj
+        return sorted(beacon_obj, key=lambda event: event.start)
 
 
 class Achievement(BaseModel):
@@ -133,8 +134,8 @@ class Achievement(BaseModel):
     done: bool
     points: int
     description: str
-    goal_parameter_threshold: bool
-    goal_parameter: bool
+    goal_parameter_threshold: Union[bool, int]
+    goal_parameter: Union[bool, int]
 
     def parse_api(data: dict):
         achv = []
