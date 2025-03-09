@@ -51,7 +51,6 @@
       th {
           background-color: #f4f4f4;
       }
-
       .wide-column {
         width: 30%;
       }
@@ -61,7 +60,7 @@
         padding: 0;
         margin: auto;
         display: block;    
-        width: 100%;  /* Change this to a percentage to make it responsive */
+        width: 100%;  /* percentage to make it scale responsive */
         max-width: 1000px;
         border: 1px solid red;
       }
@@ -72,7 +71,7 @@
   <!-- Main Page -->
   <body>
 
-    <!-- Header Section -->
+    <!-- [Header Section] -->
     <div class="container-fluid mt-3">
       <div class="container-fluid row border">
 
@@ -101,7 +100,8 @@
     {% for message in get_flashed_messages() %}
       <h2 style="color: orange">Warning: {{ message }}</h2>
     {% endfor %}
-      <!-- Content Section -->
+
+      <!-- [Middle Section] -->
     <div class="container-fluid mt-2">
       <div class="row">
         <!-- Navigation Sidebar -->
@@ -109,29 +109,30 @@
             <h2>Live Telemetry</h2>
             <p>{{timestamp}}</p>
             <div class="progress mt-2">
-              <div class="progress-bar"="progressbar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">Fuel: {{fuel}}%</div>
+              <div class="progress-bar" style="width: {{fuel}}%;" aria-valuenow="{{fuel}}" aria-valuemin="0" aria-valuemax="100">{{fuel}}% - Fuel</div>
             </div>
             <div class="progress mt-2">
-              <div class="progress-bar"="progressbar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">Battery: {{battery}}%</div>
+              <div class="progress-bar" style="width: {{battery}}%;" aria-valuenow="{{battery}}" aria-valuemin="0" aria-valuemax="100">{{battery}}% - Battery</div>
             </div>
             <div class="progress mt-2">
-              <div class="progress-bar"="progressbar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">Max Battery: {{max_battery}}%</div>
+              <div class="progress-bar" style="width: {{max_battery}}%;" aria-valuenow="{{max_battery}}" aria-valuemin="0" aria-valuemax="100">{{max_battery}}% - Max Battery</div>
             </div>
             <p>Pos: ({{width_x}},{{height_y}}) & Vel: ({{vx}},{{vy}})</p>
             <p>State: {{state}} & angle: {{angle}}</p>
             <p>dist_cov: {{distance_covered}} & active_t: {{active_time}}</p>
             <p>area_cov: {{area_covered_narrow}}/{{area_covered_normal}}/{{area_covered_wide}}</p>
             <p>#images: {{images_taken}} obj-done/points={{objectives_done}}/{{objectives_points}}</p>
-            <p>data-s/r={{data_volume_sent}}/{{data_volume_received}}</p>
-            <p>slots_used={{slots_used}}</p>
+            <p>data-s/r={{data_volume_sent}}/{{data_volume_received}} slots_used={{slots_used}}</p>
         </div>
         
         <!-- Main Content -->
         <div class="col-md-8">
           <!-- [NEW MAP] -->
           <h2 style="text-align:center;">World Map</h2>
-          <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed</p>
-
+          <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed, each dot 10s</p>
+          <button type="submit" class="btn btn-info" id="showObjectives">Toggle Zoned Objectives</button>
+          <button type="submit" class="btn btn-info" id="showTraj">Toggle Trajectory</button>
+          <div class="mb-2"></div>
           <canvas id="gameMap" width="1000" height="500"></canvas>
             <script>
               // Create a canvas object to draw on
@@ -144,10 +145,18 @@
 
               // main work loop, first background then squares
               backgroundImage.onload = function() {
+                drawScene();
+              }
+
+              function drawScene(){
                 ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
-                drawObjectiveSquares();
-                drawTraj();
+                if (showTraj) {
+                  drawTraj();
+                }
+                if (showObjectives) {
+                  drawObjectiveSquares();
+                }
                 drawSatellite();
               }
 
@@ -169,6 +178,8 @@
               const x_scaling = world_x / canvas_width
               const y_scaling = world_y / canvas_height
 
+              let showTraj = true;
+              let showObjectives = true;
 
               function drawSatellite() {
                 ctx.strokeStyle = 'green';
@@ -200,22 +211,12 @@
                 });
               }
 
-              // Helper function to generate a random color
-              function getRandomColor() {
-                const letters = '0123456789ABCDEF';
-                let color = '#';
-                for (let i = 0; i < 6; i++) {
-                  color += letters[Math.floor(Math.random() * 16)];
-                }
-                return color;
-              }
-
               // Draws a square / one objective region
-              function drawSquare(x1, y1, x2, y2, label) {
+              function drawSquare(x1, y1, x2, y2, label, index) {
 
                 const width = x2 - x1;
                 const height = y2 - y1;
-                ctx.fillStyle = getRandomColor();
+                ctx.fillStyle = '#80ffaa';
 
                 // Rectangle
                 ctx.fillRect(x1, y1, width, height);
@@ -234,13 +235,20 @@
                 objective_data.forEach(item => {
                   if (Array.isArray(item.zone) && item.zone.length === 4) {
                     const [x1, y1, x2, y2] = item.zone;
-                    drawSquare(x1 / x_scaling, y1 / y_scaling, x2 / x_scaling, y2 / y_scaling, item.name, item.start);
+                    drawSquare(x1 / x_scaling, y1 / y_scaling, x2 / x_scaling, y2 / y_scaling, item.name);
                   } else {
                     console.error('Invalid zone data for item:', JSON.stringify(item));
                   }
                 });
               }
-
+          document.getElementById('showObjectives').addEventListener('click', () => {
+            showObjectives = !showObjectives;
+            drawScene();
+          });
+          document.getElementById('showTraj').addEventListener('click', () => {
+            showTraj = !showTraj;
+            drawScene();
+          });
           </script>
         </div>
 
@@ -342,8 +350,7 @@
       </div>
     </div>
 
-    <!-- [Arrays] -->
-    <!-- nav-tab - toggable tables -->
+    <!-- [Bottom Section] -->
     <div class="container-fluid mt-1">
       <ul class="nav nav-tabs">
         <li class="active"><a data-toggle="tab" href="#slots">Slots</a></li>
@@ -525,12 +532,12 @@
                   <input type="text" class="form-control" name="description" placeholder="Blub" value="Blub">
                 </div>
                 <div class="col-md-1">
-                  <label for="beacon_height">heigth:</label>
-                  <input type="text" class="form-control" name="beacon_height" placeholder="1000" value="1000">
+                  <label for="beacon_width">X-Width:</label>
+                  <input type="text" class="form-control" name="beacon_width" placeholder="1000" value="1000">
                 </div>
                 <div class="col-md-1">
-                  <label for="beacon_width">width:</label>
-                  <input type="text" class="form-control" name="beacon_width" placeholder="1000" value="1000">
+                  <label for="beacon_height">Y-Heigth:</label>
+                  <input type="text" class="form-control" name="beacon_height" placeholder="1000" value="1000">
                 </div>
                 <div class="col-md-2 mt-4">
                   <button type="submit" class="btn btn-secondary w-100" name="button" value="ebt">Confirm</button>
@@ -665,7 +672,7 @@
       }
     }
 
-    // get current utc time
+    // Get current utc time
     function updateTime() {
         const now = new Date();
         const isoString = now.toISOString();
@@ -673,7 +680,7 @@
         document.getElementById('time').textContent = `Live UTC: ${formattedString}`;
     }
 
-    // get time for form
+    // Get time for add objective form
     function updateFormTime() {
       const now = new Date();
       const isoString = now.toISOString();

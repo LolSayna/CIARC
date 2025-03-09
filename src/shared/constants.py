@@ -1,6 +1,5 @@
 from os import cpu_count
 
-
 RIFT_LOG_LEVEL = "INFO"
 
 # [PATHS]
@@ -44,12 +43,6 @@ STATE_TRANSITION_FROM_SAFE_TIME = 20 * 60  # Seconds for state transitions from 
 WORLD_X = 21600
 WORLD_Y = 10800
 ACCELERATION = 0.02
-
-## [IMAGE PROCESSING]
-# Scaled down version for thumbnail
-SCALED_WORLD_X = 1080
-SCALED_WORLD_Y = 540
-SCALING_FACTOR = 20  # CARE IF SCALED_WORLD ist changed
 
 # While in Stitching add this border in each direction
 STITCHING_BORDER = 1000

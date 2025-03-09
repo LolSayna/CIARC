@@ -3,8 +3,8 @@ import csv
 import datetime
 import re
 import time
+from loguru import logger
 from pathlib import Path
-
 from enum import StrEnum
 from typing import Callable, Awaitable, Any, Final
 
@@ -13,9 +13,7 @@ from aiofile import async_open
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, Union
 
-
 import shared.constants as con
-from loguru import logger
 
 # Fix issue with Image size
 Image.MAX_IMAGE_PIXELS = 500000000
@@ -30,30 +28,14 @@ class CameraAngle(StrEnum):
     Normal = "normal"
     Unknown = "unknown"
 
-
-# calculates the distance between two coordinates, respecting overflows
-# TODO not sure about this, need to think when i am awake
-def calc_distance(a: int, b: int) -> int:
-    if a > con.WORLD_X:
-        a = a % con.WORLD_X
-    elif a < 0:
-        a += con.WORLD_X
-
-    if b > con.WORLD_X:
-        b = b % con.WORLD_X
-    elif b < 0:
-        b += con.WORLD_X
-
-    return abs(a, b)
-
-
 class Slot(BaseModel):
     id: int
     start: datetime.datetime
     end: datetime.datetime
     enabled: bool
 
-    def parse_api(data: dict):
+    @staticmethod
+    def parse_api(data: dict) -> list[tuple[int, 'Slot']]:
         slots_used = data["communication_slots_used"]
         slots = []
         for s in data["slots"]:
@@ -62,7 +44,6 @@ class Slot(BaseModel):
         slots.sort(key=lambda slot: slot.start)
         # logger.debug(f"Deparsed Slot API used: {slots_used} - {slots}")
         return (slots_used, slots)
-
 
 class ZonedObjective(BaseModel):
     id: int  # could be null acording to Dto
@@ -78,9 +59,8 @@ class ZonedObjective(BaseModel):
     # sprite is ignored as said in email
 
     # extracts and parses objective format from the format given from its matching api endpoint
-    def parse_api(
-        data: dict,
-    ) -> list:
+    @staticmethod
+    def parse_api(data: dict) -> list['ZonedObjective']:
         z_obj_list = []
         # parse objective list
         for obj in data["zoned_objectives"]:
@@ -111,7 +91,6 @@ class ZonedObjective(BaseModel):
 
         return sorted(z_obj_list, key=lambda event: event.start)
 
-
 class BeaconObjective(BaseModel):
     id: int
     name: str
@@ -121,13 +100,13 @@ class BeaconObjective(BaseModel):
     attempts_made: int
     description: str
 
-    def parse_api(data: dict) -> list:
+    @staticmethod
+    def parse_api(data: dict) -> list['BeaconObjective']:
         beacon_obj = []
         for b in data["beacon_objectives"]:
             beacon_obj.append(BeaconObjective(**b))
 
         return sorted(beacon_obj, key=lambda event: event.start)
-
 
 class Achievement(BaseModel):
     name: str
@@ -137,7 +116,8 @@ class Achievement(BaseModel):
     goal_parameter_threshold: Union[bool, int]
     goal_parameter: Union[bool, int]
 
-    def parse_api(data: dict):
+    @staticmethod
+    def parse_api(data: dict) -> list['Achievement']:
         achv = []
         for a in data["achievements"]:
             achv.append(Achievement(**a))
@@ -145,7 +125,7 @@ class Achievement(BaseModel):
         return achv
 
 
-
+# [MELVONAUT]
 # TODO test if this actually works as intentend???
 def boxes_overlap_in_grid(box1, box2):
     grid_width = con.WORLD_X
@@ -179,7 +159,6 @@ def boxes_overlap_in_grid(box1, box2):
     # The boxes overlap if they overlap in both dimensions
     return overlap_x and overlap_y
 
-
 def lens_size_by_angle(angle: CameraAngle) -> int:
     match angle:
         case CameraAngle.Narrow:
@@ -190,10 +169,9 @@ def lens_size_by_angle(angle: CameraAngle) -> int:
             lens_size = 1000
     return lens_size
 
-
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
 # mypy: ignore-errors
-def log_rate_limiter(interval_seconds: int):
+def log_rate_limiter(interval_seconds: int): # type: ignore
     def decorator(func):
         last_log_time = [0]  # Use a list to allow modification of non-local state
 
@@ -208,10 +186,6 @@ def log_rate_limiter(interval_seconds: int):
 
     return decorator
 
-
-# mypy: ignore-errors
-
-
 @log_rate_limiter(3)  # Apply a 10-second rate limiter
 def limited_log(message: str) -> None:
     logger.info(message)
@@ -221,8 +195,6 @@ def limited_log(message: str) -> None:
 def limited_log_debug(message: str) -> None:
     logger.debug(message)
 
-
-# was kann das?
 class Timer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -269,6 +241,7 @@ class State(StrEnum):
     Unknown = "none"
 
 
+# [TIMEFORMATS]
 # ISO 8601 format
 # Melin returns like this: 2024-12-24T13:10:13.660337Z
 #   or                     2024-12-26T13:00:00Z
@@ -278,15 +251,7 @@ class State(StrEnum):
 # or get from string with datetime.datetime.fromisoformat(X)
 # to also change into isoformat use X.isoformat()
 
-#   2024-12-24 13:09:12.786576+00:00
-#   2024-12-30 13:00:00+00:00
 # TARGET: 2025-03-01T00:54:02.809428+00:00
-
-
-# NOT USED only for referenze
-class MelvinTime(datetime.datetime):
-    time: datetime.datetime
-
 
 class MelvinImage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -341,15 +306,7 @@ class BaseTelemetry(BaseModel):
         )
 
 
-# more Telemetry, used in Riftconsole to display map
-# TODO only temporary so far
-class Telemetry(BaseTelemetry):
-    last_timestamp: datetime.datetime
-
-    pre_transition_state: State
-    planed_transition_state: State
-
-
+# TODO
 class Event(BaseModel):
     data: str = ""
     event: str = "message"
