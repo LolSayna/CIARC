@@ -145,6 +145,7 @@ class Achievement(BaseModel):
         return achv
 
 
+
 # TODO test if this actually works as intentend???
 def boxes_overlap_in_grid(box1, box2):
     grid_width = con.WORLD_X

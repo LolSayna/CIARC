@@ -14,6 +14,9 @@
     <!-- Tab name-->
     <title>Rift-Console</title>
 
+    <!-- Favicon icon -->
+    <link rel="shortcut icon" href="{{ url_for('static', filename='satellite.svg') }}">
+    
     <!-- CSS -->
     <style>
 
@@ -53,6 +56,16 @@
         width: 30%;
       }
 
+      /* For map */
+      canvas {
+        padding: 0;
+        margin: auto;
+        display: block;    
+        width: 100%;  /* Change this to a percentage to make it responsive */
+        max-width: 1000px;
+        border: 1px solid red;
+      }
+    
     </style>
   </head>
 
@@ -92,7 +105,7 @@
     <div class="container-fluid mt-2">
       <div class="row">
         <!-- Navigation Sidebar -->
-        <div class="col-md-3 border">
+        <div class="col-md-2 border">
             <h2>Live Telemetry</h2>
             <p>{{timestamp}}</p>
             <div class="progress mt-2">
@@ -114,10 +127,121 @@
         </div>
         
         <!-- Main Content -->
-        <div class="col-md-7">
-          <h2>World Map</h2>
-          <p>This is the main content area where you can add any information, links, images, or other elements you'd like.</p>
-          <h1>TODO draw</h1>
+        <div class="col-md-8">
+          <!-- [NEW MAP] -->
+          <h2 style="text-align:center;">World Map</h2>
+          <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed</p>
+
+          <canvas id="gameMap" width="1000" height="500"></canvas>
+            <script>
+              // Create a canvas object to draw on
+              const canvas = document.getElementById('gameMap');
+              const ctx = canvas.getContext('2d');
+
+              const backgroundImage = new Image();
+              // path: src/rift_console/static/images
+              backgroundImage.src = "{{ url_for('static', filename='images/thumb_grey.png') }}";
+
+              // main work loop, first background then squares
+              backgroundImage.onload = function() {
+                ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+                drawObjectiveSquares();
+                drawTraj();
+                drawSatellite();
+              }
+
+              // fixed to (1000, 500) above
+              const canvas_width = canvas.width;
+              const canvas_height = canvas.height;
+              // constant
+              const world_x = 21600
+              const world_y = 10800
+
+              // data from telemetry
+              const objective_data = {{ draw_zoned_obj | tojson }};
+              const past = {{ past_traj| tojson }};
+              const future = {{ future_traj| tojson }};
+              const x = {{width_x}} 
+              const y = {{height_y}}
+              const camera = {{camera_size}}
+
+              const x_scaling = world_x / canvas_width
+              const y_scaling = world_y / canvas_height
+
+
+              function drawSatellite() {
+                ctx.strokeStyle = 'green';
+                ctx.lineWidth = 4;
+                ctx.strokeRect((x - camera / 2) / x_scaling, (y - camera / 2) / y_scaling, camera / x_scaling, camera / y_scaling);
+
+                const satelliteEmoji = '🛰️';
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(satelliteEmoji, x / x_scaling, y / y_scaling);
+              }
+
+              function drawTraj() {
+                ctx.fillStyle = 'yellow';
+                past.forEach(coord => {
+                    const [x, y] = coord;
+                    ctx.beginPath();
+                    ctx.arc(x / x_scaling, y / y_scaling, 3, 0, Math.PI * 2, true);
+                    ctx.fill();
+                });
+
+                ctx.fillStyle = 'brown';
+                future.forEach(coord => {
+                    const [x, y] = coord;
+                    ctx.beginPath();
+                    ctx.arc(x / x_scaling, y / y_scaling, 3, 0, Math.PI * 2, true);
+                    ctx.fill();
+                });
+              }
+
+              // Helper function to generate a random color
+              function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                  color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+              }
+
+              // Draws a square / one objective region
+              function drawSquare(x1, y1, x2, y2, label) {
+
+                const width = x2 - x1;
+                const height = y2 - y1;
+                ctx.fillStyle = getRandomColor();
+
+                // Rectangle
+                ctx.fillRect(x1, y1, width, height);
+
+                // Text
+                ctx.fillStyle = 'black';
+                ctx.font = '18px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, x1 + width / 2, y1 + 20);
+
+              }
+
+              // Calls drawSquare for each objective
+              function drawObjectiveSquares() {
+                objective_data.forEach(item => {
+                  if (Array.isArray(item.zone) && item.zone.length === 4) {
+                    const [x1, y1, x2, y2] = item.zone;
+                    drawSquare(x1 / x_scaling, y1 / y_scaling, x2 / x_scaling, y2 / y_scaling, item.name, item.start);
+                  } else {
+                    console.error('Invalid zone data for item:', JSON.stringify(item));
+                  }
+                });
+              }
+
+          </script>
         </div>
 
         <!-- Buttons -->

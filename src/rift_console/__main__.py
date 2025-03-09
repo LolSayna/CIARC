@@ -8,7 +8,7 @@ import os
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, url_for, request, flash
+from quart import Quart, render_template, redirect, send_from_directory, url_for, request, flash
 from werkzeug.wrappers.response import Response
 
 # shared imports
@@ -47,7 +47,7 @@ async def index():
             is_network_simulation=console.is_network_simulation,
             user_speed_multiplier=console.user_speed_multiplier,
             # live telemtry
-            timestamp=console.live_telemetry.timestamp.isoformat(),
+            timestamp=console.live_telemetry.timestamp.isoformat()[:-6],
             state=console.live_telemetry.state,
             angle=console.live_telemetry.angle,
             width_x=console.live_telemetry.width_x,
@@ -79,6 +79,11 @@ async def index():
             # slot times
             next_slot_start=console.slots[0].start.strftime("%H:%M:%S"),
             slot_ends=console.slots[0].end.strftime("%H:%M:%S"),
+            # drawn map
+            draw_zoned_obj=console.get_draw_zoned_obj(),
+            camera_size=lens_size_by_angle(console.live_telemetry.angle),
+            past_traj=console.past_traj,
+            future_traj=console.future_traj,
         )
     else:
         return await render_template(
@@ -89,8 +94,13 @@ async def index():
             prev_state=State.Unknown,
             next_state=State.Unknown,
             state=State.Unknown,
+            # need default to prevent crash
+            draw_zoned_obj=[],
+            past_traj=[],
+            future_traj=[],
+            width_x=0,
+            height_y=0,
         )
-
 
 # Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
@@ -385,6 +395,7 @@ def update_telemetry():
         console.beacon_objectives = beacon_objectives
         console.achievements = achievements
         console.user_speed_multiplier = new_tel.simulation_speed
+        (console.past_traj, console.future_traj) = console.predict_trajektorie()
 
         if console.live_telemetry.state != State.Transition:
             console.next_state = State.Unknown
