@@ -105,7 +105,9 @@
     <div class="container-fluid mt-2">
       <div class="row">
         <!-- Navigation Sidebar -->
-        <div class="col-md-2 border">
+        <div class="col-md-2">
+          <h2>Data</h2>
+          <div class="container-fluid border">
             <h2>Live Telemetry</h2>
             <p>{{timestamp}}</p>
             <div class="progress mt-2">
@@ -123,13 +125,34 @@
             <p>area_cov: {{area_covered_narrow}}/{{area_covered_normal}}/{{area_covered_wide}}</p>
             <p>#images: {{images_taken}} obj-done/points={{objectives_done}}/{{objectives_points}}</p>
             <p>data-s/r={{data_volume_sent}}/{{data_volume_received}} slots_used={{slots_used}}</p>
+          </div>
+
+          <div class="container-fluid mt-1 border">
+            <h2>Mevlonaut API</h2>
+            {% if api %}
+              {% if api.healthy %}
+              <p class="text-success">Healthcheck</p>
+              {% else %}
+              <p class="text-danger">Healthcheck failed!</p>
+              {% endif %}
+              <p>disk-root/home: {api.disk.root}/{api.disk.home}</p>
+              <p>memory: {api.memory} cpu: {api.cpu}</p>
+            {% else %}
+            <p>No data avaiable</p>
+            {% endif %}
+            <!-- Log list/download/clear/clear all-->
+            <!-- Telemetry download/clear-->
+            <!-- Events download/clear-->
+            <!-- Image list/download/clear/clear all-->
+
+            <!-- Set Task, show/reset settings, get/set/clear setting-->
+          </div>
         </div>
         
         <!-- Main Content -->
         <div class="col-md-8">
           <!-- [NEW MAP] -->
           <h2 style="text-align:center;">World Map</h2>
-          <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed, each dot 10s</p>
           <button type="submit" class="btn btn-info" id="showObjectives">Toggle Zoned Objectives</button>
           <button type="submit" class="btn btn-info" id="showPastTraj">Toggle Past Trajectory</button>
           <button type="submit" class="btn btn-info" id="showFutureTraj">Toggle Future Trajectory</button>
@@ -285,6 +308,7 @@
 
               window.onload = populateDropdown;
           </script>
+          <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed, each dot 10s</p>
         </div>
 
         <!-- Buttons -->

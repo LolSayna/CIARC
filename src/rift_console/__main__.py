@@ -93,6 +93,8 @@ async def index() -> str:
             camera_size=lens_size_by_angle(console.live_telemetry.angle),
             past_traj=console.past_traj,
             future_traj=console.future_traj,
+            # melvonaut api
+            api=console.live_melvonaut_api,
         )
     else:
         return await render_template(

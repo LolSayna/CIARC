@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Any, Optional
 
 import shared.constants as con
 from shared.models import (
@@ -27,6 +27,7 @@ class RiftConsole:
     achievements: list[Achievement] = []
     past_traj: list[tuple[int, int]] = []
     future_traj: list[tuple[int, int]] = []
+    live_melvonaut_api: dict[str, Any] = {}
 
     def get_draw_zoned_obj(self) -> list[dict[str, object]]:
         get_draw_zoned_obj = []
