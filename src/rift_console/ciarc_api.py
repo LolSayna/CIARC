@@ -33,7 +33,7 @@ def console_api(
     params: dict[str, Any] = {},
     json: dict[str, Any] = {},
     files: dict[str, Any] = {},
-) -> dict:
+) -> Any:
     try:
         with requests.Session() as s:
             match method:
@@ -87,7 +87,7 @@ def reset() -> None:
 
 def save_backup() -> datetime.datetime:
     console_api(method=HttpCode.GET, endpoint=con.BACKUP_ENDPOINT)
-    t = live_utc().isoformat()
+    t = live_utc()
     logger.info("Console: saving satellite state.")
 
     return t
@@ -116,13 +116,15 @@ def change_simulation_env(
 
 
 def live_observation() -> (
-    tuple[
-        BaseTelemetry,
-        int,
-        list[Slot],
-        list[ZonedObjective],
-        list[BeaconObjective],
-        list[Achievement],
+    Optional[
+        tuple[
+            BaseTelemetry,
+            int,
+            list[Slot],
+            list[ZonedObjective],
+            list[BeaconObjective],
+            list[Achievement],
+        ]
     ]
 ):
     d = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
@@ -142,11 +144,11 @@ def live_observation() -> (
         return None
 
 
-def change_angle(angle: CameraAngle) -> dict:
+def change_angle(angle: CameraAngle) -> Any:
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
-        return
+        return {}
     json = {
         "vel_x": obs["vx"],
         "vel_y": obs["vy"],
@@ -164,7 +166,7 @@ def change_angle(angle: CameraAngle) -> dict:
     return d
 
 
-def change_state(state: State) -> dict:
+def change_state(state: State) -> Any:
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
@@ -186,7 +188,7 @@ def change_state(state: State) -> dict:
     return d
 
 
-def change_velocity(vel_x: float, vel_y: float) -> dict:
+def change_velocity(vel_x: float, vel_y: float) -> Any:
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
@@ -308,7 +310,7 @@ def add_modify_ebt_objective(
         logger.warning(f"Console: could not add/modifyed ebt objective {id}/{name}")
 
 
-def send_beacon(beacon_id: int, height: int, width: int) -> dict:
+def send_beacon(beacon_id: int, height: int, width: int) -> Any:
     params = {"beacon_id": beacon_id, "height": height, "width": width}
     d = console_api(method=HttpCode.PUT, endpoint=con.BEACON_ENDPOINT, params=params)
     if d:
@@ -319,7 +321,7 @@ def send_beacon(beacon_id: int, height: int, width: int) -> dict:
         return {}
 
 
-def upload_worldmap(image_path: str) -> str:
+def upload_worldmap(image_path: str) -> Any:
     files = {"image": (image_path, open(image_path, "rb"), "image/png")}
     d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
     if d:
@@ -336,7 +338,7 @@ def upload_worldmap(image_path: str) -> str:
         return ""
 
 
-def upload_objective(image_path: str, objective_id: int) -> str:
+def upload_objective(image_path: str, objective_id: int) -> Any:
     params = {
         "objective_id": objective_id,
     }

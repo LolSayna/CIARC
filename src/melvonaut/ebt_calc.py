@@ -8,19 +8,19 @@ from melvonaut.settings import settings
 ##### LOGGING #####
 logger.remove()
 logger.add(
-    sink=sys.stderr, level=settings.RIFT_LOG_LEVEL, backtrace=True, diagnose=True
+    sink=sys.stderr, level=settings.FILE_LOGGING_LEVEL, backtrace=True, diagnose=True
 )
 
 
 class ping:
-    def __init__(self, x, y, d, mind, maxd):
+    def __init__(self, x: int, y: int, d: float, mind: int, maxd: int):
         self.x = x
         self.y = y
         self.d = d
         self.mind = mind
         self.maxd = maxd
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Ping: x={self.x}, y={self.y}, d={self.d}, mind={self.mind}, maxd={self.maxd}"
 
 
@@ -66,7 +66,7 @@ for d in data:
 print("Done parsing")
 
 
-def distance(x1, x2, y1, y2):
+def distance(x1: int, x2: int, y1: int, y2: int) -> float:
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
@@ -75,13 +75,13 @@ def distance(x1, x2, y1, y2):
 
 # Procssed first point
 res = []
-d = min(processed, key=lambda p: p.maxd)
-for x in range(d.x - d.maxd, d.x + d.maxd):
-    for y in range(d.y - d.maxd, d.y + d.maxd):
+p1 = min(processed, key=lambda p: p.maxd)
+for x in range(p1.x - p1.maxd, p1.x + p1.maxd):
+    for y in range(p1.y - p1.maxd, p1.y + p1.maxd):
         if x > x_0 and x < x_max and y > y_0 and y < y_max:
-            dist = distance(d.x, x, d.y, y)
-            if dist > d.mind and dist < d.maxd:
-                # print(f"Found: {dist} for ({x},{y}) with possible d: ({d.mind},{d.maxd}")
+            dist = distance(p1.x, x, p1.y, y)
+            if dist > p1.mind and dist < p1.maxd:
+                # print(f"Found: {dist} for ({x},{y}) with possible p1: ({p1.mind},{p1.maxd}")
                 res.append((x, y))
 
 print(f"Found {len(res)} possible points on first circle")
@@ -91,10 +91,10 @@ filtered_res = []
 for x, y in res:
     # print(f"x: {x}, y: {y}")
     is_valid = True
-    for d in processed:
-        dist = distance(d.x, x, d.y, y)
-        if dist < d.mind or dist > d.maxd:
-            # print(f"Found: {dist} for ({x},{y}) with possible d: ({d.mind},{d.maxd})")
+    for p2 in processed:
+        dist = distance(p2.x, x, p2.y, y)
+        if dist < p2.mind or dist > p2.maxd:
+            # print(f"Found: {dist} for ({x},{y}) with possible d: ({p2.mind},{p2.maxd})")
             is_valid = False
             break
 

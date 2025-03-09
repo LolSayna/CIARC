@@ -36,7 +36,7 @@ console = rift_console.rift_console.RiftConsole()
 
 
 @app.route("/media")
-async def media():
+async def media() -> str:
     # List of image filenames you want to display
 
     images = os.listdir("src/rift_console/static/media/")
@@ -46,11 +46,13 @@ async def media():
 
 
 @app.route("/", methods=["GET"])
-async def index():
+async def index() -> str:
     if console.live_telemetry:
         return await render_template(
             "main.html",
-            last_backup_date=console.last_backup_date,
+            last_backup_date=console.last_backup_date.isoformat()[:-13]
+            if console.last_backup_date
+            else "",
             is_network_simulation=console.is_network_simulation,
             user_speed_multiplier=console.user_speed_multiplier,
             # live telemtry
@@ -119,8 +121,8 @@ async def results() -> Response:
 
     match button:
         case "worldmap":
-            image_path = form.get("path_world", type=str)
-            if not os.path.isfile(image_path):
+            image_path = form.get("path_world", type=str) or ""
+            if not os.path.isfile(path=image_path):
                 await flash(
                     f"Cant upload world map, file: {image_path} does not exist."
                 )
@@ -142,8 +144,8 @@ async def results() -> Response:
                     )
 
         case "obj":
-            image_path = form.get("path_obj", type=str)
-            id = form.get("objective_id", type=int)
+            image_path = form.get("path_obj", type=str) or ""
+            id = form.get("objective_id", type=int) or 0
 
             if not os.path.isfile(image_path):
                 await flash(
@@ -165,9 +167,9 @@ async def results() -> Response:
                 await flash(f"Could not upload objective {id} - {image_path}")
 
         case "beacon":
-            id = form.get("beacon_id", type=int)
-            height = form.get("height", type=int)
-            width = form.get("width", type=int)
+            id = form.get("beacon_id", type=int) or 0
+            height = form.get("height", type=int) or 0
+            width = form.get("width", type=int) or 0
             res = ciarc_api.send_beacon(
                 beacon_id=id,
                 height=height,
@@ -207,9 +209,15 @@ async def obj_mod() -> Response:
                 ciarc_api.add_modify_zoned_objective(
                     id=form.get("obj_id", type=int) or 0,
                     name=form.get("name", type=str) or "name",
-                    start=datetime.datetime.fromisoformat(form.get("start", type=str) or "2025-01-01T00:00"),
-                    end=datetime.datetime.fromisoformat(form.get("end", type=str) or "2025-01-01T00:00"),
-                    optic_required=CameraAngle(form.get("angle", type=str) or CameraAngle.Unknown),
+                    start=datetime.datetime.fromisoformat(
+                        form.get("start", type=str) or "2025-01-01T00:00"
+                    ),
+                    end=datetime.datetime.fromisoformat(
+                        form.get("end", type=str) or "2025-01-01T00:00"
+                    ),
+                    optic_required=CameraAngle(
+                        form.get("angle", type=str) or CameraAngle.Unknown
+                    ),
                     secret=True,
                     zone=(0, 0, 0, 0),
                     coverage_required=form.get("coverage_required", type=float) or 0.99,
@@ -219,9 +227,15 @@ async def obj_mod() -> Response:
                 ciarc_api.add_modify_zoned_objective(
                     id=form.get("obj_id", type=int) or 0,
                     name=form.get("name", type=str) or "name",
-                    start=datetime.datetime.fromisoformat(form.get("start", type=str) or "2025-01-01T00:00"),
-                    end=datetime.datetime.fromisoformat(form.get("end", type=str) or "2025-01-01T00:00"),
-                    optic_required=CameraAngle(form.get("angle", type=str) or CameraAngle.Unknown),
+                    start=datetime.datetime.fromisoformat(
+                        form.get("start", type=str) or "2025-01-01T00:00"
+                    ),
+                    end=datetime.datetime.fromisoformat(
+                        form.get("end", type=str) or "2025-01-01T00:00"
+                    ),
+                    optic_required=CameraAngle(
+                        form.get("angle", type=str) or CameraAngle.Unknown
+                    ),
                     secret=False,
                     zone=(
                         form.get("x1", type=int) or 0,
@@ -236,8 +250,12 @@ async def obj_mod() -> Response:
             ciarc_api.add_modify_ebt_objective(
                 id=form.get("obj_id", type=int) or 0,
                 name=form.get("name", type=str) or "name",
-                start=datetime.datetime.fromisoformat(form.get("start_ebt", type=str) or "2025-01-01T00:00"),
-                end=datetime.datetime.fromisoformat(form.get("end_ebt", type=str) or "2025-01-01T00:00"),
+                start=datetime.datetime.fromisoformat(
+                    form.get("start_ebt", type=str) or "2025-01-01T00:00"
+                ),
+                end=datetime.datetime.fromisoformat(
+                    form.get("end_ebt", type=str) or "2025-01-01T00:00"
+                ),
                 description=form.get("description", type=str) or "desc",
                 beacon_height=form.get("beacon_height", type=int) or 0,
                 beacon_width=form.get("beacon_width", type=int) or 0,
@@ -351,7 +369,6 @@ async def control_handler() -> Response:
             ciarc_api.load_backup(console.last_backup_date)
             console.live_telemetry = None
         case "save":
-            ciarc_api.save_backup()
             console.last_backup_date = ciarc_api.save_backup()
         case "on_sim":
             if console.user_speed_multiplier:

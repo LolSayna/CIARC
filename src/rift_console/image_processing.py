@@ -2,12 +2,13 @@ import sys
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from typing import Optional
 import requests
 
 from loguru import logger
 from PIL import Image
 
-from rift_console.image_helper import (
+from image_helper import (  # type: ignore
     generate_spiral_walk,
     parse_image_name,
     find_image_names,
@@ -20,8 +21,11 @@ logger.add(sink=sys.stderr, level=con.RIFT_LOG_LEVEL, backtrace=True, diagnose=T
 
 
 def count_matching_pixels(
-    offset: tuple[int, int], first_img: Image, second_img: Image, max_offset: int
-) -> tuple[int, int]:
+    offset: tuple[int, int],
+    first_img: Image.Image,
+    second_img: Image.Image,
+    max_offset: int,
+) -> tuple[tuple[int, int], int]:
     """Counts how many pixels are equal between the two images for a given offset
 
     Args:
@@ -40,21 +44,22 @@ def count_matching_pixels(
             p2 = second_img.getpixel(
                 (x_local + offset[0] + max_offset, y_local + offset[1] + max_offset)
             )
-
-            # logger.error(f"{p1} {p2} {abs(p1[0] - p2[0])} {abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]) + abs(p1[2] - p2[2])}")
-            # only compare R G B and not Alpha. Since there is random noise a slight difference is allowed
-            if (
-                abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]) + abs(p1[2] - p2[2])
-                < con.IMAGE_NOISE_FORGIVENESS
-            ):
-                matches += 1
+            if p1 and p2 and isinstance(p1, tuple) and isinstance(p2, tuple):
+                # only compare R G B and not Alpha. Since there is random noise a slight difference is allowed
+                if (
+                    abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]) + abs(p1[2] - p2[2])
+                    < con.IMAGE_NOISE_FORGIVENESS
+                ):
+                    matches += 1
+            else:
+                logger.error(f"{p1} {p2} unkown types")
 
     return offset, matches
 
 
 # Takes the folder location(including logs/melvonaut/images) and a list of image names
 def stitch_images(
-    image_path: str, image_name_list: list[str], panorama=None
+    image_path: str, image_name_list: list[str], panorama: Optional[Image.Image] = None
 ) -> Image.Image:
     """Main stitching algorithm
     TODO add existing img
@@ -122,7 +127,7 @@ def stitch_images(
             # check if existing_stich contains something
             total_pixel = existing_stitch.size[0] * existing_stitch.size[1]
             set_pixel = sum(
-                1 for pixel in existing_stitch.getdata() if pixel != (0, 0, 0, 0)
+                pixel != (0, 0, 0, 0) for pixel in list(existing_stitch.getdata())
             )
             empty_pixel = total_pixel - set_pixel
 
@@ -283,7 +288,7 @@ def create_thumbnail(panorama_path: str) -> None:
     """
     with Image.open(panorama_path) as panorama:
         thumb = panorama.resize(
-            (con.SCALED_WORLD_X, con.SCALED_WORLD_Y), Image.Resampling.LANCZOS
+            (con.THUMBNAIL_X, con.THUMBNAIL_Y), Image.Resampling.LANCZOS
         )
         thumb.save("src/rift_console/static/images/" + "thumb.png")
         thumb = thumb.convert("L")
@@ -354,7 +359,13 @@ if __name__ == "__main__":
     # Cut
     elif sys.argv[1] == "cut":
         if len(sys.argv) == 7:
-            cut(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+            cut(
+                sys.argv[2],
+                int(sys.argv[3]),
+                int(sys.argv[4]),
+                int(sys.argv[5]),
+                int(sys.argv[6]),
+            )
             sys.exit(0)
         print(
             "Usage: python3 src/rift_console/image_processing.py cut PATH X1 Y1 X2 Y2)"
@@ -363,7 +374,7 @@ if __name__ == "__main__":
     # Upload objective
     elif sys.argv[1] == "upload":
         if len(sys.argv) == 5:
-            upload(id=sys.argv[2], path=sys.argv[3], folder=eval(sys.argv[4]))
+            upload(id=int(sys.argv[2]), path=sys.argv[3], folder=eval(sys.argv[4]))
             sys.exit(0)
         print(
             "Usage: python3 src/rift_console/image_processing.py upload ID PATH IS_FOLDER"
