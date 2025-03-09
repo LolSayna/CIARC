@@ -252,6 +252,10 @@ class State(StrEnum):
 # to also change into isoformat use X.isoformat()
 
 # TARGET: 2025-03-01T00:54:02.809428+00:00
+def live_utc() -> datetime.datetime:
+
+    return datetime.datetime.now(datetime.timezone.utc)
+
 
 class MelvinImage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

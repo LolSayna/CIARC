@@ -22,6 +22,7 @@ from shared.models import (
     lens_size_by_angle,
     limited_log,
     Event,
+    live_utc,
 )
 from loguru import logger
 import random
@@ -95,7 +96,7 @@ class StatePlanner(BaseModel):
         if self.current_telemetry is None:
             return 0.0, 0.0
         time_since_observation = (
-            datetime.datetime.now(datetime.timezone.utc)
+            live_utc()
             - self.current_telemetry.timestamp
         ).total_seconds()
         current_x = (
@@ -420,15 +421,15 @@ class StatePlanner(BaseModel):
             datetime.timezone.utc
         ):
             logger.warning(
-                f"Skipped image, to early: start={settings.START_TIME} current_time={datetime.datetime.now(datetime.timezone.utc)}"
+                f"Skipped image, to early: start={settings.START_TIME} current_time={live_utc()}"
             )
             return
         if (
             settings.DO_TIMING_CHECK
-            and datetime.datetime.now(datetime.timezone.utc) > settings.STOP_TIME
+            and live_utc() > settings.STOP_TIME
         ):
             logger.warning(
-                f"Skipped image, to late: end={settings.STOP_TIME} current_time={datetime.datetime.now(datetime.timezone.utc)}"
+                f"Skipped image, to late: end={settings.STOP_TIME} current_time={live_utc()}"
             )
             return
 

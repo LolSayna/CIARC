@@ -1,5 +1,6 @@
 import requests
 import datetime
+import shutil
 
 from enum import Enum
 from loguru import logger
@@ -13,6 +14,7 @@ from shared.models import (
     State,
     Slot,
     ZonedObjective,
+    live_utc,
 )
 
 
@@ -84,7 +86,7 @@ def reset() -> None:
 
 def save_backup() -> datetime.datetime:
     console_api(method=HttpCode.GET, endpoint=con.BACKUP_ENDPOINT)
-    t = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    t = live_utc().isoformat()
     logger.info("Console: saving satellite state.")
 
     return t
@@ -334,6 +336,7 @@ def upload_worldmap(image_path: str) -> str:
     d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
     if d:
         logger.info(f"Console: Uploaded world map - {d}.")
+        shutil.copyfile(image_path, "src/rift_console/static/media/" + live_utc().strftime("%d-%m-%Y") + "worldmap.png")
         return d
     else:
         logger.warning("Console: could not upload world map")
@@ -350,6 +353,7 @@ def upload_objective(image_path: str, objective_id: int) -> str:
     )
     if d:
         logger.info(f"Console: Uploaded objective - {d}.")
+        shutil.copyfile(image_path, "src/rift_console/static/media/" + str(objective_id) + "objective.png")
         return d
     else:
         logger.warning("Console: could not upload objective")

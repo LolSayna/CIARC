@@ -13,7 +13,7 @@ from werkzeug.wrappers.response import Response
 # shared imports
 import rift_console.rift_console
 import shared.constants as con
-from shared.models import State, CameraAngle, lens_size_by_angle
+from shared.models import State, CameraAngle, lens_size_by_angle, live_utc
 import rift_console.image_processing
 import rift_console.ciarc_api as ciarc_api
 
@@ -34,6 +34,15 @@ app = Quart(__name__)
 app.secret_key = "yoursecret_key"
 console = rift_console.rift_console.RiftConsole()
 
+
+@app.route("/media")
+async def media():
+    # List of image filenames you want to display
+
+    images = os.listdir("src/rift_console/static/media/")  
+    images = ["media/" + s for s in images]
+    logger.warning(f"Showing images: {images}")
+    return await render_template("media.html", images=images)
 
 @app.route("/", methods=["GET"])
 async def index():
@@ -123,8 +132,8 @@ async def results() -> Response:
             if res:
                 await flash(res)
                 if res.startswith("Image uploaded successfully"):
-                    await flash(f"Worldmap - {image_path} - {datetime.datetime.now(datetime.timezone.utc).strftime("%d/%m/%Y")}.")
-                    logger.warning(f"Worldmap uploaded - {image_path} - {datetime.datetime.now(datetime.timezone.utc).strftime("%d/%m/%Y")}.")
+                    await flash(f"Worldmap - {image_path} - {live_utc().strftime("%d/%m/%Y")}.")
+                    logger.warning(f"Worldmap uploaded - {image_path} - {live_utc().strftime("%d/%m/%Y")}.")
 
         case "obj":
             image_path = form.get("path_obj", type=str)
