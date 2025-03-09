@@ -131,7 +131,10 @@
           <h2 style="text-align:center;">World Map</h2>
           <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed, each dot 10s</p>
           <button type="submit" class="btn btn-info" id="showObjectives">Toggle Zoned Objectives</button>
-          <button type="submit" class="btn btn-info" id="showTraj">Toggle Trajectory</button>
+          <button type="submit" class="btn btn-info" id="showPastTraj">Toggle Past Trajectory</button>
+          <button type="submit" class="btn btn-info" id="showFutureTraj">Toggle Future Trajectory</button>
+          <select name="trajDur" id="trajDur" onchange="updateTrajDur()">
+          </select>
           <div class="mb-2"></div>
           <canvas id="gameMap" width="1000" height="500"></canvas>
             <script>
@@ -151,8 +154,11 @@
               function drawScene(){
                 ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
-                if (showTraj) {
-                  drawTraj();
+                if (showPastTraj) {
+                  drawPastTraj();
+                }
+                if (showFutureTraj) {
+                  drawFutureTraj();
                 }
                 if (showObjectives) {
                   drawObjectiveSquares();
@@ -166,6 +172,8 @@
               // constant
               const world_x = 21600
               const world_y = 10800
+              // must be equal to constants.py
+              const hour = 3600/10  // each trajDur means 1 hour, each datapoint is 60s apart
 
               // data from telemetry
               const objective_data = {{ draw_zoned_obj | tojson }};
@@ -178,8 +186,10 @@
               const x_scaling = world_x / canvas_width
               const y_scaling = world_y / canvas_height
 
-              let showTraj = true;
+              let showPastTraj = true;
+              let showFutureTraj = true;
               let showObjectives = true;
+              let trajDur = 1;
 
               function drawSatellite() {
                 ctx.strokeStyle = 'green';
@@ -193,17 +203,18 @@
                 ctx.fillText(satelliteEmoji, x / x_scaling, y / y_scaling);
               }
 
-              function drawTraj() {
-                ctx.fillStyle = 'yellow';
-                past.forEach(coord => {
+              function drawPastTraj() {
+                ctx.fillStyle = 'brown';
+                past.slice(0, trajDur*hour).forEach(coord => {
                     const [x, y] = coord;
                     ctx.beginPath();
                     ctx.arc(x / x_scaling, y / y_scaling, 3, 0, Math.PI * 2, true);
                     ctx.fill();
                 });
-
-                ctx.fillStyle = 'brown';
-                future.forEach(coord => {
+              }
+              function drawFutureTraj() {
+                ctx.fillStyle = 'yellow';
+                future.slice(0, trajDur*hour).forEach(coord => {
                     const [x, y] = coord;
                     ctx.beginPath();
                     ctx.arc(x / x_scaling, y / y_scaling, 3, 0, Math.PI * 2, true);
@@ -241,14 +252,38 @@
                   }
                 });
               }
-          document.getElementById('showObjectives').addEventListener('click', () => {
-            showObjectives = !showObjectives;
-            drawScene();
-          });
-          document.getElementById('showTraj').addEventListener('click', () => {
-            showTraj = !showTraj;
-            drawScene();
-          });
+              // Toogle buttons
+              document.getElementById('showObjectives').addEventListener('click', () => {
+                showObjectives = !showObjectives;
+                drawScene();
+              });
+              document.getElementById('showPastTraj').addEventListener('click', () => {
+                showPastTraj = !showPastTraj;
+                drawScene();
+              });
+              document.getElementById('showFutureTraj').addEventListener('click', () => {
+                showFutureTraj = !showFutureTraj;
+                drawScene();
+              });
+              // dropdown menu
+              function populateDropdown() {
+                const dropdown = document.getElementById('trajDur');
+                for (let i = 1; i <= 12; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    dropdown.appendChild(option);
+                }
+              }
+
+              function updateTrajDur() {
+                  const dropdown = document.getElementById('trajDur');
+                  trajDur = parseInt(dropdown.value, 10);
+                  console.log(`Trajectory duration updated to: ${trajDur}`);
+                  drawScene();
+              }
+
+              window.onload = populateDropdown;
           </script>
         </div>
 

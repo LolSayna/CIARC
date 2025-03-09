@@ -54,18 +54,17 @@ class RiftConsole:
         future = []
 
         if self.live_telemetry:
-            steps = 10  # do not count every single second as a point
-            for i in range(0, con.TRAJ_TIME, steps):
+            for i in range(0, con.TRAJ_TIME, con.TRAJ_STEP):
                 (x, y) = RiftConsole.fix_overflow(
                     int(self.live_telemetry.width_x + self.live_telemetry.vx * i),
                     int(self.live_telemetry.height_y + self.live_telemetry.vy * i),
                 )
-                past.append((x, y))
+                future.append((x, y))
                 (x, y) = RiftConsole.fix_overflow(
                     int(self.live_telemetry.width_x - self.live_telemetry.vx * i),
                     int(self.live_telemetry.height_y - self.live_telemetry.vy * i),
                 )
-                future.append((x, y))
+                past.append((x, y))
 
         return (past, future)
 

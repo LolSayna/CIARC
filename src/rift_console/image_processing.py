@@ -8,7 +8,7 @@ import requests
 from loguru import logger
 from PIL import Image
 
-from image_helper import (  # type: ignore
+from rift_console.image_helper import (
     generate_spiral_walk,
     parse_image_name,
     find_image_names,

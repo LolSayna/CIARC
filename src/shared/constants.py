@@ -17,8 +17,9 @@ PANORAMA_PATH = "media/"
 MEL_PERSISTENT_SETTINGS = "logs/melvonaut/persistent_settings.json"
 
 # [TRAJECTORY]
-# Number of seconds to calculate the path
-TRAJ_TIME = 3600
+# generate points up to 12 hours, each point after 1 minute
+TRAJ_TIME = 3600 * 12
+TRAJ_STEP = 10
 
 # [URLs]
 BASE_URL = "http://10.100.10.11:33000/"  # URL of our instance
