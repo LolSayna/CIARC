@@ -1,3 +1,4 @@
+from typing import Any, Optional
 import requests
 import datetime
 import shutil
@@ -29,9 +30,9 @@ class HttpCode(Enum):
 def console_api(
     method: HttpCode,
     endpoint: str,
-    params: dict = {},
-    json: dict = {},
-    files: dict = {},
+    params: dict[str, Any] = {},
+    json: dict[str, Any] = {},
+    files: dict[str, Any] = {},
 ) -> dict:
     try:
         with requests.Session() as s:
@@ -66,7 +67,7 @@ def console_api(
             )
             return {}
         case 500:
-            # this happens with an bug on the api side? TODO
+            # this happens with an bug on the api side? Should not appear anymore
             logger.warning(
                 f"Console: API File not found - {r.status_code} - {type(r.json())} - {r.json()}."
             )
@@ -92,7 +93,7 @@ def save_backup() -> datetime.datetime:
     return t
 
 
-def load_backup(last_backup_date: datetime.datetime) -> None:
+def load_backup(last_backup_date: Optional[datetime.datetime]) -> None:
     console_api(method=HttpCode.PUT, endpoint=con.BACKUP_ENDPOINT)
     logger.info(f"Console: restoring satellite state from {last_backup_date}.")
 
@@ -114,7 +115,16 @@ def change_simulation_env(
     return
 
 
-def live_observation() -> BaseTelemetry:
+def live_observation() -> (
+    tuple[
+        BaseTelemetry,
+        int,
+        list[Slot],
+        list[ZonedObjective],
+        list[BeaconObjective],
+        list[Achievement],
+    ]
+):
     d = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     s = console_api(method=HttpCode.GET, endpoint=con.SLOTS_ENDPOINT)
     o = console_api(method=HttpCode.GET, endpoint=con.OBJECTIVE_ENDPOINT)
@@ -130,28 +140,6 @@ def live_observation() -> BaseTelemetry:
     else:
         logger.warning("Live telemtry failed.")
         return None
-
-
-def change_velocity(vel_x: float, vel_y: float) -> dict:
-    obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
-    if not obs:
-        logger.warning("Console: no telemetry available, could not change velocity")
-        return
-    json = {
-        "vel_x": vel_x,
-        "vel_y": vel_y,
-        "camera_angle": obs["angle"],
-        "state": obs["state"],
-    }
-    logger.error(json)
-    d = console_api(method=HttpCode.PUT, endpoint=con.CONTROL_ENDPOINT, json=json)
-
-    if d:
-        logger.info(f"Console: changed velocity to ({d["vel_x"],d["vel_y"]}).")
-    else:
-        logger.warning("Console: could not change velocity, not in acquisition?")
-
-    return d
 
 
 def change_angle(angle: CameraAngle) -> dict:
@@ -336,7 +324,12 @@ def upload_worldmap(image_path: str) -> str:
     d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
     if d:
         logger.info(f"Console: Uploaded world map - {d}.")
-        shutil.copyfile(image_path, "src/rift_console/static/media/" + live_utc().strftime("%d-%m-%Y") + "worldmap.png")
+        shutil.copyfile(
+            image_path,
+            "src/rift_console/static/media/"
+            + live_utc().strftime("%d-%m-%Y")
+            + "worldmap.png",
+        )
         return d
     else:
         logger.warning("Console: could not upload world map")
@@ -353,7 +346,10 @@ def upload_objective(image_path: str, objective_id: int) -> str:
     )
     if d:
         logger.info(f"Console: Uploaded objective - {d}.")
-        shutil.copyfile(image_path, "src/rift_console/static/media/" + str(objective_id) + "objective.png")
+        shutil.copyfile(
+            image_path,
+            "src/rift_console/static/media/" + str(objective_id) + "objective.png",
+        )
         return d
     else:
         logger.warning("Console: could not upload objective")

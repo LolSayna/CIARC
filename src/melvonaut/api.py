@@ -1,4 +1,3 @@
-
 from melvonaut.settings import settings
 import importlib.metadata
 import psutil

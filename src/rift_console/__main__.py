@@ -39,10 +39,11 @@ console = rift_console.rift_console.RiftConsole()
 async def media():
     # List of image filenames you want to display
 
-    images = os.listdir("src/rift_console/static/media/")  
+    images = os.listdir("src/rift_console/static/media/")
     images = ["media/" + s for s in images]
     logger.warning(f"Showing images: {images}")
     return await render_template("media.html", images=images)
+
 
 @app.route("/", methods=["GET"])
 async def index():
@@ -108,6 +109,7 @@ async def index():
             height_y=0,
         )
 
+
 # Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
 async def results() -> Response:
@@ -132,8 +134,12 @@ async def results() -> Response:
             if res:
                 await flash(res)
                 if res.startswith("Image uploaded successfully"):
-                    await flash(f"Worldmap - {image_path} - {live_utc().strftime("%d/%m/%Y")}.")
-                    logger.warning(f"Worldmap uploaded - {image_path} - {live_utc().strftime("%d/%m/%Y")}.")
+                    await flash(
+                        f"Worldmap - {image_path} - {live_utc().strftime("%d/%m/%Y")}."
+                    )
+                    logger.warning(
+                        f"Worldmap uploaded - {image_path} - {live_utc().strftime("%d/%m/%Y")}."
+                    )
 
         case "obj":
             image_path = form.get("path_obj", type=str)
@@ -158,7 +164,6 @@ async def results() -> Response:
             else:
                 await flash(f"Could not upload objective {id} - {image_path}")
 
-
         case "beacon":
             id = form.get("beacon_id", type=int)
             height = form.get("height", type=int)
@@ -169,14 +174,15 @@ async def results() -> Response:
                 width=width,
             )
             if res:
-                await flash(res["status"])
-                if res["status"].startswith(
+                status: str = res["status"]
+                await flash(status)
+                if status.startswith(
                     "The beacon could not be found around the given location"
                 ):
                     await flash(
                         f"Attempts made: {res["attempts_made"]} of 3, Location was ({height},{width})"
                     )
-                if res["status"].startswith("No more rescue attempts left"):
+                if status.startswith("No more rescue attempts left"):
                     await flash(f"for EBT: {id}")
 
         case _:
@@ -199,42 +205,42 @@ async def obj_mod() -> Response:
             secret = form.get("secret", type=str)
             if secret == "True":
                 ciarc_api.add_modify_zoned_objective(
-                    id=form.get("obj_id", type=int),
-                    name=form.get("name", type=str),
-                    start=datetime.datetime.fromisoformat(form.get("start", type=str)),
-                    end=datetime.datetime.fromisoformat(form.get("end", type=str)),
-                    optic_required=CameraAngle(form.get("angle", type=str)),
+                    id=form.get("obj_id", type=int) or 0,
+                    name=form.get("name", type=str) or "name",
+                    start=datetime.datetime.fromisoformat(form.get("start", type=str) or "2025-01-01T00:00"),
+                    end=datetime.datetime.fromisoformat(form.get("end", type=str) or "2025-01-01T00:00"),
+                    optic_required=CameraAngle(form.get("angle", type=str) or CameraAngle.Unknown),
                     secret=True,
                     zone=(0, 0, 0, 0),
-                    coverage_required=form.get("coverage_required", type=str),
-                    description=form.get("description", type=str),
+                    coverage_required=form.get("coverage_required", type=float) or 0.99,
+                    description=form.get("description", type=str) or "desc",
                 )
             else:
                 ciarc_api.add_modify_zoned_objective(
-                    id=form.get("obj_id", type=int),
-                    name=form.get("name", type=str),
-                    start=datetime.datetime.fromisoformat(form.get("start", type=str)),
-                    end=datetime.datetime.fromisoformat(form.get("end", type=str)),
-                    optic_required=CameraAngle(form.get("angle", type=str)),
+                    id=form.get("obj_id", type=int) or 0,
+                    name=form.get("name", type=str) or "name",
+                    start=datetime.datetime.fromisoformat(form.get("start", type=str) or "2025-01-01T00:00"),
+                    end=datetime.datetime.fromisoformat(form.get("end", type=str) or "2025-01-01T00:00"),
+                    optic_required=CameraAngle(form.get("angle", type=str) or CameraAngle.Unknown),
                     secret=False,
                     zone=(
-                        form.get("x1", type=str),
-                        form.get("y1", type=str),
-                        form.get("x2", type=str),
-                        form.get("y2", type=str),
+                        form.get("x1", type=int) or 0,
+                        form.get("y1", type=int) or 0,
+                        form.get("x2", type=int) or 0,
+                        form.get("y2", type=int) or 0,
                     ),
-                    coverage_required=form.get("coverage_required", type=str),
-                    description=form.get("description", type=str),
+                    coverage_required=form.get("coverage_required", type=float) or 0.99,
+                    description=form.get("description", type=str) or "desc",
                 )
         case "ebt":
             ciarc_api.add_modify_ebt_objective(
-                id=form.get("obj_id", type=int),
-                name=form.get("name", type=str),
-                start=datetime.datetime.fromisoformat(form.get("start_ebt", type=str)),
-                end=datetime.datetime.fromisoformat(form.get("end_ebt", type=str)),
-                description=form.get("description", type=str),
-                beacon_height=form.get("beacon_height", type=int),
-                beacon_width=form.get("beacon_width", type=int),
+                id=form.get("obj_id", type=int) or 0,
+                name=form.get("name", type=str) or "name",
+                start=datetime.datetime.fromisoformat(form.get("start_ebt", type=str) or "2025-01-01T00:00"),
+                end=datetime.datetime.fromisoformat(form.get("end_ebt", type=str) or "2025-01-01T00:00"),
+                description=form.get("description", type=str) or "desc",
+                beacon_height=form.get("beacon_height", type=int) or 0,
+                beacon_width=form.get("beacon_width", type=int) or 0,
             )
         case _:
             logger.error(f"Unknown button pressed: {button}")
@@ -315,8 +321,12 @@ async def satellite_handler() -> Response:
         case "velocity":
             vel_x = form.get("vel_x", type=float)
             vel_y = form.get("vel_y", type=float)
-            if not ciarc_api.change_velocity(vel_x=vel_x, vel_y=vel_y):
-                await flash("Could not change Velocity")
+            if vel_x and vel_y:
+                if not ciarc_api.change_velocity(vel_x=vel_x, vel_y=vel_y):
+                    await flash("Could not change Velocity")
+            else:
+                logger.warning("Cant change velocity since vel_x/vel_y not set!")
+
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
@@ -365,15 +375,18 @@ async def control_handler() -> Response:
             console.is_network_simulation = False
         case "sim_speed":
             speed = form.get("sim_speed", type=int)
-            if console.is_network_simulation is not None:
-                ciarc_api.change_simulation_env(
-                    is_network_simulation=console.is_network_simulation,
-                    user_speed_multiplier=speed,
-                )
+            if speed:
+                if console.is_network_simulation is not None:
+                    ciarc_api.change_simulation_env(
+                        is_network_simulation=console.is_network_simulation,
+                        user_speed_multiplier=speed,
+                    )
+                else:
+                    ciarc_api.change_simulation_env(user_speed_multiplier=speed)
+                    logger.warning("Disabled network simulation.")
+                console.user_speed_multiplier = speed
             else:
-                ciarc_api.change_simulation_env(user_speed_multiplier=speed)
-                logger.warning("Disabled network simulation.")
-            console.user_speed_multiplier = speed
+                logger.warning("Cant change sim_speed since speed not set!")
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
@@ -382,7 +395,7 @@ async def control_handler() -> Response:
 
 
 # Pulls API after some changes
-def update_telemetry():
+def update_telemetry() -> None:
     global console
     res = ciarc_api.live_observation()
     if res:
@@ -403,7 +416,7 @@ def update_telemetry():
         console.user_speed_multiplier = new_tel.simulation_speed
         (console.past_traj, console.future_traj) = console.predict_trajektorie()
 
-        if console.live_telemetry.state != State.Transition:
+        if console.live_telemetry and console.live_telemetry.state != State.Transition:
             console.next_state = State.Unknown
 
 

@@ -28,7 +28,7 @@ class RiftConsole:
     past_traj: list[tuple[int, int]] = []
     future_traj: list[tuple[int, int]] = []
 
-    def get_draw_zoned_obj(self) -> list[dict]:
+    def get_draw_zoned_obj(self) -> list[dict[str, object]]:
         get_draw_zoned_obj = []
         for obj in self.zoned_objectives:
             if obj.zone is not None:
@@ -42,27 +42,28 @@ class RiftConsole:
                     ],
                 }
                 get_draw_zoned_obj.append(draw)
-                if len(get_draw_zoned_obj) >= 5:    # only collect 5 for visual clarity
+                if len(get_draw_zoned_obj) >= 5:  # only collect 5 for visual clarity
                     break
         return get_draw_zoned_obj
 
-    def predict_trajektorie(self) -> list[tuple[int, int]]:
+    def predict_trajektorie(
+        self,
+    ) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
         """Calculate the points that melvin goes through next"""
         past = []
         future = []
 
         if self.live_telemetry:
-
             steps = 10  # do not count every single second as a point
             for i in range(0, con.TRAJ_TIME, steps):
                 (x, y) = RiftConsole.fix_overflow(
-                    self.live_telemetry.width_x + self.live_telemetry.vx * i,
-                    self.live_telemetry.height_y + self.live_telemetry.vy * i,
+                    int(self.live_telemetry.width_x + self.live_telemetry.vx * i),
+                    int(self.live_telemetry.height_y + self.live_telemetry.vy * i),
                 )
                 past.append((x, y))
                 (x, y) = RiftConsole.fix_overflow(
-                    self.live_telemetry.width_x - self.live_telemetry.vx * i,
-                    self.live_telemetry.height_y - self.live_telemetry.vy * i,
+                    int(self.live_telemetry.width_x - self.live_telemetry.vx * i),
+                    int(self.live_telemetry.height_y - self.live_telemetry.vy * i),
                 )
                 future.append((x, y))
 
@@ -82,4 +83,3 @@ class RiftConsole:
             y += con.WORLD_Y
 
         return (x, y)
-    

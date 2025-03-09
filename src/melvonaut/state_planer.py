@@ -96,8 +96,7 @@ class StatePlanner(BaseModel):
         if self.current_telemetry is None:
             return 0.0, 0.0
         time_since_observation = (
-            live_utc()
-            - self.current_telemetry.timestamp
+            live_utc() - self.current_telemetry.timestamp
         ).total_seconds()
         current_x = (
             self.current_telemetry.width_x
@@ -424,10 +423,7 @@ class StatePlanner(BaseModel):
                 f"Skipped image, to early: start={settings.START_TIME} current_time={live_utc()}"
             )
             return
-        if (
-            settings.DO_TIMING_CHECK
-            and live_utc() > settings.STOP_TIME
-        ):
+        if settings.DO_TIMING_CHECK and live_utc() > settings.STOP_TIME:
             logger.warning(
                 f"Skipped image, to late: end={settings.STOP_TIME} current_time={live_utc()}"
             )

@@ -28,6 +28,7 @@ class CameraAngle(StrEnum):
     Normal = "normal"
     Unknown = "unknown"
 
+
 class Slot(BaseModel):
     id: int
     start: datetime.datetime
@@ -35,7 +36,7 @@ class Slot(BaseModel):
     enabled: bool
 
     @staticmethod
-    def parse_api(data: dict) -> list[tuple[int, 'Slot']]:
+    def parse_api(data: dict) -> tuple[int, list["Slot"]]:
         slots_used = data["communication_slots_used"]
         slots = []
         for s in data["slots"]:
@@ -44,6 +45,7 @@ class Slot(BaseModel):
         slots.sort(key=lambda slot: slot.start)
         # logger.debug(f"Deparsed Slot API used: {slots_used} - {slots}")
         return (slots_used, slots)
+
 
 class ZonedObjective(BaseModel):
     id: int  # could be null acording to Dto
@@ -60,7 +62,7 @@ class ZonedObjective(BaseModel):
 
     # extracts and parses objective format from the format given from its matching api endpoint
     @staticmethod
-    def parse_api(data: dict) -> list['ZonedObjective']:
+    def parse_api(data: dict) -> list["ZonedObjective"]:
         z_obj_list = []
         # parse objective list
         for obj in data["zoned_objectives"]:
@@ -91,6 +93,7 @@ class ZonedObjective(BaseModel):
 
         return sorted(z_obj_list, key=lambda event: event.start)
 
+
 class BeaconObjective(BaseModel):
     id: int
     name: str
@@ -101,12 +104,13 @@ class BeaconObjective(BaseModel):
     description: str
 
     @staticmethod
-    def parse_api(data: dict) -> list['BeaconObjective']:
+    def parse_api(data: dict) -> list["BeaconObjective"]:
         beacon_obj = []
         for b in data["beacon_objectives"]:
             beacon_obj.append(BeaconObjective(**b))
 
         return sorted(beacon_obj, key=lambda event: event.start)
+
 
 class Achievement(BaseModel):
     name: str
@@ -117,7 +121,7 @@ class Achievement(BaseModel):
     goal_parameter: Union[bool, int]
 
     @staticmethod
-    def parse_api(data: dict) -> list['Achievement']:
+    def parse_api(data: dict) -> list["Achievement"]:
         achv = []
         for a in data["achievements"]:
             achv.append(Achievement(**a))
@@ -159,6 +163,7 @@ def boxes_overlap_in_grid(box1, box2):
     # The boxes overlap if they overlap in both dimensions
     return overlap_x and overlap_y
 
+
 def lens_size_by_angle(angle: CameraAngle) -> int:
     match angle:
         case CameraAngle.Narrow:
@@ -169,9 +174,10 @@ def lens_size_by_angle(angle: CameraAngle) -> int:
             lens_size = 1000
     return lens_size
 
+
 # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
 # mypy: ignore-errors
-def log_rate_limiter(interval_seconds: int): # type: ignore
+def log_rate_limiter(interval_seconds: int):  # type: ignore
     def decorator(func):
         last_log_time = [0]  # Use a list to allow modification of non-local state
 
@@ -186,6 +192,7 @@ def log_rate_limiter(interval_seconds: int): # type: ignore
 
     return decorator
 
+
 @log_rate_limiter(3)  # Apply a 10-second rate limiter
 def limited_log(message: str) -> None:
     logger.info(message)
@@ -194,6 +201,7 @@ def limited_log(message: str) -> None:
 @log_rate_limiter(1)  # Apply a 10-second rate limiter
 def limited_log_debug(message: str) -> None:
     logger.debug(message)
+
 
 class Timer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -251,9 +259,9 @@ class State(StrEnum):
 # or get from string with datetime.datetime.fromisoformat(X)
 # to also change into isoformat use X.isoformat()
 
+
 # TARGET: 2025-03-01T00:54:02.809428+00:00
 def live_utc() -> datetime.datetime:
-
     return datetime.datetime.now(datetime.timezone.utc)
 
 

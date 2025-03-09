@@ -115,7 +115,7 @@ def find_image_names(directory: str) -> list[str]:
             image_names.append(filename)
 
     # helper function used in sorting
-    def extract_timestamp(s):
+    def extract_timestamp(s: str) -> datetime.datetime:
         timestamp_pattern = r"_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6})"
 
         match = re.search(timestamp_pattern, s)
@@ -124,7 +124,7 @@ def find_image_names(directory: str) -> list[str]:
         else:
             raise Exception("find_image_names: did not found timestamp in image names")
 
-    def extract_pos(s):
+    def extract_pos(s: str) -> int:
         pos_pattern = r"_x_(-?\d+)_y_(-?\d+)"
 
         match = re.search(pos_pattern, s)
