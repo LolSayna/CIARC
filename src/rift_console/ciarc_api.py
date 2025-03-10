@@ -15,7 +15,7 @@ from shared.models import (
     Slot,
     ZonedObjective,
     live_utc,
-    HttpCode
+    HttpCode,
 )
 
 

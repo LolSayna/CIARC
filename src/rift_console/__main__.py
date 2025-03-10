@@ -114,6 +114,7 @@ async def index() -> str:
             height_y=0,
         )
 
+
 @app.route("/melvonaut_api", methods=["POST"])
 async def melvonaut_api() -> Response:
     global console

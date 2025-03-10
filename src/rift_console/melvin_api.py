@@ -3,11 +3,12 @@ from pydantic import BaseModel
 import requests
 
 from loguru import logger
-from shared.models import CameraAngle, HttpCode, State, Event
+from shared.models import HttpCode
 
 # TODO
 url = "0.0.0.0"
 port = "8080"
+
 
 def melvonaut_api(
     method: HttpCode,
@@ -26,16 +27,17 @@ def melvonaut_api(
     match r.status_code:
         case 200:
             try:
-                logger.debug(f"Received from API {method}/{endpoint} - {r} - {r.json()}")
-            except:
+                logger.debug(
+                    f"Received from API {method}/{endpoint} - {r} - {r.json()}"
+                )
+            except requests.exceptions.JSONDecodeError:
                 logger.debug(f"Received from API {method}/{endpoint} - {r}")
             return r
         case _:
             # unknow error
-            logger.warning(
-                f"Unkown error, could not contact satellite? - {r}."
-            )
+            logger.warning(f"Unkown error, could not contact satellite? - {r}.")
             return {}
+
 
 class MelvonautTelemetry(BaseModel):
     disk_total: int
@@ -47,8 +49,8 @@ class MelvonautTelemetry(BaseModel):
     cpu_cores: int
     cpu_perc: float
 
-def live_melvonaut() -> Optional[MelvonautTelemetry]:
 
+def live_melvonaut() -> Optional[MelvonautTelemetry]:
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return None
@@ -60,14 +62,13 @@ def live_melvonaut() -> Optional[MelvonautTelemetry]:
     if d and m and c:
         logger.info("Mevlonaut telemetry done.")
         return MelvonautTelemetry(
-            disk_total=int(d["root"]["total"]/gigabyte),
-            disk_free=int(d["root"]["free"]/gigabyte),
-            disk_perc=100 - d["root"]["percent"], # invert
-            mem_total=int(m["total"]/gigabyte),
-            mem_available=int(m["available"]/gigabyte),
+            disk_total=int(d["root"]["total"] / gigabyte),
+            disk_free=int(d["root"]["free"] / gigabyte),
+            disk_perc=100 - d["root"]["percent"],  # invert
+            mem_total=int(m["total"] / gigabyte),
+            mem_available=int(m["available"] / gigabyte),
             mem_perc=m["percent"],
             cpu_cores=c["physical_cores"],
-            cpu_perc=c["percent"]
+            cpu_perc=c["percent"],
         )
     return None
-

@@ -255,6 +255,7 @@ class HttpCode(Enum):
     DELETE = "delete"
     POST = "post"
 
+
 # [TIMEFORMATS]
 # ISO 8601 format
 # Melin returns like this: 2024-12-24T13:10:13.660337Z

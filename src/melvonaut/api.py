@@ -700,3 +700,4 @@ async def run_api() -> None:
         # das hat bei mir direkt nach dem start ausgelöst
         # logger.debug("Shutting down API server")
         # await runner.cleanup()
+        pass

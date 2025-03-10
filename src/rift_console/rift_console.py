@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from rift_console.melvin_api import MelvonautTelemetry
 import shared.constants as con
