@@ -73,7 +73,7 @@ class Settings(BaseModel):
 
     ## [Melvin Task Planing]
     # Standard mapping, with no objectives and the camera angle below
-    # CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
+    CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Mapping
     TARGET_CAMERA_ANGLE_ACQUISITION: CameraAngle = CameraAngle.Normal
 
     # Automatically do the next upcoming objective
@@ -84,7 +84,7 @@ class Settings(BaseModel):
     # FIXED_OBJECTIVE = "Aurora 10"
 
     # Go for the emergency beacon tracker
-    CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.EBT
+    #CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.EBT
 
     # To set a custom time window to be active, or to disable all timing checks
     DO_TIMING_CHECK: bool = False
