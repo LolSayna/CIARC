@@ -16,6 +16,7 @@ import shared.constants as con
 from shared.models import State, CameraAngle, lens_size_by_angle, live_utc
 import rift_console.image_processing
 import rift_console.ciarc_api as ciarc_api
+import rift_console.melvin_api as melvin_api
 
 ##### LOGGING #####
 con.RIFT_LOG_LEVEL = "INFO"
@@ -112,6 +113,22 @@ async def index() -> str:
             width_x=0,
             height_y=0,
         )
+
+@app.route("/melvonaut_api", methods=["POST"])
+async def melvonaut_api() -> Response:
+    global console
+
+    # read which button was pressed
+    form = await request.form
+    button = form.get("button", type=str)
+
+    match button:
+        case "status":
+            console.live_melvonaut_api = melvin_api.live_melvonaut()
+        case _:
+            logger.error(f"Unknown button pressed: {button}")
+
+    return redirect(url_for("index"))
 
 
 # Upload world map/images/beacon position

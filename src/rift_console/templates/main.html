@@ -130,13 +130,18 @@
           <div class="container-fluid mt-1 border">
             <h2>Mevlonaut API</h2>
             {% if api %}
-              {% if api.healthy %}
-              <p class="text-success">Healthcheck</p>
-              {% else %}
-              <p class="text-danger">Healthcheck failed!</p>
-              {% endif %}
-              <p>disk-root/home: {api.disk.root}/{api.disk.home}</p>
-              <p>memory: {api.memory} cpu: {api.cpu}</p>
+              <div class="progress">
+                <div class="progress-bar" style="width: {{api.disk_perc}}%;" aria-valuenow="{{api.disk_perc}}" aria-valuemin="0" aria-valuemax="100">Disk Util {{api.disk_perc}}%</div>
+              </div>
+              <p>disk-free/total: {{api.disk_free}}/{{api.disk_total}}[GB] - {{api.disk_perc}}%</p>
+              <div class="progress">
+                <div class="progress-bar" style="width: {{api.mem_perc}}%;" aria-valuenow="{{api.mem_perc}}" aria-valuemin="0" aria-valuemax="100">Mem Util {{api.mem_perc}}%</div>
+              </div>
+              <p>mem-free/total: {{api.mem_available}}/{{api.mem_total}}[GB] - {{api.mem_perc}}%</p>
+              <div class="progress">
+                <div class="progress-bar" style="width: {{api.cpu_perc}}%;" aria-valuenow="{{api.cpu_perc}}" aria-valuemin="0" aria-valuemax="100">CPU Util {{api.cpu_perc}}%</div>
+              </div>
+              <p>cpu: {{api.cpu_perc}}% of #cores: {{api.cpu_cores}}</p>
             {% else %}
             <p>No data avaiable</p>
             {% endif %}
@@ -313,7 +318,6 @@
 
         <!-- Buttons -->
         <div class="col-md-2">
-          <h2>Controls</h2>
           <div class="container-fluid border">
             <h3>Simulation</h3>
             <form action="{{ url_for('control_handler') }}" method="post">
@@ -353,8 +357,7 @@
               </div>
             </form>
             <h6>Saved backup: {{last_backup_date}}</h6>
-            <h6>SimOn: {{is_network_simulation}}</h6>
-            <h6>SimSpeed: {{user_speed_multiplier}}</h6>
+            <h6>SimOn: {{is_network_simulation}} SimSpeed: {{user_speed_multiplier}}</h6>
           </div>
           <div class="container-fluid mt-1 border">
             <h3>Satellite</h3>
@@ -401,6 +404,41 @@
                 <div class="col-md-12 mb-3">
                   <button type="submit" class="btn btn-secondary w-100" name="button" value="velocity"">Confirm</button>
                 </div>
+              </div>
+            </form>
+          </div>
+          <div class="container-fluid mt-1 border">
+            <h3>Melvonaut API</h3>
+            <form action="{{ url_for('melvonaut_api') }}" method="post">
+              <div class="row">
+                <div class="col-md-12">
+                  <button type="submit" class="btn btn-info w-100" name="button" value="status">Status</button>
+                </div>
+              </div>
+              <!-- State -->
+              <div class="row">
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="acquisition">Acq.</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="charge">Charge</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="communication">Com.</button>
+                </div>
+              </div>
+              <!-- Camera angle -->
+              <div class="row">
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="narrow">Narrow</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="normal">Normal</button>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="wide">Wide</button>
+                </div>
+              </div>
               </div>
             </form>
           </div>

@@ -5,7 +5,7 @@ import re
 import time
 from loguru import logger
 from pathlib import Path
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Callable, Awaitable, Any, Final
 
 from PIL import Image
@@ -248,6 +248,12 @@ class State(StrEnum):
     Transition = "transition"
     Unknown = "none"
 
+
+class HttpCode(Enum):
+    GET = "get"
+    PUT = "put"
+    DELETE = "delete"
+    POST = "post"
 
 # [TIMEFORMATS]
 # ISO 8601 format

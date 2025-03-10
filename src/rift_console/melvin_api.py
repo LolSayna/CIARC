@@ -1,20 +1,73 @@
-import asyncio
-from aiohttp import web, ClientSession
+from typing import Any, Optional
+from pydantic import BaseModel
+import requests
 
-from melvonaut.settings import settings
-from shared import constants as con
-from melvonaut.api import setup_routes, compression_middleware, catcher_middleware
 from loguru import logger
-from melvonaut.mel_telemetry import MelTelemetry
-from shared.models import CameraAngle, State, Event
-from datetime import datetime
-from PIL import Image
+from shared.models import CameraAngle, HttpCode, State, Event
 
-async def main():
-    async with ClientSession() as session:
-        async with session.get("/api/health") as resp:
-            print(resp.status)
-            print(await resp.text())
+# TODO
+url = "0.0.0.0"
+port = "8080"
 
+def melvonaut_api(
+    method: HttpCode,
+    endpoint: str,
+) -> Any:
+    try:
+        with requests.Session() as s:
+            match method:
+                case HttpCode.GET:
+                    r = s.get("http://" + url + ":" + port + endpoint)
 
-asyncio.run(main())
+    except requests.exceptions.ConnectionError:
+        logger.error("ConnectionError - possible no VPN?")
+        return {}
+
+    match r.status_code:
+        case 200:
+            try:
+                logger.debug(f"Received from API {method}/{endpoint} - {r} - {r.json()}")
+            except:
+                logger.debug(f"Received from API {method}/{endpoint} - {r}")
+            return r
+        case _:
+            # unknow error
+            logger.warning(
+                f"Unkown error, could not contact satellite? - {r}."
+            )
+            return {}
+
+class MelvonautTelemetry(BaseModel):
+    disk_total: int
+    disk_free: int
+    disk_perc: float
+    mem_total: int
+    mem_available: int
+    mem_perc: float
+    cpu_cores: int
+    cpu_perc: float
+
+def live_melvonaut() -> Optional[MelvonautTelemetry]:
+
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return None
+    d = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_disk_usage").json()
+    m = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_memory_usage").json()
+    c = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_cpu_usage").json()
+
+    gigabyte = 2**30
+    if d and m and c:
+        logger.info("Mevlonaut telemetry done.")
+        return MelvonautTelemetry(
+            disk_total=int(d["root"]["total"]/gigabyte),
+            disk_free=int(d["root"]["free"]/gigabyte),
+            disk_perc=100 - d["root"]["percent"], # invert
+            mem_total=int(m["total"]/gigabyte),
+            mem_available=int(m["available"]/gigabyte),
+            mem_perc=m["percent"],
+            cpu_cores=c["physical_cores"],
+            cpu_perc=c["percent"]
+        )
+    return None
+

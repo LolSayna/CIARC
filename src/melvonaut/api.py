@@ -697,5 +697,6 @@ async def run_api() -> None:
         await site.start()
         logger.debug("API server started")
     finally:
-        logger.debug("Shutting down API server")
-        await runner.cleanup()
+        # das hat bei mir direkt nach dem start ausgelöst
+        # logger.debug("Shutting down API server")
+        # await runner.cleanup()

@@ -1,6 +1,7 @@
 import datetime
 from typing import Any, Optional
 
+from rift_console.melvin_api import MelvonautTelemetry
 import shared.constants as con
 from shared.models import (
     Achievement,
@@ -27,7 +28,7 @@ class RiftConsole:
     achievements: list[Achievement] = []
     past_traj: list[tuple[int, int]] = []
     future_traj: list[tuple[int, int]] = []
-    live_melvonaut_api: dict[str, Any] = {}
+    live_melvonaut_api: Optional[MelvonautTelemetry] = None
 
     def get_draw_zoned_obj(self) -> list[dict[str, object]]:
         get_draw_zoned_obj = []

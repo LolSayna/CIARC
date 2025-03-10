@@ -3,7 +3,6 @@ import requests
 import datetime
 import shutil
 
-from enum import Enum
 from loguru import logger
 
 import shared.constants as con
@@ -16,14 +15,8 @@ from shared.models import (
     Slot,
     ZonedObjective,
     live_utc,
+    HttpCode
 )
-
-
-class HttpCode(Enum):
-    GET = "get"
-    PUT = "put"
-    DELETE = "delete"
-    POST = "post"
 
 
 # wrapper with error handling for ciarc api
