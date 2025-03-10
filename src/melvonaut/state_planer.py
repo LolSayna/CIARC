@@ -359,7 +359,7 @@ class StatePlanner(BaseModel):
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
 
-                        # loop.create_task(self.run_get_image())
+                        await self.run_get_image()
 
                         await self.control_acquisition()
                     case State.Charge:

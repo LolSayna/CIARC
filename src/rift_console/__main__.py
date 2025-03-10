@@ -126,6 +126,8 @@ async def melvonaut_api() -> Response:
     match button:
         case "status":
             console.live_melvonaut_api = melvin_api.live_melvonaut()
+            if not console.live_melvonaut_api:
+                await flash("Could not contact Melvonaut API.")
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
