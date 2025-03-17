@@ -9,8 +9,6 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
-    ports:
-      - "3000:3000"
     volumes:
       #- ./data:/app/data
       - ./.env:/app/.env
