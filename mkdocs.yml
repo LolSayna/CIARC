@@ -10,6 +10,7 @@ nav:
   - Overview: index.md
   - Changelog: changelog.md
   - License: license.md
+  - Coverage Report: coverage.md
 - Code Reference:
   - Melvonaut: melvonaut.md
   - Rift-Console: rift_console.md
@@ -60,3 +61,7 @@ plugins:
             show_private: true
             show_line_numbers: true
             show_warnings: true
+- coverage:
+    page_path: coverage
+    html_report_dir: htmlcov
+
