@@ -39,7 +39,6 @@ jobs:
           poetry install --with dev --with melvonaut
       - name: Run tests
         run: |
-          	coverage run --source src -m pytest
-	        coverage report -m
-	        coverage html
-
+          coverage run --source src -m pytest
+          coverage report -m
+          coverage html
