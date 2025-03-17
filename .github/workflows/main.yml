@@ -46,7 +46,7 @@ jobs:
           poetry config virtualenvs.path .venv
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with dev --with melvonaut
+        run: poetry install --no-interaction --with dev --with melvonaut
       - name: Run tests
         run: |
           source .venv/bin/activate
