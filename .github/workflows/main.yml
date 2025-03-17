@@ -12,7 +12,11 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v3
-
+      - name: Download coverage report
+        uses: actions/download-artificat@v4
+        with:
+          name: htmlcov
+          path: htmlcov
       - name: Deploy docs
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
@@ -53,3 +57,8 @@ jobs:
           coverage run --source src -m pytest
           coverage report -m
           coverage html
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: htmlcov
+          path: htmlcov
