@@ -175,3 +175,5 @@ src/rift_console/static/images/preview.png
 *.csv.old
 
 data
+
+.ssh-pw
