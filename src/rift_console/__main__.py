@@ -9,6 +9,9 @@ from loguru import logger
 
 from quart import Quart, render_template, redirect, url_for, request, flash
 from werkzeug.wrappers.response import Response
+from hypercorn.config import Config
+import asyncio
+from hypercorn.asyncio import serve
 
 # shared imports
 import rift_console.rift_console
@@ -212,7 +215,7 @@ async def results() -> Response:
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
-    update_telemetry()
+    await update_telemetry()
 
     return redirect(url_for("index"))
 
@@ -285,7 +288,7 @@ async def obj_mod() -> Response:
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
-    update_telemetry()
+    await update_telemetry()
 
     return redirect(url_for("index"))
 
@@ -301,7 +304,7 @@ async def book_slot(slot_id: int) -> Response:
     else:
         ciarc_api.book_slot(slot_id=slot_id, enabled=False)
 
-    update_telemetry()
+    await update_telemetry()
 
     return redirect(url_for("index"))
 
@@ -309,7 +312,7 @@ async def book_slot(slot_id: int) -> Response:
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
 async def del_obj(obj_id: int) -> Response:
     ciarc_api.delete_objective(id=obj_id)
-    update_telemetry()
+    await update_telemetry()
 
     return redirect(url_for("index"))
 
@@ -370,7 +373,7 @@ async def satellite_handler() -> Response:
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
-    update_telemetry()
+    await update_telemetry()
     return redirect(url_for("index"))
 
 
@@ -429,12 +432,12 @@ async def control_handler() -> Response:
         case _:
             logger.error(f"Unknown button pressed: {button}")
 
-    update_telemetry()
+    await update_telemetry()
     return redirect(url_for("index"))
 
 
 # Pulls API after some changes
-def update_telemetry() -> None:
+async def update_telemetry() -> None:
     global console
     res = ciarc_api.live_observation()
     if res:
@@ -458,6 +461,9 @@ def update_telemetry() -> None:
         if console.live_telemetry and console.live_telemetry.state != State.Transition:
             console.next_state = State.Unknown
 
+    else:
+        await flash("Could not contact CIARC API.")
+
 
 @click.group()
 @click.version_option()
@@ -468,22 +474,30 @@ def main() -> None:
 
 @main.command()
 def run_server() -> None:
-    """Run the Flask development server on port 8000."""
-    click.echo("Starting Quart development server on port 8000...")
+    """Run the Flask development server on port 3000."""
+    click.echo("Starting Quart server on port 3000...")
 
     # thread = threading.Thread(target=call_telemetry)
     # thread.start()
 
-    click.echo("Updated Telemetry")
-    ciarc_api.live_observation()
+    config = Config()
+    config.bind = ["0.0.0.0:3000"]
 
-    app.run(port=3000, debug=True, host="0.0.0.0")
+    asyncio.run(serve(app, config))
+
+    # old run command
+    #app.run(port=3000, debug=False, host="0.0.0.0")
 
 
 @main.command()
 def cli_only() -> None:
-    """Original Rift Console CLI command"""
-    click.echo("Rift Console CLI.")
+    """Original Rift Console CLI command, to run via poetry on a different port"""
+    click.echo("Starting Quart server on port 4000...")
+
+    config = Config()
+    config.bind = ["0.0.0.0:4000"]
+
+    asyncio.run(serve(app, config))
 
 
 if __name__ == "__main__":

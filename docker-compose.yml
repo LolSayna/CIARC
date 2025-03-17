@@ -1,5 +1,3 @@
-version: "3"
-
 networks:
   internal:
     driver: bridge
@@ -7,6 +5,7 @@ networks:
 services:
   flask:
     build: .
+    network_mode: host
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
