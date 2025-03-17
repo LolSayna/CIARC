@@ -176,3 +176,5 @@ letsencrypt/
 .http-pass
 
 logs/
+
+data
