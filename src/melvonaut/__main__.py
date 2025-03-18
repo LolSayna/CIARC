@@ -63,7 +63,7 @@ async def get_observations() -> None:
             async with session.get(con.OBSERVATION_ENDPOINT) as response:
                 if response.status == 200:
                     json_response = await response.json()
-                    logger.debug("Received observations")
+                    # logger.debug("Received observations")
                     # pprint(json_response, indent=4, sort_dicts=True)
                     await state_planner.update_telemetry(MelTelemetry(**json_response))
                 else:
@@ -87,7 +87,7 @@ async def run_get_observations() -> None:
     """
     await get_observations()
     while True:
-        logger.debug("Submitted observations request")
+        #logger.debug("Submitted observations request")
         observe_task = Timer(
             timeout=settings.OBSERVATION_REFRESH_RATE
             / state_planner.get_simulation_speed(),
@@ -153,6 +153,9 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                     return None
                 else:
                     lines: list[str] = []
+                    # logger.error(response.content)
+                    #async for line in response.content:
+                   #    logger.error(line)
                     async for line in response.content:
                         line_decoded = line.decode("utf-8")
                         # logger.warning(f"Received announcement {line}")

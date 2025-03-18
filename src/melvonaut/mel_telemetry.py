@@ -17,8 +17,6 @@ class MelTelemetry(BaseTelemetry):
     timestamp: datetime.datetime
 
     async def store_observation_csv(self) -> None:
-        logger.debug("Storing observation as csv.")
-
         tel_dict = self.model_dump()
         flattened = {}
         for key, value in tel_dict.items():
@@ -38,12 +36,12 @@ class MelTelemetry(BaseTelemetry):
                 writer = csv.DictWriter(afp, fieldnames=flattened.keys())
                 await writer.writeheader()
                 await writer.writerow(flattened)
-            logger.debug(f"Writing to {con.TELEMETRY_LOCATION_CSV}")
+            # logger.debug(f"Writing observation to {con.TELEMETRY_LOCATION_CSV}")
         else:
             async with async_open(con.TELEMETRY_LOCATION_CSV, "a") as afp:
                 writer = csv.DictWriter(afp, fieldnames=flattened.keys())
                 await writer.writerow(flattened)
-            logger.debug(f"Writing to {con.TELEMETRY_LOCATION_CSV}")
+            # logger.debug(f"Writing observation to {con.TELEMETRY_LOCATION_CSV}")
 
     async def store_observation_json(self) -> None:
         logger.debug("Storing observation as json.")
@@ -64,7 +62,7 @@ class MelTelemetry(BaseTelemetry):
         json_telemetry = json.dumps(dict_telemetry, indent=4, sort_keys=True)
 
         async with async_open(con.TELEMETRY_LOCATION_JSON, "w") as afp:
-            logger.debug(f"Writing to {con.TELEMETRY_LOCATION_JSON}")
+            # logger.debug(f"Writing to {con.TELEMETRY_LOCATION_JSON}")
             await afp.write(str(json_telemetry))
         logger.debug("Observation stored")
 

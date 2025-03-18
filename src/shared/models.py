@@ -373,7 +373,6 @@ class Event(BaseModel):
         return self.data
 
     async def to_csv(self) -> None:
-        logger.debug("Storing event as csv.")
 
         event_dict = self.model_dump()
         if self.timestamp:
@@ -383,12 +382,12 @@ class Event(BaseModel):
                 writer = csv.DictWriter(afp, fieldnames=event_dict.keys())
                 await writer.writeheader()
                 await writer.writerow(event_dict)
-            logger.debug(f"Writing to {con.EVENT_LOCATION_CSV}")
+            # logger.debug(f"Writing event to {con.EVENT_LOCATION_CSV}")
         else:
             async with async_open(con.EVENT_LOCATION_CSV, "a") as afp:
                 writer = csv.DictWriter(afp, fieldnames=event_dict.keys())
                 await writer.writerow(event_dict)
-            logger.debug(f"Writing to {con.EVENT_LOCATION_CSV}")
+            # logger.debug(f"Writing event to {con.EVENT_LOCATION_CSV}")
 
     @staticmethod
     def load_events_from_csv() -> list["Event"]:

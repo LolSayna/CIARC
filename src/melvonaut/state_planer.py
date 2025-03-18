@@ -235,9 +235,9 @@ class StatePlanner(BaseModel):
                 limited_log(
                     f"State is Transition to {self.target_state}, waiting for transition to complete.\nExpected time to complete state transition: {expected_time_to_complete}"
                 )
-                logger.debug(
-                    f"Previous state: {self.get_previous_state()}, Current state: {self.get_current_state()}"
-                )
+                # logger.debug(
+                #     f"Previous state: {self.get_previous_state()}, Current state: {self.get_current_state()}"
+                # )
             case State.Acquisition:
                 # in EBT leave once everything is set
                 if settings.CURRENT_MELVIN_TASK == MELVINTask.EBT:
@@ -277,11 +277,11 @@ class StatePlanner(BaseModel):
                             )
                             await self.trigger_state_transition(State.Acquisition)
                         else:
-                            logger.info("starting comms!")
+                            #logger.info("starting comms!")
                             await self.trigger_state_transition(State.Communication)
 
                     else:
-                        logger.info("starting acq!")
+                        #logger.info("starting acq!")
                         await self.trigger_state_transition(State.Acquisition)
 
             case State.Safe:
@@ -305,7 +305,7 @@ class StatePlanner(BaseModel):
         self.current_telemetry = new_telemetry
 
         logger.debug(
-            f"State: {self.get_current_state()},"
+            f"New observations - State: {self.get_current_state()},"
             f" Battery level: {self.current_telemetry.battery}/{self.current_telemetry.max_battery},"
             f" Vel X,Y: {self.current_telemetry.vx}, {self.current_telemetry.vy},"
             f" Fuel: {self.current_telemetry.fuel}"
@@ -313,7 +313,7 @@ class StatePlanner(BaseModel):
 
         # if self.get_current_state() == State.Acquisition:
         #    await self.get_image()
-        logger.debug(f"Threads: {threading.active_count()}")
+        #logger.debug(f"Threads: {threading.active_count()}")
         # for thread in threading.enumerate():
         #    frame = sys._current_frames()[thread.ident]
         #    logger.warning(f"{inspect.getframeinfo(frame).filename}.{inspect.getframeinfo(frame).function}:{inspect.getframeinfo(frame).lineno}")
@@ -345,9 +345,9 @@ class StatePlanner(BaseModel):
                             for line in stat.traceback.format():
                                 logger.warning(line)
 
-                logger.debug(
-                    f"Previous state: {self.previous_state}, Current state: {self.get_current_state()}"
-                )
+                # logger.debug(
+                #     f"Previous state: {self.previous_state}, Current state: {self.get_current_state()}"
+                # )
                 match self.get_current_state():
                     case State.Transition:
                         # if self._run_get_image_task:
@@ -359,8 +359,9 @@ class StatePlanner(BaseModel):
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
 
+                        logger.error("start image")
                         await self.run_get_image()
-
+                        logger.error("end image")
                         await self.control_acquisition()
                     case State.Charge:
                         pass
@@ -386,7 +387,7 @@ class StatePlanner(BaseModel):
                     self.target_state = None
 
             await self.plan_state_switching()
-
+            
     async def get_image(self) -> None:
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot get image.")
@@ -494,10 +495,10 @@ class StatePlanner(BaseModel):
 
                         # TODO check if images are correct!
                         # TODO might also need modulo for side cases
-                        logger.debug(f"T {parsed_img_timestamp} | C {tele_timestamp}")
-                        logger.debug(
-                            f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}"
-                        )
+                        # logger.debug(f"T {parsed_img_timestamp} | C {tele_timestamp}")
+                        # logger.debug(
+                        #     f"D {difference_in_seconds} | R {tele_x} ADJ {adj_x}"
+                        # )
 
                         image_path = con.IMAGE_LOCATION.format(
                             melv_id=self._current_obj_name,
