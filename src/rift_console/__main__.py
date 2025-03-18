@@ -24,6 +24,7 @@ import asyncio
 from hypercorn.asyncio import serve
 
 # shared imports
+from rift_console.image_helper import get_angle, get_date
 import rift_console.rift_console
 import shared.constants as con
 from shared.models import State, CameraAngle, lens_size_by_angle, live_utc
@@ -70,27 +71,40 @@ async def downloads() -> str:
     images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
     # filter to only png
     images = [s for s in images if s.endswith(".png")]
-    # sort by date modifyed, starting with the newest
+
+    # sort by timestamp
     images.sort(
-        key=lambda x: os.path.getmtime(Path(con.CONSOLE_DOWNLOAD_PATH) / x),
+        key=lambda x: get_date(x),
         reverse=True,
     )
     # only take first CONSOLE_IMAGE_VIEWER_LIMIT
     images = images[: con.CONSOLE_IMAGE_VIEWER_LIMIT]
 
+    # find the dates of each image
+    dates = set()
+    for image in images:
+        dates.add(get_date(image)[:10])
+    dates_list = list(dates)
+    dates_list.sort(reverse=True)
+
+    image_tupel = [(image, get_date(image)[:10], get_angle(image)) for image in images]
+
     count = len(images)
     narrow = sum(CameraAngle.Narrow in i for i in images)
     normal = sum(CameraAngle.Normal in i for i in images)
     wide = sum(CameraAngle.Wide in i for i in images)
-    logger.warning(f"Showing {count} images.")
+    logger.warning(
+        f"Showing {len(image_tupel)} images, from {len(dates_list)} different dates."
+    )
     # logger.info(f"Images: {images}")
     return await render_template(
         "downloads.html",
-        images=images,
+        image_tupel=image_tupel,
         count=count,
         narrow=narrow,
         normal=normal,
         wide=wide,
+        dates=dates_list,
     )
 
 
@@ -237,12 +251,12 @@ async def melvonaut_api() -> Response:
                         ) as f:
                             f.write(r.content)
                         success += 1
-                        logger.info(f'Downloaded "{image}" success!')
+                        # logger.info(f'Downloaded "{image}" success!')
                     else:
                         failed += 1
                         logger.warning(f'File "{image}" failed!')
                 await flash(
-                    f"Downloaded Images form Melvonaut, success: {success}, failed: {failed}, already exisiting: {already_there}"
+                    f"Downloaded Images from Melvonaut, success: {success}, failed: {failed}, already exisiting: {already_there}"
                 )
             else:
                 await flash("Could not contact Melvonaut API - count.")
@@ -254,14 +268,68 @@ async def melvonaut_api() -> Response:
 
         case "clear":
             if melvin_api.clear_images():
-                console.melvonaut_image_count = 0
                 if console.melvonaut_image_count != -1:
                     await flash(f"Cleared {console.melvonaut_image_count} images.")
                 else:
                     await flash("Cleared all images.")
+                console.melvonaut_image_count = 0
             else:
                 await flash("Clearing of images failed!")
 
+        case "sync_logs":
+            logs = melvin_api.list_logs()
+            dir = "logs-" + live_utc().strftime("%Y-%m-%dT%H:%M:%S")
+            path = Path(con.CONSOLE_FROM_MELVONAUT_PATH + dir)
+            if not path.exists():
+                path.mkdir()
+            if type(logs) is list:
+                console.melvonaut_image_count = len(logs)
+                success = 0
+                failed = 0
+                already_there = 0
+                for log in logs:
+                    r = melvin_api.get_download_save_log(log)
+                    if r:
+                        with open(
+                            con.CONSOLE_FROM_MELVONAUT_PATH + dir + "/" + log,
+                            "wb",
+                        ) as f:
+                            f.write(r.content)
+                        success += 1
+                        # logger.info(f'Downloaded "{log}" success!')
+                    else:
+                        failed += 1
+                        logger.warning(f'File "{log}" failed!')
+                await flash(
+                    f"Downloaded Logs from Melvonaut, success: {success}, failed: {failed} to {con.CONSOLE_FROM_MELVONAUT_PATH + dir}"
+                )
+            else:
+                await flash("Could not contact Melvonaut API - count.")
+
+            folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+            console.console_image_count = sum(
+                file.is_file() for file in folder.rglob("*.png")
+            )
+
+        case "clear_logs":
+            if melvin_api.clear_logs():
+                await flash("Cleared all logs.")
+            else:
+                await flash("Clearing of logs failed!")
+
+        case "down_telemetry":
+            res = melvin_api.download_telemetry()
+            await flash(res)
+        case "clear_telemetry":
+            res = melvin_api.clear_telemetry()
+            await flash(res)
+
+        case "down_events":
+            res = melvin_api.download_events()
+            await flash(res)
+        case "clear_events":
+            res = melvin_api.clear_events()
+            await flash(res)
         case _:
             logger.error(f"Unknown button pressed: {button}")
             await flash("Unknown button pressed.")

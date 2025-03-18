@@ -148,7 +148,6 @@
             <!-- Log list/download/clear/clear all-->
             <!-- Telemetry download/clear-->
             <!-- Events download/clear-->
-            <!-- Image list/download/clear/clear all-->
 
             <!-- Set Task, show/reset settings, get/set/clear setting-->
           </div>
@@ -482,23 +481,54 @@
           <form action="{{ url_for('melvonaut_api') }}" method="post">
             <div class="row mt-2">
               {% if melvonaut_image_count != -1 and console_image_count != -1 %}
-              <h2>Images - currently {{melvonaut_image_count}} Images of Melvin, {{console_image_count}} Images Downloaded on Console</h2>
+              <h2>Images - currently {{melvonaut_image_count}} Images on Melvin, {{console_image_count}} Images downloaded on Console</h2>
               {% else %}
               <h2>Images</h2>
               {% endif %}
             </div>
             <div class="row">
                 <div class="col-md-1"></div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                   <button type="submit" class="btn btn-info w-100" name="button" value="count">Count Images</button>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                   <button type="submit" class="btn btn-success w-100" name="button" value="sync">Sync to console</button>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                   <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="clear">Clear images</button>
                 </div>
             </div>
+            <div class="row">
+                <h2>Telemetry-csv</h2>
+                <div class="col-md-1"></div>
+                <div class="col-md-2">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="down_telemetry">Download</button>
+                </div>
+                <div class="col-md-2">
+                  <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="clear_telemetry">Delete</button>
+                </div>
+            </div>
+            <div class="row">
+                <h2>Events-csv</h2>
+                <div class="col-md-1"></div>
+                <div class="col-md-2">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="down_events">Download</button>
+                </div>
+                <div class="col-md-2">
+                  <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="clear_events">Delete</button>
+                </div>
+            </div>
+            <div class="row">
+              <h2>Log-files</h2>
+              <div class="col-md-1"></div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100" name="button" value="sync_logs">Sync to console</button>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="clear_logs">Clear Logs</button>
+              </div>
+          </div>
+            <div class="row mt-5"></div>
           </form>
         </div>
         <div id="slots" class="tab-pane fade">

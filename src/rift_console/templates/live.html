@@ -86,22 +86,42 @@
                 document.querySelectorAll('.narrow').forEach((element) => {
                     element.style.display = showNarrow ? '' : 'none';
                 });
+                var button = document.getElementById('showNarrow');
+                if (showNarrow) {
+                    button.innerText = "Hide Narrow (" + {{narrow}}+ ")";
+                } else {
+                    button.innerText = "Show Narrow (" + {{narrow}}+ ")";
+                }
             }
             function updateNormalDisplay() {
                 document.querySelectorAll('.normal').forEach((element) => {
                     element.style.display = showNormal ? '' : 'none';
                 });
+                var button = document.getElementById('showNormal');
+                if (showNormal) {
+                    button.innerText = "Hide Normal (" + {{normal}} + ")";
+                } else {
+                    button.innerText = "Show Normal (" + {{normal}} + ")";
+                }
             }
             function updateWideDisplay() {
                 document.querySelectorAll('.wide').forEach((element) => {
                     element.style.display = showWide ? '' : 'none';
                 });
+                var button = document.getElementById('showWide');
+                if (showWide) {
+                    button.innerText = "Hide Wide (" + {{wide}}+ ")";
+                } else {
+                    button.innerText = "Show Wide (" + {{wide}}+ ")";
+                }
             }
+        
         
             updateNarrowDisplay();
             updateNormalDisplay();
             updateWideDisplay();
-        
+
+
             // Toggle button functionality
             document.getElementById('showNarrow').addEventListener('click', () => {
                 showNarrow = !showNarrow;

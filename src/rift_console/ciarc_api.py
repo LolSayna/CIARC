@@ -34,7 +34,7 @@ def console_api_image(angle: CameraAngle) -> Optional[str]:
         case 200:
             img_timestamp = datetime.datetime.fromisoformat(
                 r.headers.get("image-timestamp") or ""
-            ).strftime("%H:%M:%S")
+            ).strftime("%Y-%m-%dT%H:%M:%S")
             with open(
                 con.CONSOLE_LIVE_PATH + "live_" + angle + "_" + img_timestamp + ".png",
                 "wb",

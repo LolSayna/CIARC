@@ -44,33 +44,26 @@
                     <button class="btn btn-success" type="submit">Go back</button>
                 </form>
             </div>
-            <div class="col-md-10">
+            <div class="col-md-4">
                 <button type="submit" class="btn btn-info" id="showNarrow">Toggle Narrow ({{narrow}})</button>
                 <button type="submit" class="btn btn-info" id="showNormal">Toggle Normal ({{normal}})</button>
                 <button type="submit" class="btn btn-info" id="showWide">Toggle Wide ({{wide}})</button>
             </div>
+            <!-- bonus feature: also filter by date
+            {% for date in dates %}
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-secondary" id="date">Toogle {{date}}</button>
+                </div>
+            {% endfor %}
+            -->
         </div>
     </div>
     <div class="gallery">
-        {% for image in images %}
-            {% if "narrow" in image %}
-                <div class="gallery-item narrow" style="display: none;">
-                    <h2 class="image-title">{{ image }}</h2>
-                    <img src="{{ url_for('uploaded_file_download', filename=image) }}" alt="Image {{ loop.index }}">
-                </div>
-            {% endif %}
-            {% if "normal" in image %}
-                <div class="gallery-item normal" style="display: none;">
-                    <h2 class="image-title">{{ image }}</h2>
-                    <img src="{{ url_for('uploaded_file_download', filename=image) }}" alt="Image {{ loop.index }}">
-                </div>
-            {% endif %}
-            {% if "wide" in image %}
-                <div class="gallery-item wide" style="display: none;">
-                    <h2 class="image-title">{{ image }}</h2>
-                    <img src="{{ url_for('uploaded_file_download', filename=image) }}" alt="Image {{ loop.index }}">
-                </div>
-            {% endif %}
+        {% for image in image_tupel %}
+            <div class="gallery-item {{ image[2] }} {{image[1]}}" data-date="{{ image[1] }}" style="display: none;">
+                <h2 class="image-title">{{ image[0] }}</h2>
+                <img src="{{ url_for('uploaded_file_download', filename=image[0]) }}" alt="Image {{ loop.index }}">
+            </div>
         {% endfor %}
     </div>
 
@@ -82,20 +75,45 @@
             let showNormal = JSON.parse(localStorage.getItem('showNormal')) ?? true;
             let showWide = JSON.parse(localStorage.getItem('showWide')) ?? true;
         
+            /*
+            // bonus feature: also filter by date
+            let showDate = {};
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                showDate[item.dataset.date] = JSON.parse(localStorage.getItem(`showDate-${item.dataset.date}`)) ?? true;
+            });*/
+
             function updateNarrowDisplay() {
                 document.querySelectorAll('.narrow').forEach((element) => {
                     element.style.display = showNarrow ? '' : 'none';
                 });
+                var button = document.getElementById('showNarrow');
+                if (showNarrow) {
+                    button.innerText = "Hide Narrow (" + {{narrow}}+ ")";
+                } else {
+                    button.innerText = "Show Narrow (" + {{narrow}}+ ")";
+                }
             }
             function updateNormalDisplay() {
                 document.querySelectorAll('.normal').forEach((element) => {
                     element.style.display = showNormal ? '' : 'none';
                 });
+                var button = document.getElementById('showNormal');
+                if (showNormal) {
+                    button.innerText = "Hide Normal (" + {{normal}} + ")";
+                } else {
+                    button.innerText = "Show Normal (" + {{normal}} + ")";
+                }
             }
             function updateWideDisplay() {
                 document.querySelectorAll('.wide').forEach((element) => {
                     element.style.display = showWide ? '' : 'none';
                 });
+                var button = document.getElementById('showWide');
+                if (showWide) {
+                    button.innerText = "Hide Wide (" + {{wide}}+ ")";
+                } else {
+                    button.innerText = "Show Wide (" + {{wide}}+ ")";
+                }
             }
         
             updateNarrowDisplay();

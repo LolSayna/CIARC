@@ -7,8 +7,47 @@ Provides helping functions that are used in image_processing.
 import re
 import os
 import datetime
+from loguru import logger
 
 import shared.constants as con
+from shared.models import CameraAngle
+
+
+def get_angle(image: str) -> CameraAngle:
+    if "narrow" in image:
+        return CameraAngle.Narrow
+    elif "normal" in image:
+        return CameraAngle.Normal
+    elif "wide" in image:
+        return CameraAngle.Wide
+    logger.warning(f"Unknown camera angle in {image}")
+    return CameraAngle.Unknown
+
+
+def get_date(image: str) -> str:
+    # pattern of year-month-dayThour-minute
+    pattern = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"
+
+    found_matches = re.findall(pattern, image)
+
+    if len(found_matches) == 1:
+        # logger.debug(found_matches[0])
+        match: str = found_matches[0]
+        return match
+    else:
+        logger.warning("None or two dates in {image}")
+        return datetime.datetime.min.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+# def filter_by_date(
+#     images: list[str], start: datetime.datetime, end: datetime.datetime
+# ) -> list[str]:
+#     res = []
+#     for image in images:
+#         date = get_date(image)
+#         if date >= start and date <= end:
+#             res.append(image)
+#     return res
 
 
 def generate_spiral_walk(n: int) -> list[tuple[int, int]]:
