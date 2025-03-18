@@ -317,19 +317,15 @@
 
           <div class="row">
             <div class="col-md-2">
-              <form action="{{ url_for('live') }}" method="get">
-                <button class="btn btn-success w-100" type="submit">View Snapshots</button>
-              </form>
+              <a href="{{ url_for('live') }}" class="btn btn-success w-100" target="_blank">View Snapshots</a>
             </div>
             <div class="col-md-2">
-              <form action="{{ url_for('stitches') }}" method="get">
-                <button class="btn btn-success w-100" type="submit">View Stitches</button>
-              </form>
+
+              <a href="{{ url_for('downloads') }}" class="btn btn-success w-100" target="_blank">View Downloads</a>
             </div>
             <div class="col-md-2">
-              <form action="{{ url_for('downloads') }}" method="get">
-                <button class="btn btn-success w-100" type="submit">View Downloads</button>
-              </form>
+
+              <a href="{{ url_for('stitches') }}" class="btn btn-success w-100" target="_blank">View Stitches</a>
             </div>
             <div class="col-md-6">
             </div>
@@ -473,7 +469,8 @@
     <!-- [Bottom Section] -->
     <div class="container-fluid mt-1">
       <ul class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#slots">Slots</a></li>
+        <li class="active"><a data-toggle="tab" href="#melv">Melvonaut</a></li>
+        <li><a data-toggle="tab" href="#slots">Slots</a></li>
         <li><a data-toggle="tab" href="#obj">Objectives</a></li>
         <li><a data-toggle="tab" href="#ebt">EBT</a></li>
         <li><a data-toggle="tab" href="#upload">Upload</a></li>
@@ -481,7 +478,30 @@
       </ul>
     
       <div class="tab-content">
-        <div id="slots" class="tab-pane fade in active">
+        <div id="melv" class="tab-pane fade in active mb-2">
+          <form action="{{ url_for('melvonaut_api') }}" method="post">
+            <div class="row mt-2">
+              {% if melvonaut_image_count != -1 and console_image_count != -1 %}
+              <h2>Images - currently {{melvonaut_image_count}} Images of Melvin, {{console_image_count}} Images Downloaded on Console</h2>
+              {% else %}
+              <h2>Images</h2>
+              {% endif %}
+            </div>
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-1">
+                  <button type="submit" class="btn btn-info w-100" name="button" value="count">Count Images</button>
+                </div>
+                <div class="col-md-1">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="sync">Sync to console</button>
+                </div>
+                <div class="col-md-1">
+                  <button type="submit" class="btn btn-danger w-100" onclick="confirmAction(event)" name="button" value="clear">Clear images</button>
+                </div>
+            </div>
+          </form>
+        </div>
+        <div id="slots" class="tab-pane fade">
           <table> 
             <thead>
               <tr>
@@ -749,8 +769,6 @@
             <!-- small spacer -->
             <div class="row mt-5"></div>
           </form>
-
-
         </div>
         <div id="achv" class="tab-pane fade">
           <table> 

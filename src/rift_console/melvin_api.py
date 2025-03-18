@@ -10,15 +10,18 @@ url = "0.0.0.0"
 port = "8080"
 
 
-def melvonaut_api(
-    method: HttpCode,
-    endpoint: str,
-) -> Any:
+def melvonaut_api(method: HttpCode, endpoint: str, json_str: str = "") -> Any:
     try:
         with requests.Session() as s:
             match method:
                 case HttpCode.GET:
                     r = s.get("http://" + url + ":" + port + endpoint, timeout=5)
+                case HttpCode.POST:
+                    r = s.post(
+                        "http://" + url + ":" + port + endpoint,
+                        timeout=5,
+                        json={"file": json_str},
+                    )
 
     except requests.exceptions.ConnectionError:
         logger.error("ConnectionError - possible no VPN?")
@@ -53,6 +56,54 @@ class MelvonautTelemetry(BaseModel):
     cpu_perc: float
 
 
+def clear_images() -> bool:
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return False
+
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_all_images")
+
+    if r:
+        logger.warning("Mevlonaut cleared all images done.")
+        return True
+    else:
+        logger.debug("Mevlonaut clear_images failed.")
+        return False
+
+
+def get_download_save_image(image_name: str) -> Any:
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return None
+
+    r = melvonaut_api(
+        method=HttpCode.POST, endpoint="/api/post_download_image", json_str=image_name
+    )
+
+    if r:
+        logger.debug(f'Mevlonaut downloaded "{image_name}" done.')
+        return r
+    else:
+        logger.debug("Mevlonaut get_download_save_image failed.")
+        return None
+
+
+def list_images() -> list[str] | bool:
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return False
+
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_list_images").json()
+
+    if r:
+        images: list[str] = r["images"]
+        logger.info(f"Mevlonaut image list done, found {len(images)} images.")
+        return images
+    else:
+        logger.info("Mevlonaut list_images failed.")
+        return False
+
+
 def live_melvonaut() -> Optional[MelvonautTelemetry]:
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
@@ -74,4 +125,6 @@ def live_melvonaut() -> Optional[MelvonautTelemetry]:
             cpu_cores=c["physical_cores"],
             cpu_perc=c["percent"],
         )
-    return None
+    else:
+        logger.info("Mevlonaut telemetry failed.")
+        return None

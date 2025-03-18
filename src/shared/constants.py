@@ -77,3 +77,6 @@ IMAGE_NOISE_FORGIVENESS = 20
 IMAGE_ITERATION_POSITION_NOT_TIME = True
 # only stitched that many images for better testing
 STITCHING_COUNT_LIMIT = 5000
+
+# how many images should be shown at once in the viewer tabs
+CONSOLE_IMAGE_VIEWER_LIMIT = 250

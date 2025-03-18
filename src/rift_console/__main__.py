@@ -1,6 +1,7 @@
 """Command-line interface."""
 
 from pathlib import Path
+import pathlib
 import sys
 import datetime
 import os
@@ -49,8 +50,13 @@ console = rift_console.rift_console.RiftConsole()
 
 
 @app.route(f"/{con.CONSOLE_LIVE_PATH}/<path:filename>")
-async def uploaded_file(filename):  # type: ignore
+async def uploaded_file_live(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
+
+
+@app.route(f"/{con.CONSOLE_DOWNLOAD_PATH}/<path:filename>")
+async def uploaded_file_download(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_DOWNLOAD_PATH, filename)
 
 
 @app.route("/stitches")
@@ -60,7 +66,32 @@ async def stitches() -> str:
 
 @app.route("/downloads")
 async def downloads() -> str:
-    return await render_template("live.html")
+    # list all images
+    images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
+    # filter to only png
+    images = [s for s in images if s.endswith(".png")]
+    # sort by date modifyed, starting with the newest
+    images.sort(
+        key=lambda x: os.path.getmtime(Path(con.CONSOLE_DOWNLOAD_PATH) / x),
+        reverse=True,
+    )
+    # only take first CONSOLE_IMAGE_VIEWER_LIMIT
+    images = images[: con.CONSOLE_IMAGE_VIEWER_LIMIT]
+
+    count = len(images)
+    narrow = sum(CameraAngle.Narrow in i for i in images)
+    normal = sum(CameraAngle.Normal in i for i in images)
+    wide = sum(CameraAngle.Wide in i for i in images)
+    logger.warning(f"Showing {count} images.")
+    # logger.info(f"Images: {images}")
+    return await render_template(
+        "downloads.html",
+        images=images,
+        count=count,
+        narrow=narrow,
+        normal=normal,
+        wide=wide,
+    )
 
 
 @app.route("/live")
@@ -73,17 +104,15 @@ async def live() -> str:
     images.sort(
         key=lambda x: os.path.getmtime(Path(con.CONSOLE_LIVE_PATH) / x), reverse=True
     )
-    # only take first 100
-    images = images[:100]
+    # only take first CONSOLE_IMAGE_VIEWER_LIMIT
+    images = images[: con.CONSOLE_IMAGE_VIEWER_LIMIT]
 
     count = len(images)
     narrow = sum(CameraAngle.Narrow in i for i in images)
     normal = sum(CameraAngle.Normal in i for i in images)
     wide = sum(CameraAngle.Wide in i for i in images)
-    # images =
-    # images = os.listdir("src/rift_console/static/media/")
-    # images = ["media/" + s for s in images]
-    logger.warning(f"Showing {count} images: {images}")
+    logger.warning(f"Showing {count} images.")
+    # logger.info(f"Images: {images}")
     return await render_template(
         "live.html", images=images, count=count, narrow=narrow, normal=normal, wide=wide
     )
@@ -139,6 +168,8 @@ async def index() -> str:
             future_traj=console.future_traj,
             # melvonaut api
             api=console.live_melvonaut_api,
+            melvonaut_image_count=console.melvonaut_image_count,
+            console_image_count=console.console_image_count,
         )
     else:
         return await render_template(
@@ -155,6 +186,10 @@ async def index() -> str:
             future_traj=[],
             width_x=0,
             height_y=0,
+            # melvonaut api
+            api=console.live_melvonaut_api,
+            melvonaut_image_count=console.melvonaut_image_count,
+            console_image_count=console.console_image_count,
         )
 
 
@@ -170,9 +205,66 @@ async def melvonaut_api() -> Response:
         case "status":
             console.live_melvonaut_api = melvin_api.live_melvonaut()
             if not console.live_melvonaut_api:
-                await flash("Could not contact Melvonaut API.")
+                await flash("Could not contact Melvonaut API - live_melvonaut.")
+        case "count":
+            folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+            console.console_image_count = sum(
+                file.is_file() for file in folder.rglob("*.png")
+            )
+
+            images = melvin_api.list_images()
+            if type(images) is list:
+                console.melvonaut_image_count = len(images)
+            else:
+                await flash("Could not contact Melvonaut API - count.")
+        case "sync":
+            images = melvin_api.list_images()
+            if type(images) is list:
+                console.melvonaut_image_count = len(images)
+                success = 0
+                failed = 0
+                already_there = 0
+                for image in images:
+                    if os.path.isfile(con.CONSOLE_DOWNLOAD_PATH + image):
+                        already_there += 1
+                        logger.info(f'File "{image}" exists, not downloaded')
+                        continue
+                    r = melvin_api.get_download_save_image(image)
+                    if r:
+                        with open(
+                            con.CONSOLE_DOWNLOAD_PATH + image,
+                            "wb",
+                        ) as f:
+                            f.write(r.content)
+                        success += 1
+                        logger.info(f'Downloaded "{image}" success!')
+                    else:
+                        failed += 1
+                        logger.warning(f'File "{image}" failed!')
+                await flash(
+                    f"Downloaded Images form Melvonaut, success: {success}, failed: {failed}, already exisiting: {already_there}"
+                )
+            else:
+                await flash("Could not contact Melvonaut API - count.")
+
+            folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+            console.console_image_count = sum(
+                file.is_file() for file in folder.rglob("*.png")
+            )
+
+        case "clear":
+            if melvin_api.clear_images():
+                console.melvonaut_image_count = 0
+                if console.melvonaut_image_count != -1:
+                    await flash(f"Cleared {console.melvonaut_image_count} images.")
+                else:
+                    await flash("Cleared all images.")
+            else:
+                await flash("Clearing of images failed!")
+
         case _:
             logger.error(f"Unknown button pressed: {button}")
+            await flash("Unknown button pressed.")
 
     return redirect(url_for("index"))
 
@@ -254,6 +346,7 @@ async def results() -> Response:
 
         case _:
             logger.error(f"Unknown button pressed: {button}")
+            await flash("Unknown button pressed.")
 
     await update_telemetry()
 
@@ -327,6 +420,7 @@ async def obj_mod() -> Response:
             )
         case _:
             logger.error(f"Unknown button pressed: {button}")
+            await flash("Unknown button pressed.")
 
     await update_telemetry()
 
@@ -423,6 +517,7 @@ async def satellite_handler() -> Response:
                 logger.warning("Cant change velocity since vel_x/vel_y not set!")
         case _:
             logger.error(f"Unknown button pressed: {button}")
+            await flash("Unknown button pressed.")
 
     await update_telemetry()
     return redirect(url_for("index"))
@@ -484,6 +579,7 @@ async def control_handler() -> Response:
                 logger.warning("Cant change sim_speed since speed not set!")
         case _:
             logger.error(f"Unknown button pressed: {button}")
+            await flash("Unknown button pressed.")
 
     await update_telemetry()
     return redirect(url_for("index"))
