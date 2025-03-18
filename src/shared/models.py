@@ -373,7 +373,6 @@ class Event(BaseModel):
         return self.data
 
     async def to_csv(self) -> None:
-
         event_dict = self.model_dump()
         if self.timestamp:
             event_dict["timestamp"] = self.timestamp.isoformat()

@@ -18,7 +18,8 @@ from shared.models import (
     HttpCode,
 )
 
-def console_api_image(angle: CameraAngle) -> str:
+
+def console_api_image(angle: CameraAngle) -> Optional[str]:
     try:
         with requests.Session() as s:
             r = s.get(con.IMAGE_ENDPOINT, timeout=10)
@@ -31,8 +32,13 @@ def console_api_image(angle: CameraAngle) -> str:
 
     match r.status_code:
         case 200:
-            img_timestamp = datetime.datetime.fromisoformat(r.headers.get("image-timestamp")).strftime("%H:%M:%S")
-            with open(con.CONSOLE_LIVE_PATH + "live_" + angle + "_" + img_timestamp + ".png", "wb") as f:
+            img_timestamp = datetime.datetime.fromisoformat(
+                r.headers.get("image-timestamp") or ""
+            ).strftime("%H:%M:%S")
+            with open(
+                con.CONSOLE_LIVE_PATH + "live_" + angle + "_" + img_timestamp + ".png",
+                "wb",
+            ) as f:
                 f.write(r.content)
             logger.warning(f"Console: received Image - {img_timestamp}")
             return img_timestamp
@@ -42,7 +48,8 @@ def console_api_image(angle: CameraAngle) -> str:
         case _:
             logger.warning(f"Console: Unkown error: - {type(r.json())} - {r}")
             return None
-        
+
+
 # wrapper with error handling for ciarc api
 def console_api(
     method: HttpCode,

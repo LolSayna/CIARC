@@ -87,7 +87,7 @@ async def run_get_observations() -> None:
     """
     await get_observations()
     while True:
-        #logger.debug("Submitted observations request")
+        # logger.debug("Submitted observations request")
         observe_task = Timer(
             timeout=settings.OBSERVATION_REFRESH_RATE
             / state_planner.get_simulation_speed(),
@@ -154,8 +154,8 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                 else:
                     lines: list[str] = []
                     # logger.error(response.content)
-                    #async for line in response.content:
-                   #    logger.error(line)
+                    # async for line in response.content:
+                    #    logger.error(line)
                     async for line in response.content:
                         line_decoded = line.decode("utf-8")
                         # logger.warning(f"Received announcement {line}")

@@ -7,7 +7,15 @@ import os
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, send_from_directory, url_for, request, flash
+from quart import (
+    Quart,
+    render_template,
+    redirect,
+    send_from_directory,
+    url_for,
+    request,
+    flash,
+)
 from werkzeug.wrappers.response import Response
 from hypercorn.config import Config
 import asyncio
@@ -38,8 +46,9 @@ app = Quart(__name__)
 app.secret_key = "yoursecret_key"
 console = rift_console.rift_console.RiftConsole()
 
+
 @app.route(f"/{con.CONSOLE_LIVE_PATH}/<path:filename>")
-async def uploaded_file(filename):
+async def uploaded_file(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
 
 
@@ -50,9 +59,9 @@ async def live() -> str:
     images = os.listdir(con.CONSOLE_LIVE_PATH)
     images = [s for s in images if s.endswith(".png")]
     images = images[:100]
-    #images = 
-    #images = os.listdir("src/rift_console/static/media/")
-    #images = ["media/" + s for s in images]
+    # images =
+    # images = os.listdir("src/rift_console/static/media/")
+    # images = ["media/" + s for s in images]
     logger.warning(f"Showing images: {images}")
     return await render_template("live.html", images=images, count=len(images))
 
@@ -347,7 +356,9 @@ async def satellite_handler() -> Response:
             if console.live_telemetry:
                 t = ciarc_api.console_api_image(console.live_telemetry.angle)
                 if t:
-                    await flash(f"Got image @{con.CONSOLE_LIVE_PATH}live_{console.live_telemetry.angle}_{t}.png")
+                    await flash(
+                        f"Got image @{con.CONSOLE_LIVE_PATH}live_{console.live_telemetry.angle}_{t}.png"
+                    )
                 else:
                     await flash("Could not get image, not in acquistion mode?")
             else:
@@ -505,7 +516,7 @@ def run_server() -> None:
     asyncio.run(serve(app, config))
 
     # old run command
-    #app.run(port=3000, debug=False, host="0.0.0.0")
+    # app.run(port=3000, debug=False, host="0.0.0.0")
 
 
 @main.command()

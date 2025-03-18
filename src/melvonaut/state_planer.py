@@ -3,7 +3,6 @@ import asyncio
 import subprocess
 import datetime
 import math
-import threading
 import tracemalloc
 from typing import Optional, Any
 from aiofile import async_open
@@ -277,11 +276,11 @@ class StatePlanner(BaseModel):
                             )
                             await self.trigger_state_transition(State.Acquisition)
                         else:
-                            #logger.info("starting comms!")
+                            # logger.info("starting comms!")
                             await self.trigger_state_transition(State.Communication)
 
                     else:
-                        #logger.info("starting acq!")
+                        # logger.info("starting acq!")
                         await self.trigger_state_transition(State.Acquisition)
 
             case State.Safe:
@@ -313,7 +312,7 @@ class StatePlanner(BaseModel):
 
         # if self.get_current_state() == State.Acquisition:
         #    await self.get_image()
-        #logger.debug(f"Threads: {threading.active_count()}")
+        # logger.debug(f"Threads: {threading.active_count()}")
         # for thread in threading.enumerate():
         #    frame = sys._current_frames()[thread.ident]
         #    logger.warning(f"{inspect.getframeinfo(frame).filename}.{inspect.getframeinfo(frame).function}:{inspect.getframeinfo(frame).lineno}")
@@ -387,7 +386,7 @@ class StatePlanner(BaseModel):
                     self.target_state = None
 
             await self.plan_state_switching()
-            
+
     async def get_image(self) -> None:
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot get image.")
