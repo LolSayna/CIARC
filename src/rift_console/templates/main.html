@@ -130,18 +130,18 @@
           <div class="container-fluid mt-1 border">
             <h2>Mevlonaut API</h2>
             {% if api %}
+              <p>disk-free/total: {{api.disk_free}}/{{api.disk_total}}[GB] - {{api.disk_perc}}%</p>
               <div class="progress">
                 <div class="progress-bar" style="width: {{api.disk_perc}}%;" aria-valuenow="{{api.disk_perc}}" aria-valuemin="0" aria-valuemax="100">Disk Util {{api.disk_perc}}%</div>
               </div>
-              <p>disk-free/total: {{api.disk_free}}/{{api.disk_total}}[GB] - {{api.disk_perc}}%</p>
+              <p>mem-free/total: {{api.mem_available}}/{{api.mem_total}}[GB] - {{api.mem_perc}}%</p>
               <div class="progress">
                 <div class="progress-bar" style="width: {{api.mem_perc}}%;" aria-valuenow="{{api.mem_perc}}" aria-valuemin="0" aria-valuemax="100">Mem Util {{api.mem_perc}}%</div>
               </div>
-              <p>mem-free/total: {{api.mem_available}}/{{api.mem_total}}[GB] - {{api.mem_perc}}%</p>
+              <p>cpu: {{api.cpu_perc}}% of #cores: {{api.cpu_cores}}</p>
               <div class="progress">
                 <div class="progress-bar" style="width: {{api.cpu_perc}}%;" aria-valuenow="{{api.cpu_perc}}" aria-valuemin="0" aria-valuemax="100">CPU Util {{api.cpu_perc}}%</div>
               </div>
-              <p>cpu: {{api.cpu_perc}}% of #cores: {{api.cpu_cores}}</p>
             {% else %}
             <p>No data avaiable</p>
             {% endif %}
