@@ -18,7 +18,31 @@ from shared.models import (
     HttpCode,
 )
 
+def console_api_image(angle: CameraAngle) -> str:
+    try:
+        with requests.Session() as s:
+            r = s.get(con.IMAGE_ENDPOINT, timeout=10)
+    except requests.exceptions.ConnectionError:
+        logger.error("Console: ConnectionError - possible no VPN?")
+        return None
+    except requests.exceptions.ReadTimeout:
+        logger.error("Console: Timeout error - possible no VPN?")
+        return None
 
+    match r.status_code:
+        case 200:
+            img_timestamp = datetime.datetime.fromisoformat(r.headers.get("image-timestamp")).strftime("%H:%M:%S")
+            with open(con.CONSOLE_LIVE_PATH + "live_" + angle + "_" + img_timestamp + ".png", "wb") as f:
+                f.write(r.content)
+            logger.warning(f"Console: received Image - {img_timestamp}")
+            return img_timestamp
+        case 400:
+            logger.warning(f"Console: Bad request - {type(r.json())} - {r.json()}")
+            return None
+        case _:
+            logger.warning(f"Console: Unkown error: - {type(r.json())} - {r}")
+            return None
+        
 # wrapper with error handling for ciarc api
 def console_api(
     method: HttpCode,

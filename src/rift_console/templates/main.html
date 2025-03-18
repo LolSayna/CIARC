@@ -363,12 +363,15 @@
             <h3>Satellite</h3>
             <form action="{{ url_for('satellite_handler') }}" method="post">
               <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
                   <button type="submit" class="btn btn-info w-100" name="button" value="telemetry">Telemetry</button>
+                </div>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-info w-100" name="button" value="image">Image</button>
                 </div>
               </div>
               <!-- State -->
-              <div class="row">
+              <div class="row no-gutters">
                 <div class="col-md-4">
                   <button type="submit" class="btn btn-success w-100" name="button" value="acquisition">Acq.</button>
                 </div>
@@ -730,8 +733,8 @@
 
         </div>
         <div id="achv" class="tab-pane fade">
-          <form class="mt-2" action="{{ url_for('media') }}" method="get">
-            <button class="btn btn-success" type="submit">View Media</button>
+          <form class="mt-2" action="{{ url_for('live') }}" method="get">
+            <button class="btn btn-success" type="submit">View Snapshots</button>
           </form>
           <table> 
             <thead>

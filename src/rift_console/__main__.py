@@ -7,7 +7,7 @@ import os
 import click
 from loguru import logger
 
-from quart import Quart, render_template, redirect, url_for, request, flash
+from quart import Quart, render_template, redirect, send_from_directory, url_for, request, flash
 from werkzeug.wrappers.response import Response
 from hypercorn.config import Config
 import asyncio
@@ -38,15 +38,23 @@ app = Quart(__name__)
 app.secret_key = "yoursecret_key"
 console = rift_console.rift_console.RiftConsole()
 
+@app.route(f"/{con.CONSOLE_LIVE_PATH}/<path:filename>")
+async def uploaded_file(filename):
+    return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
 
-@app.route("/media")
-async def media() -> str:
+
+@app.route("/live")
+async def live() -> str:
     # List of image filenames you want to display
 
-    images = os.listdir("src/rift_console/static/media/")
-    images = ["media/" + s for s in images]
+    images = os.listdir(con.CONSOLE_LIVE_PATH)
+    images = [s for s in images if s.endswith(".png")]
+    images = images[:100]
+    #images = 
+    #images = os.listdir("src/rift_console/static/media/")
+    #images = ["media/" + s for s in images]
     logger.warning(f"Showing images: {images}")
-    return await render_template("media.html", images=images)
+    return await render_template("live.html", images=images, count=len(images))
 
 
 @app.route("/", methods=["GET"])
@@ -334,6 +342,16 @@ async def satellite_handler() -> Response:
     match button:
         case "telemetry":
             pass
+        case "image":
+            await update_telemetry()
+            if console.live_telemetry:
+                t = ciarc_api.console_api_image(console.live_telemetry.angle)
+                if t:
+                    await flash(f"Got image @{con.CONSOLE_LIVE_PATH}live_{console.live_telemetry.angle}_{t}.png")
+                else:
+                    await flash("Could not get image, not in acquistion mode?")
+            else:
+                await flash("No Telemetry, cant take image!")
         case "acquisition":
             if ciarc_api.change_state(State.Acquisition):
                 console.prev_state = old_state
@@ -392,6 +410,8 @@ async def control_handler() -> Response:
         case "load":
             ciarc_api.load_backup(console.last_backup_date)
             console.live_telemetry = None
+            console.prev_state = State.Unknown
+            console.next_state = State.Unknown
         case "save":
             console.last_backup_date = ciarc_api.save_backup()
         case "on_sim":
