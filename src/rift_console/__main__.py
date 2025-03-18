@@ -369,7 +369,6 @@ async def satellite_handler() -> Response:
                     await flash("Could not change Velocity")
             else:
                 logger.warning("Cant change velocity since vel_x/vel_y not set!")
-
         case _:
             logger.error(f"Unknown button pressed: {button}")
 

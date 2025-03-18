@@ -31,16 +31,19 @@ def console_api(
         with requests.Session() as s:
             match method:
                 case HttpCode.GET:
-                    r = s.get(endpoint, timeout=0.5)
+                    r = s.get(endpoint, timeout=10)
                 case HttpCode.PUT:
-                    r = s.put(endpoint, params=params, json=json, timeout=0.5)
+                    r = s.put(endpoint, params=params, json=json, timeout=5)
                 case HttpCode.DELETE:
-                    r = s.delete(endpoint, params=params, timeout=0.5)
+                    r = s.delete(endpoint, params=params, timeout=5)
                 case HttpCode.POST:
-                    r = s.post(endpoint, params=params, files=files, timeout=0.5)
+                    r = s.post(endpoint, params=params, files=files, timeout=5)
 
     except requests.exceptions.ConnectionError:
         logger.error("Console: ConnectionError - possible no VPN?")
+        return {}
+    except requests.exceptions.ReadTimeout:
+        logger.error("Console: Timeout error - possible no VPN?")
         return {}
 
     match r.status_code:

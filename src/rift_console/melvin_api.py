@@ -18,10 +18,13 @@ def melvonaut_api(
         with requests.Session() as s:
             match method:
                 case HttpCode.GET:
-                    r = s.get("http://" + url + ":" + port + endpoint, timeout=0.5)
+                    r = s.get("http://" + url + ":" + port + endpoint, timeout=5)
 
     except requests.exceptions.ConnectionError:
         logger.error("ConnectionError - possible no VPN?")
+        return {}
+    except requests.exceptions.ReadTimeout:
+        logger.error("Timeout error!")
         return {}
 
     match r.status_code:
