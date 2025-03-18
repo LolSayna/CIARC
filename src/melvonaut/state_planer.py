@@ -349,18 +349,22 @@ class StatePlanner(BaseModel):
                 # )
                 match self.get_current_state():
                     case State.Transition:
-                        # if self._run_get_image_task:
-                        #    self._run_get_image_task.cancel()
+                        if self._run_get_image_task:
+                            logger.error("end image")
+                            self._run_get_image_task.cancel()
+                            self._run_get_image_task = None
                         if self.submitted_transition_request:
                             self.submitted_transition_request = False
                         else:
                             logger.warning("State transition was externally triggered!")
                     case State.Acquisition:
                         logger.info("Starting control in acquisition state.")
-
-                        logger.error("start image")
-                        await self.run_get_image()
-                        logger.error("end image")
+                        if self._run_get_image_task:
+                            logger.debug("Image task already running")
+                        else:
+                            logger.error("start image")
+                            loop = asyncio.get_event_loop()
+                            self._run_get_image_task = loop.create_task(self.run_get_image())
                         await self.control_acquisition()
                     case State.Charge:
                         pass
