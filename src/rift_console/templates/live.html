@@ -34,19 +34,91 @@
       </style>
 </head>
 <body>
-    <h1>Live Media - {{count}} Images</h1>
+    <div class="container-fluid mt-3">
+        <h1>Live Media - {{count}} Images</h1>
+    </div>
     <div class="container-fluid mt-3 mb-3">
-    <form class="mt-2" action="{{ url_for('index') }}" method="get">
-        <button class="btn btn-success" type="submit">Go back</button>
-      </form>
+        <div class="row">
+            <div class="col-md-2">
+                <form action="{{ url_for('index') }}" method="get">
+                    <button class="btn btn-success" type="submit">Go back</button>
+                </form>
+            </div>
+            <div class="col-md-10">
+                <button type="submit" class="btn btn-info" id="showNarrow">Toggle Narrow ({{narrow}})</button>
+                <button type="submit" class="btn btn-info" id="showNormal">Toggle Normal ({{normal}})</button>
+                <button type="submit" class="btn btn-info" id="showWide">Toggle Wide ({{wide}})</button>
+            </div>
+        </div>
     </div>
     <div class="gallery">
         {% for image in images %}
-        <div class="gallery-item">
-            <h2 class="image-title">{{ image }}</h2>
-            <img src="{{ url_for('uploaded_file', filename=image) }}" alt="Image {{ loop.index }}">
-        </div>
+            {% if "narrow" in image %}
+                <div class="gallery-item narrow" style="display: none;">
+                    <h2 class="image-title">{{ image }}</h2>
+                    <img src="{{ url_for('uploaded_file', filename=image) }}" alt="Image {{ loop.index }}">
+                </div>
+            {% endif %}
+            {% if "normal" in image %}
+                <div class="gallery-item normal" style="display: none;">
+                    <h2 class="image-title">{{ image }}</h2>
+                    <img src="{{ url_for('uploaded_file', filename=image) }}" alt="Image {{ loop.index }}">
+                </div>
+            {% endif %}
+            {% if "wide" in image %}
+                <div class="gallery-item wide" style="display: none;">
+                    <h2 class="image-title">{{ image }}</h2>
+                    <img src="{{ url_for('uploaded_file', filename=image) }}" alt="Image {{ loop.index }}">
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
+
+    <script>
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize as persistant variables
+            let showNarrow = JSON.parse(localStorage.getItem('showNarrow')) ?? true;
+            let showNormal = JSON.parse(localStorage.getItem('showNormal')) ?? true;
+            let showWide = JSON.parse(localStorage.getItem('showWide')) ?? true;
+        
+            function updateNarrowDisplay() {
+                document.querySelectorAll('.narrow').forEach((element) => {
+                    element.style.display = showNarrow ? '' : 'none';
+                });
+            }
+            function updateNormalDisplay() {
+                document.querySelectorAll('.normal').forEach((element) => {
+                    element.style.display = showNormal ? '' : 'none';
+                });
+            }
+            function updateWideDisplay() {
+                document.querySelectorAll('.wide').forEach((element) => {
+                    element.style.display = showWide ? '' : 'none';
+                });
+            }
+        
+            updateNarrowDisplay();
+            updateNormalDisplay();
+            updateWideDisplay();
+        
+            // Toggle button functionality
+            document.getElementById('showNarrow').addEventListener('click', () => {
+                showNarrow = !showNarrow;
+                localStorage.setItem('showNarrow', JSON.stringify(showNarrow));
+                updateNarrowDisplay(); // Update display after toggle
+            });
+            document.getElementById('showNormal').addEventListener('click', () => {
+                showNormal = !showNormal;
+                localStorage.setItem('showNormal', JSON.stringify(showNormal));
+                updateNormalDisplay(); // Update display after toggle
+            });
+            document.getElementById('showWide').addEventListener('click', () => {
+                showWide = !showWide;
+                localStorage.setItem('showWide', JSON.stringify(showWide));
+                updateWideDisplay(); // Update display after toggle
+            });
+        });
+    </script>
 </body>
 </html>

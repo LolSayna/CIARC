@@ -1,5 +1,6 @@
 """Command-line interface."""
 
+from pathlib import Path
 import sys
 import datetime
 import os
@@ -52,18 +53,40 @@ async def uploaded_file(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
 
 
+@app.route("/stitches")
+async def stitches() -> str:
+    return await render_template("live.html")
+
+
+@app.route("/downloads")
+async def downloads() -> str:
+    return await render_template("live.html")
+
+
 @app.route("/live")
 async def live() -> str:
-    # List of image filenames you want to display
-
+    # list all images
     images = os.listdir(con.CONSOLE_LIVE_PATH)
+    # filter to only png
     images = [s for s in images if s.endswith(".png")]
+    # sort by date modifyed, starting with the newest
+    images.sort(
+        key=lambda x: os.path.getmtime(Path(con.CONSOLE_LIVE_PATH) / x), reverse=True
+    )
+    # only take first 100
     images = images[:100]
+
+    count = len(images)
+    narrow = sum(CameraAngle.Narrow in i for i in images)
+    normal = sum(CameraAngle.Normal in i for i in images)
+    wide = sum(CameraAngle.Wide in i for i in images)
     # images =
     # images = os.listdir("src/rift_console/static/media/")
     # images = ["media/" + s for s in images]
-    logger.warning(f"Showing images: {images}")
-    return await render_template("live.html", images=images, count=len(images))
+    logger.warning(f"Showing {count} images: {images}")
+    return await render_template(
+        "live.html", images=images, count=count, narrow=narrow, normal=normal, wide=wide
+    )
 
 
 @app.route("/", methods=["GET"])
@@ -88,9 +111,9 @@ async def index() -> str:
             battery=console.live_telemetry.battery,
             max_battery=console.live_telemetry.max_battery,
             distance_covered=console.live_telemetry.distance_covered,
-            area_covered_narrow=console.live_telemetry.area_covered.narrow,
-            area_covered_normal=console.live_telemetry.area_covered.normal,
-            area_covered_wide=console.live_telemetry.area_covered.wide,
+            area_covered_narrow=f"{console.live_telemetry.area_covered.narrow * 100 :.2f}",  # convert percantage
+            area_covered_normal=f"{console.live_telemetry.area_covered.normal * 100 :.2f}",  # convert percantage
+            area_covered_wide=f"{console.live_telemetry.area_covered.wide * 100 :.2f}",  # convert percantage
             active_time=console.live_telemetry.active_time,
             images_taken=console.live_telemetry.images_taken,
             objectives_done=console.live_telemetry.objectives_done,

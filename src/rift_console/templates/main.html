@@ -122,7 +122,7 @@
             <p>Pos: ({{width_x}},{{height_y}}) & Vel: ({{vx}},{{vy}})</p>
             <p>State: {{state}} & angle: {{angle}}</p>
             <p>dist_cov: {{distance_covered}} & active_t: {{active_time}}</p>
-            <p>area_cov: {{area_covered_narrow}}/{{area_covered_normal}}/{{area_covered_wide}}</p>
+            <p>area_cov (%): {{area_covered_narrow}}/{{area_covered_normal}}/{{area_covered_wide}}</p>
             <p>#images: {{images_taken}} obj-done/points={{objectives_done}}/{{objectives_points}}</p>
             <p>data-s/r={{data_volume_sent}}/{{data_volume_received}} slots_used={{slots_used}}</p>
           </div>
@@ -314,6 +314,26 @@
               window.onload = populateDropdown;
           </script>
           <p>Green Box: Melvins Camera Area; Brown/Yellow Line: Past/Future Trajectory for 1h@1SimSpeed, each dot 10s</p>
+
+          <div class="row">
+            <div class="col-md-2">
+              <form action="{{ url_for('live') }}" method="get">
+                <button class="btn btn-success w-100" type="submit">View Snapshots</button>
+              </form>
+            </div>
+            <div class="col-md-2">
+              <form action="{{ url_for('stitches') }}" method="get">
+                <button class="btn btn-success w-100" type="submit">View Stitches</button>
+              </form>
+            </div>
+            <div class="col-md-2">
+              <form action="{{ url_for('downloads') }}" method="get">
+                <button class="btn btn-success w-100" type="submit">View Downloads</button>
+              </form>
+            </div>
+            <div class="col-md-6">
+            </div>
+          </div>
         </div>
 
         <!-- Buttons -->
@@ -733,9 +753,6 @@
 
         </div>
         <div id="achv" class="tab-pane fade">
-          <form class="mt-2" action="{{ url_for('live') }}" method="get">
-            <button class="btn btn-success" type="submit">View Snapshots</button>
-          </form>
           <table> 
             <thead>
               <tr>
