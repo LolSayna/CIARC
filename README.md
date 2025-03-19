@@ -92,6 +92,9 @@ source venv/bin/activate
 pip install poetry
 poetry install --with melvonaut
 
+# Optional, reset the container to remove the build dependencies
+kill 1
+
 # Run Melvonaut with
 ./start-melvonaut.sh
 # To let it run in the background use
