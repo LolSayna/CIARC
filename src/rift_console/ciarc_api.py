@@ -275,7 +275,7 @@ def add_modify_zoned_objective(
     coverage_required: float,
     description: str,
     secret: bool,
-) -> None:
+) -> bool:
     json = {
         "zoned_objectives": [
             {
@@ -299,8 +299,10 @@ def add_modify_zoned_objective(
 
     if d:
         logger.info(f"Console: add/modifyed zoned objective {id}/{name}.")
+        return True
     else:
         logger.warning(f"Console: could not add/modifyed zoned objective {id}/{name}")
+        return False
 
 
 def add_modify_ebt_objective(
@@ -311,7 +313,7 @@ def add_modify_ebt_objective(
     description: str,
     beacon_height: int,
     beacon_width: int,
-) -> None:
+) -> bool:
     json = {
         "zoned_objectives": [],
         "beacon_objectives": [
@@ -333,8 +335,10 @@ def add_modify_ebt_objective(
 
     if d:
         logger.info(f"Console: add/modifyed ebt objective {id}/{name}.")
+        return True
     else:
         logger.warning(f"Console: could not add/modifyed ebt objective {id}/{name}")
+        return False
 
 
 def send_beacon(beacon_id: int, height: int, width: int) -> Any:

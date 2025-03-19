@@ -647,7 +647,8 @@
                 <th>Coverage %</th>
                 <th>Coordinates</th>
                 <th>decrease_rate</th>
-                <th>Action</th>
+                <th>Stitch</th>
+                <th>Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -663,6 +664,13 @@
                 <td>{{ obj.coverage_required }}</td>
                 <td>{{ obj.zone }}</td>
                 <td>{{ obj.decrease_rate }}</td>
+                <td>
+                  {% if obj.secret == False %}
+                  <form action="{{ url_for('stitch_obj', obj_id=obj.id) }}" method="post">
+                    <button type="submit" class="btn btn-success">Stitch</button>
+                  </form>
+                  {% endif %}
+                </td>
                 <td>
                   <form action="{{ url_for('del_obj', obj_id=obj.id) }}" method="post">
                     <button type="submit" class="btn btn-danger" onclick="confirmAction(event)">Delete</button>
@@ -753,7 +761,7 @@
             <div class="row mt-2">
               <h3>World Map</h2>
                 <div class="col-md-1"></div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <label for="path_world">Path: (starting in root of repo)</label>
                   <input type="text" class="form-control" name="path_world" placeholder="media/test.png" value="media/test.png">
                 </div>
@@ -762,11 +770,14 @@
                   <button type="submit" class="btn btn-success" name="button" value="worldmap">Upload</button>
                 </div>
                 <div class="col-md-1"></div>
+                <div class="col-md-1 mt-3">
+                  <button type="submit" class="btn btn-info" name="button" value="check_images">Check Images</button>
+                </div>
                 <div class="col-md-2">
                   <label for="choose_date">Choose date</label>
                   <select name="choose_date" id="choose_date">
                       {% for date in console_image_dates %}
-                          <option value="{{ date }}" {% if selected_value == date|string %}selected{% endif %}>{{ date }}</option>
+                          <option value="{{ date[0] }}" {% if selected_value == date[0]|string %}selected{% endif %}>{{ date[0] }} - {{date[1]}}</option>
                       {% endfor %}
                   </select>
                 </div>

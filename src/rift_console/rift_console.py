@@ -31,7 +31,7 @@ class RiftConsole:
     live_melvonaut_api: Optional[MelvonautTelemetry] = None
     melvonaut_image_count: int = -1  # -1 indicates no data
     console_image_count: int = -1  # -1 indicates no data
-    console_image_dates: list[str] = []
+    console_image_dates: list[tuple[str, int]] = []
 
     def get_draw_zoned_obj(self) -> list[dict[str, object]]:
         get_draw_zoned_obj = []

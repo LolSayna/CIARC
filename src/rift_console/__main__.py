@@ -1,5 +1,6 @@
 """Command-line interface."""
 
+from collections import defaultdict
 from pathlib import Path
 import pathlib
 import sys
@@ -24,7 +25,7 @@ import asyncio
 from hypercorn.asyncio import serve
 
 # shared imports
-from rift_console.image_helper import get_angle, get_date
+from rift_console.image_helper import filter_by_date, get_angle, get_date
 import rift_console.rift_console
 import shared.constants as con
 from shared.models import State, CameraAngle, lens_size_by_angle, live_utc
@@ -252,19 +253,7 @@ async def melvonaut_api() -> Response:
             if not console.live_melvonaut_api:
                 await flash("Could not contact Melvonaut API - live_melvonaut.")
         case "count":
-            folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
-            console.console_image_count = sum(
-                file.is_file() for file in folder.rglob("*.png")
-            )
-
-            # find the dates of each image
-            dates = set()
-            for image in folder.rglob("*.png"):
-                dates.add(get_date(image.name)[:10])
-            dates_list = list(dates)
-            dates_list.sort(reverse=True)
-            console.console_image_dates = dates_list
-            logger.info(f"Counted images on console, found {console.console_image_count} from {len(console.console_image_dates)} different dates.")
+            await check_images()
 
             images = melvin_api.list_images()
             if type(images) is list:
@@ -377,6 +366,23 @@ async def melvonaut_api() -> Response:
     return redirect(url_for("index"))
 
 
+async def check_images() -> None:
+    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+    console.console_image_count = sum(
+        file.is_file() for file in folder.rglob("*.png")
+    )
+    dates = set()
+    date_counts = defaultdict(int)
+    for image in folder.rglob("*.png"):
+        dates.add(get_date(image.name)[:10])
+        date_counts[get_date(image.name)[:10]] += 1
+    dates_list = list(dates)
+    dates_list.sort(reverse=True)
+    console.console_image_dates = [(date, date_counts[date]) for date in dates_list]
+
+    logger.info(f"Counted images on console, found {console.console_image_count} from {len(console.console_image_dates)} different dates.")
+    await flash(f"Counted images on console, found {console.console_image_count} from {len(console.console_image_dates)} different dates.")
+
 # Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
 async def results() -> Response:
@@ -385,6 +391,9 @@ async def results() -> Response:
     button = form.get("button", type=str)
 
     match button:
+        case "check_images":
+            await check_images()
+
         case "worldmap":
             image_path = form.get("path_world", type=str) or ""
             if not os.path.isfile(path=image_path):
@@ -463,7 +472,6 @@ async def results() -> Response:
                 if choose_date in image:
                     filtered_images.append(image)
             logger.warning(f"Starting stitching, found {len(images)} images and {len(filtered_images)} with right day.")
-            await flash(f"Starting stitching of {len(filtered_images)} images.")
 
             panorama = rift_console.image_processing.stitch_images(image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images)
 
@@ -477,7 +485,7 @@ async def results() -> Response:
 
             space = ""
             count = 0
-            path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
+            path = f"{con.CONSOLE_STICHED_PATH}worldmap_{len(filtered_images)}_{choose_date}{space}.png"
             while os.path.isfile(path):
                 count += 1
                 space = "_" + str(count)
@@ -507,7 +515,7 @@ async def obj_mod() -> Response:
         case "zoned":
             secret = form.get("secret", type=str)
             if secret == "True":
-                ciarc_api.add_modify_zoned_objective(
+                if not ciarc_api.add_modify_zoned_objective(
                     id=form.get("obj_id", type=int) or 0,
                     name=form.get("name", type=str) or "name",
                     start=datetime.datetime.fromisoformat(
@@ -523,9 +531,10 @@ async def obj_mod() -> Response:
                     zone=(0, 0, 0, 0),
                     coverage_required=form.get("coverage_required", type=float) or 0.99,
                     description=form.get("description", type=str) or "desc",
-                )
+                ):
+                    await flash("Adding secret zoned objective failed, check logs.")
             else:
-                ciarc_api.add_modify_zoned_objective(
+                if ciarc_api.add_modify_zoned_objective(
                     id=form.get("obj_id", type=int) or 0,
                     name=form.get("name", type=str) or "name",
                     start=datetime.datetime.fromisoformat(
@@ -546,9 +555,10 @@ async def obj_mod() -> Response:
                     ),
                     coverage_required=form.get("coverage_required", type=float) or 0.99,
                     description=form.get("description", type=str) or "desc",
-                )
+                ):
+                    await flash("Adding Zoned Objective failed, check logs.")
         case "ebt":
-            ciarc_api.add_modify_ebt_objective(
+            if ciarc_api.add_modify_ebt_objective(
                 id=form.get("obj_id", type=int) or 0,
                 name=form.get("name", type=str) or "name",
                 start=datetime.datetime.fromisoformat(
@@ -560,7 +570,8 @@ async def obj_mod() -> Response:
                 description=form.get("description", type=str) or "desc",
                 beacon_height=form.get("beacon_height", type=int) or 0,
                 beacon_width=form.get("beacon_width", type=int) or 0,
-            )
+            ):
+                await flash("Adding EBT Objective failed, check logs.")
         case _:
             logger.error(f"Unknown button pressed: {button}")
             await flash("Unknown button pressed.")
@@ -582,6 +593,71 @@ async def book_slot(slot_id: int) -> Response:
         ciarc_api.book_slot(slot_id=slot_id, enabled=False)
 
     await update_telemetry()
+
+    return redirect(url_for("index"))
+
+
+@app.route("/stitch_obj/<int:obj_id>", methods=["POST"])
+async def stitch_obj(obj_id: int) -> Response:
+
+    logger.info(f"Stiching Zoned Objective with id {obj_id}.")
+
+    res_obj = None
+    for obj in console.zoned_objectives:
+        if obj.id == obj_id:
+            res_obj = obj
+            break
+    if not res_obj:
+        logger.warning("Objective Id {obj_id} not found, cant stitch without coordinates.")
+        await flash("Objective Id {obj_id} not found, cant stitch without coordinates.")
+        return redirect(url_for("index"))
+    await check_images()
+
+    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+    images = [str(file) for file in folder.rglob("*.png") if file.is_file()]
+
+    filtered_images = []
+    for image in images:
+        if res_obj.optic_required in image:
+            filtered_images.append(image)
+
+    final_images = filter_by_date(images=filtered_images, start=res_obj.start, end=res_obj.end)
+
+    message = f"{len(filtered_images)} have right lens of which {len(final_images)} are in time window."
+    logger.warning(message)
+    await flash(message)
+
+    if len(final_images) == 0:
+        logger.warning("Aborting since 0 images")
+        await flash("Aborting since 0 images")
+        return redirect(url_for("index"))
+
+    final_images = [image.split('/')[-1] for image in final_images]
+
+    panorama = rift_console.image_processing.stitch_images(image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=final_images)
+
+    remove_offset = (
+        con.STITCHING_BORDER,
+        con.STITCHING_BORDER,
+        con.WORLD_X + con.STITCHING_BORDER,
+        con.WORLD_Y + con.STITCHING_BORDER,
+    )
+    panorama = panorama.crop(remove_offset)
+
+    space = ""
+    count = 0
+    path = f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
+    while os.path.isfile(path):
+        count += 1
+        space = "_" + str(count)
+        path = f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
+
+    panorama.save(path)
+
+    rift_console.image_processing.cut(panorama_path=path, X1=res_obj.zone[0], Y1=res_obj.zone[1], X2=res_obj.zone[2], Y2=res_obj.zone[3])
+
+    logger.warning(f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}")
+    await flash(f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}")
 
     return redirect(url_for("index"))
 
