@@ -50,6 +50,10 @@ app.secret_key = "yoursecret_key"
 console = rift_console.rift_console.RiftConsole()
 
 
+@app.route(f"/{con.CONSOLE_STICHED_PATH}/<path:filename>")
+async def uploaded_file_stitched(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_STICHED_PATH, filename)
+
 @app.route(f"/{con.CONSOLE_LIVE_PATH}/<path:filename>")
 async def uploaded_file_live(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
@@ -62,7 +66,25 @@ async def uploaded_file_download(filename):  # type: ignore
 
 @app.route("/stitches")
 async def stitches() -> str:
-    return await render_template("live.html")
+    # list all images
+    images = os.listdir(con.CONSOLE_STICHED_PATH)
+    # filter to only png
+    images = [s for s in images if s.endswith(".png")]
+
+    # sort by date modifyed, starting with the newest
+    images.sort(
+        key=lambda x: os.path.getmtime(Path(con.CONSOLE_STICHED_PATH) / x), reverse=True
+    )
+    # only take first CONSOLE_IMAGE_VIEWER_LIMIT
+    images = images[: con.CONSOLE_IMAGE_VIEWER_LIMIT]
+
+    count = len(images)
+    worldmap = sum("worldmap" in i for i in images)
+    zoned = sum("zoned" in i for i in images)
+    hidden = sum("hidden" in i for i in images)
+    logger.warning(f"Showing {count} stitched images.")
+    # logger.info(f"Images: {images}")
+    return await render_template("stitched.html", images=images, worldMap=worldmap, zoned=zoned, hidden=hidden)
 
 
 def get_console_images() -> list[str]:

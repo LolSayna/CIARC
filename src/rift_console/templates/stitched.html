@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Stitched Media Viewer</title>
+
+    <!-- Favicon icon -->
+    <link rel="shortcut icon" href="{{ url_for('static', filename='satellite.svg') }}">
+
+    <style>
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(800px, 1fr));
+            gap: 10px;
+        }
+        .gallery-item {
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .image-title {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+      </style>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+        <h1>Stitched Images - {{count}} Images</h1>
+    </div>
+    <div class="container-fluid mt-3 mb-3">
+        <div class="row">
+            <div class="col-md-2">
+                <form action="{{ url_for('index') }}" method="get">
+                    <button class="btn btn-success" type="submit">Go back</button>
+                </form>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-info" id="showWorldMap">Toggle World Map ({{worldMap}})</button>
+                <button type="submit" class="btn btn-info" id="showZoned">Toggle Zoned Objectives ({{zoned}})</button>
+                <button type="submit" class="btn btn-info" id="showHidden">Toggle Hidden Objectives ({{hidden}})</button>
+            </div>
+        </div>
+    </div>
+    <div class="gallery">
+        {% for image in images %}
+            {% if "worldmap" in image %}
+                <div class="gallery-item worldMap" style="display: none;">
+                    <h2 class="image-title">{{ image }}</h2>
+                    <img src="{{ url_for('uploaded_file_stitched', filename=image) }}" alt="Image {{ loop.index }}">
+                </div>
+            {% endif %}
+            {% if "zoned" in image %}
+                <div class="gallery-item zoned" style="display: none;">
+                    <h2 class="image-title">{{ image }}</h2>
+                    <img src="{{ url_for('uploaded_file_stitched', filename=image) }}" alt="Image {{ loop.index }}">
+                </div>
+            {% endif %}
+            {% if "hidden" in image %}
+                <div class="gallery-item hidden" style="display: none;">
+                    <h2 class="image-title">{{ image }}</h2>
+                    <img src="{{ url_for('uploaded_file_stitched', filename=image) }}" alt="Image {{ loop.index }}">
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <script>
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize as persistant variables
+            let showWorldMap = JSON.parse(localStorage.getItem('showWorldMap')) ?? true;
+            let showZoned = JSON.parse(localStorage.getItem('showZoned')) ?? true;
+            let showHidden = JSON.parse(localStorage.getItem('showHidden')) ?? true;
+        
+            function updateworldMapDisplay() {
+                document.querySelectorAll('.worldMap').forEach((element) => {
+                    element.style.display = showWorldMap ? '' : 'none';
+                });
+                var button = document.getElementById('showWorldMap');
+                if (showWorldMap) {
+                    button.innerText = "Hide World Map (" + {{worldMap}}+ ")";
+                } else {
+                    button.innerText = "Show World Map (" + {{worldMap}}+ ")";
+                }
+            }
+            function updatezonedDisplay() {
+                document.querySelectorAll('.zoned').forEach((element) => {
+                    element.style.display = showZoned ? '' : 'none';
+                });
+                var button = document.getElementById('showZoned');
+                if (showZoned) {
+                    button.innerText = "Hide Zoned Objective (" + {{zoned}} + ")";
+                } else {
+                    button.innerText = "Show Zoned Objective (" + {{zoned}} + ")";
+                }
+            }
+            function updatehiddenDisplay() {
+                document.querySelectorAll('.hidden').forEach((element) => {
+                    element.style.display = showHidden ? '' : 'none';
+                });
+                var button = document.getElementById('showHidden');
+                if (showHidden) {
+                    button.innerText = "Hide Hidden Objective (" + {{hidden}}+ ")";
+                } else {
+                    button.innerText = "Show Hidden Objective (" + {{hidden}}+ ")";
+                }
+            }
+        
+        
+            updateworldMapDisplay();
+            updatezonedDisplay();
+            updatehiddenDisplay();
+
+
+            // Toggle button functionality
+            document.getElementById('showWorldMap').addEventListener('click', () => {
+                showWorldMap = !showWorldMap;
+                localStorage.setItem('showWorldMap', JSON.stringify(showWorldMap));
+                updateworldMapDisplay(); // Update display after toggle
+            });
+            document.getElementById('showZoned').addEventListener('click', () => {
+                showZoned = !showZoned;
+                localStorage.setItem('showZoned', JSON.stringify(showZoned));
+                updatezonedDisplay(); // Update display after toggle
+            });
+            document.getElementById('showHidden').addEventListener('click', () => {
+                showHidden = !showHidden;
+                localStorage.setItem('showHidden', JSON.stringify(showHidden));
+                updatehiddenDisplay(); // Update display after toggle
+            });
+        });
+    </script>
+</body>
+</html>
