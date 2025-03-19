@@ -104,6 +104,12 @@ kill 1
 cd /home/CIARC/logs/melvonaut
 # Replace yyyy-mm-dd-hh with the current date or look for the newest file
 tail -f log_melvonaut_yyyy-mm-dd-hh.log
+
+# To stop Melvonaut restart the container
+kill 1
+
+# To update
+git pull
 ```
 
 ### Rift-Console

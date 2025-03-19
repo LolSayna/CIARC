@@ -350,7 +350,7 @@ class StatePlanner(BaseModel):
                 match self.get_current_state():
                     case State.Transition:
                         if self._run_get_image_task:
-                            logger.error("end image")
+                            logger.debug("end image")
                             self._run_get_image_task.cancel()
                             self._run_get_image_task = None
                         if self.submitted_transition_request:
@@ -362,7 +362,7 @@ class StatePlanner(BaseModel):
                         if self._run_get_image_task:
                             logger.debug("Image task already running")
                         else:
-                            logger.error("start image")
+                            logger.debug("start image")
                             loop = asyncio.get_event_loop()
                             self._run_get_image_task = loop.create_task(self.run_get_image())
                         await self.control_acquisition()
@@ -392,8 +392,15 @@ class StatePlanner(BaseModel):
             await self.plan_state_switching()
 
     async def get_image(self) -> None:
+        logger.debug("Getting image")
         if self.current_telemetry is None:
-            logger.warning("No telemetry data available. Cannot get image.")
+            logger.warning(
+                f"No telemetry data available. Waiting {settings.OBSERVATION_REFRESH_RATE}s for next image."
+            )
+            image_task = Timer(
+                timeout=settings.OBSERVATION_REFRESH_RATE, callback=self.get_image
+            ).get_task()
+            await asyncio.gather(image_task)
             return
         if not self._aiohttp_session:
             self._aiohttp_session = aiohttp.ClientSession()
@@ -533,17 +540,10 @@ class StatePlanner(BaseModel):
                 logger.warning("Get image task was cancelled.")
 
     async def run_get_image(self) -> None:
-        await self.get_image()
+        logger.debug("Starting run_get_image")
+        if self.get_current_state() == State.Acquisition:
+            await self.get_image()
         while self.get_current_state() == State.Acquisition:
-            if self.current_telemetry is None:
-                logger.warning(
-                    f"No telemetry data available. Waiting {settings.OBSERVATION_REFRESH_RATE}s for next image."
-                )
-                image_task = Timer(
-                    timeout=settings.OBSERVATION_REFRESH_RATE, callback=self.get_image
-                ).get_task()
-                await asyncio.gather(image_task)
-                continue
             current_total_vel = self.current_telemetry.vx + self.current_telemetry.vy
             if self._accelerating:
                 # If accelerating calculate distance based on current speed and acceleration
