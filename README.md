@@ -94,6 +94,13 @@ poetry install --with melvonaut
 
 # Run Melvonaut with
 ./start-melvonaut.sh
+# To let it run in the background use
+./start-melvonaut.sh & disown
+
+# To follow the logs
+cd /home/CIARC/logs/melvonaut
+# Replace yyyy-mm-dd-hh with the current date or look for the newest file
+tail -f log_melvonaut_yyyy-mm-dd-hh.log
 ```
 
 ### Rift-Console
