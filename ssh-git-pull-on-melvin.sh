@@ -1,1 +1,1 @@
-sshpass -f .ssh-pw ssh -o StrictHostKeychecking=no  -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password -o PubkeyAuthentication=no root@10.100.50.1 "command -v git >/dev/null 2>&1 || { apt update && apt -y install git; } && cd /home/CIARC && /home/git/bin/git pull"
+sshpass -f .ssh-pw ssh -o StrictHostKeychecking=no  -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password -o PubkeyAuthentication=no root@10.100.50.1 "command -v git >/dev/null 2>&1 || { apt update && apt -y install git; } && cd /home/CIARC && git pull"
