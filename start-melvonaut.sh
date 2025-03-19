@@ -13,5 +13,5 @@ source venv/bin/activate
 
 until melvonaut; do
     echo "LOG: Application crashed. Restarting ..."
-    sleep 5
+    sleep 2
 done

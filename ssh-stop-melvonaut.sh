@@ -1,0 +1,1 @@
+sshpass -f .ssh-pw ssh -o StrictHostKeychecking=no  -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password -o PubkeyAuthentication=no root@10.100.50.1 "ps aux | grep '[m]elvonaut' | awk '{print $2}' | xargs kill -9"

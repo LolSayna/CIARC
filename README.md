@@ -6,23 +6,6 @@
 [pre-commit]: https://github.com/pre-commit/pre-commit
 
 
-
-# 103 - 2025-02-25
-## (x,y,distance)
-[
-(19972.3165561, 113.5243816, 1454.48),
-(20486.232864, 331.337984, 930.35),
-(20998.9861724, 548.6578144, 787.93),
-(21510.18207954, 766.74099024, 1093.99),
-(18882.99334624, 2295.73420544, 1947.67),
-(19394.53293776, 2512.96329856, 1450.01),
-(19908.73421827, 2730.89789112, 1442.63),
-(20421.30728271, 2948.14119576, 1828.68),
-(20926.46189231, 3163.05597336, 1651.83),
-]
-
-
-
 ## Overview
 
 This is the [Riftonaut's CIARC](https://github.com/Lolsayna/CIARC) repository.
@@ -69,11 +52,12 @@ apt update
 apt install git nano
 
 # Install Python 3.12 build dependencies
-apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
+apt -y install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
 
 # Get and build Python 3.12.9, newest 3.12 at the time of writing
 wget https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz
 tar xzf Python-3.12.9.tgz
+rm Python-3.12.9.tgz
 cd Python-3.12.9
 ./configure --enable-optimizations
 
@@ -110,6 +94,10 @@ kill 1
 
 # To update
 git pull
+
+# To be able to update after restarting the container, git must be reinstalled
+apt update
+apt install git
 ```
 
 ### Rift-Console
