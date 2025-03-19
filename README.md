@@ -56,6 +56,50 @@ pipx inject nox nox-poetry
 
 ## Installation
 
+### Melvonaut
+
+For deployment of Melvonaut on Melvin, Python 3.12 is required.
+In order to provide an isolated installation that persists across reboots, we compile Python 3.12 in user space.
+
+SSH into Melvin and execute the following commands:
+```
+cd /home
+
+apt update
+apt install git nano
+
+# Install Python 3.12 build dependencies
+apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
+
+# Get and build Python 3.12.9, newest 3.12 at the time of writing
+wget https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz
+tar xzf Python-3.12.9.tgz
+cd Python-3.12.9
+./configure --enable-optimizations
+
+# This takes some time
+make -j 16
+
+# Verify that it worked
+./python --version
+
+# Install Melvonaut
+cd /home
+git clone https://github.com/LolSayna/CIARC
+cd CIARC
+../Python-3.12.9/python -m venv venv
+source venv/bin/activate
+pip install poetry
+poetry install --with melvonaut
+
+# Run Melvonaut with
+./start-melvonaut.sh
+```
+
+### Rift-Console
+
+
+#### TODO Rewrite this part
 To install the requirements run `poetry install --with melvonaut` or `poetry install --with rift_console`.
 Afterward run `poetry shell` to activate the virtual environment in your shell.
 This provides the `melvonaut` and `rift-console` commands.
