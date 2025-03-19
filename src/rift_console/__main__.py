@@ -116,7 +116,10 @@ async def downloads() -> str:
 
 @app.route("/live")
 async def live() -> str:
-    images = get_console_images()
+    # list all images
+    images = os.listdir(con.CONSOLE_LIVE_PATH)
+    # filter to only png
+    images = [s for s in images if s.endswith(".png")]
 
     # sort by date modifyed, starting with the newest
     images.sort(
