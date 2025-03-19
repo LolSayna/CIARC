@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Restarts the application if exit code is not 0
 source venv/bin/activate
 
