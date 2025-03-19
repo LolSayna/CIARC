@@ -39,15 +39,15 @@ def get_date(image: str) -> str:
         return datetime.datetime.min.strftime("%Y-%m-%dT%H:%M:%S")
 
 
-# def filter_by_date(
-#     images: list[str], start: datetime.datetime, end: datetime.datetime
-# ) -> list[str]:
-#     res = []
-#     for image in images:
-#         date = get_date(image)
-#         if date >= start and date <= end:
-#             res.append(image)
-#     return res
+def filter_by_date(
+    images: list[str], start: datetime.datetime, end: datetime.datetime
+) -> list[str]:
+    res = []
+    for image in images:
+        date = get_date(image)
+        if date >= start and date <= end:
+            res.append(image)
+    return res
 
 
 def generate_spiral_walk(n: int) -> list[tuple[int, int]]:

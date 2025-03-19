@@ -56,7 +56,7 @@ THUMBNAIL_Y = 500
 STITCHING_BORDER = 1000
 ## For image processing
 NUMBER_OF_WORKER_THREADS = (cpu_count() or 4) - 2  # use 1 for single core
-DO_IMAGE_NUDGING_SEARCH = True  # if False ignore SEARCH_GRID_SIDE_LENGTH
+DO_IMAGE_NUDGING_SEARCH = False  # if False ignore SEARCH_GRID_SIDE_LENGTH
 SEARCH_GRID_SIDE_LENGTH = 15  # should be uneven
 
 # should be false, the naming convention for images changed, for all new images this should be false

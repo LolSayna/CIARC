@@ -758,9 +758,21 @@
                   <input type="text" class="form-control" name="path_world" placeholder="media/test.png" value="media/test.png">
                 </div>
                 <div class="col-md-1"></div>
-                <div class="col-md-3 mt-3">
+                <div class="col-md-1 mt-3">
                   <button type="submit" class="btn btn-success" name="button" value="worldmap">Upload</button>
-              </div>
+                </div>
+                <div class="col-md-1"></div>
+                <div class="col-md-2">
+                  <label for="choose_date">Choose date</label>
+                  <select name="choose_date" id="choose_date">
+                      {% for date in console_image_dates %}
+                          <option value="{{ date }}" {% if selected_value == date|string %}selected{% endif %}>{{ date }}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-1 mt-3">
+                  <button type="submit" class="btn btn-success" name="button" value="stitch">Stitch</button>
+                </div>
             </div>
             <div class="row mt-2">
               <h3>Zoned Objective</h2>

@@ -65,18 +65,24 @@ async def stitches() -> str:
     return await render_template("live.html")
 
 
-@app.route("/downloads")
-async def downloads() -> str:
+def get_console_images() -> list[str]:
     # list all images
     images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
     # filter to only png
     images = [s for s in images if s.endswith(".png")]
+
+    return images
+
+@app.route("/downloads")
+async def downloads() -> str:
+    images = get_console_images()
 
     # sort by timestamp
     images.sort(
         key=lambda x: get_date(x),
         reverse=True,
     )
+    
     # only take first CONSOLE_IMAGE_VIEWER_LIMIT
     images = images[: con.CONSOLE_IMAGE_VIEWER_LIMIT]
 
@@ -110,10 +116,8 @@ async def downloads() -> str:
 
 @app.route("/live")
 async def live() -> str:
-    # list all images
-    images = os.listdir(con.CONSOLE_LIVE_PATH)
-    # filter to only png
-    images = [s for s in images if s.endswith(".png")]
+    images = get_console_images()
+
     # sort by date modifyed, starting with the newest
     images.sort(
         key=lambda x: os.path.getmtime(Path(con.CONSOLE_LIVE_PATH) / x), reverse=True
@@ -184,6 +188,7 @@ async def index() -> str:
             api=console.live_melvonaut_api,
             melvonaut_image_count=console.melvonaut_image_count,
             console_image_count=console.console_image_count,
+            console_image_dates=console.console_image_dates,
         )
     else:
         return await render_template(
@@ -204,6 +209,7 @@ async def index() -> str:
             api=console.live_melvonaut_api,
             melvonaut_image_count=console.melvonaut_image_count,
             console_image_count=console.console_image_count,
+            console_image_dates=console.console_image_dates,
         )
 
 
@@ -225,6 +231,15 @@ async def melvonaut_api() -> Response:
             console.console_image_count = sum(
                 file.is_file() for file in folder.rglob("*.png")
             )
+
+            # find the dates of each image
+            dates = set()
+            for image in folder.rglob("*.png"):
+                dates.add(get_date(image.name)[:10])
+            dates_list = list(dates)
+            dates_list.sort(reverse=True)
+            console.console_image_dates = dates_list
+            logger.info(f"Counted images on console, found {console.console_image_count} from {len(console.console_image_dates)} different dates.")
 
             images = melvin_api.list_images()
             if type(images) is list:
@@ -411,7 +426,42 @@ async def results() -> Response:
                     )
                 if status.startswith("No more rescue attempts left"):
                     await flash(f"for EBT: {id}")
+        case "stitch":
+            choose_date = form.get("choose_date", type=str)
+            if not choose_date:
+                logger.warning("Tried to stitch worldmap but no date given.")
+                await flash("Tried to stitch worldmap but no date given.")
 
+            images = get_console_images()
+            filtered_images = []
+            for image in images:
+                if choose_date in image:
+                    filtered_images.append(image)
+            logger.warning(f"Starting stitching, found {len(images)} images and {len(filtered_images)} with right day.")
+            await flash(f"Starting stitching of {len(filtered_images)} images.")
+
+            panorama = rift_console.image_processing.stitch_images(image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images)
+
+            remove_offset = (
+                con.STITCHING_BORDER,
+                con.STITCHING_BORDER,
+                con.WORLD_X + con.STITCHING_BORDER,
+                con.WORLD_Y + con.STITCHING_BORDER,
+            )
+            panorama = panorama.crop(remove_offset)
+
+            space = ""
+            count = 0
+            path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
+            while os.path.isfile(path):
+                count += 1
+                space = "_" + str(count)
+                path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
+
+            panorama.save(path)
+
+            logger.warning(f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}")
+            await flash(f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}")
         case _:
             logger.error(f"Unknown button pressed: {button}")
             await flash("Unknown button pressed.")
