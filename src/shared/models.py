@@ -361,9 +361,7 @@ class Event(BaseModel):
             with open(con.EVENT_LOCATION_CSV, "r") as f:
                 for row in csv.DictReader(f):
                     read_event = Event(
-                        data=row["data"],
                         event=row["event"],
-                        retry=bool(row["retry"]),
                         id=row["id"],
                         timestamp=datetime.datetime.fromisoformat(row["timestamp"]),
                         current_x=row["current_x"],

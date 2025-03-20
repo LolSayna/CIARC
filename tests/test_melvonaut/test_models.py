@@ -6,10 +6,8 @@ import datetime
 
 
 event = Event(
-    data="test-data",
     event="test-event",
-    id="test-id",
-    retry=False,
+    id=123456,
     timestamp=datetime.datetime.now(),
     current_x=0.0,
     current_y=0.0,

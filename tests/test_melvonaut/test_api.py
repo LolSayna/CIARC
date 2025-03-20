@@ -34,7 +34,7 @@ mel_telemetry = MelTelemetry(
     vy=0.0,
 )
 
-event = Event()
+event = Event(event="test", id=0)
 
 image_path = con.IMAGE_LOCATION.format(
     melv_id="test",
@@ -237,7 +237,7 @@ async def test_get_download_events(client: TestClient):
     resp = await client.get("/api/get_download_events")
     assert resp.status == 200
     data = await resp.text()
-    assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
+    assert "event,id,timestamp,current_x,current_y" in data, data
 
 
 async def test_get_download_events_and_clear(client: TestClient):
@@ -245,7 +245,7 @@ async def test_get_download_events_and_clear(client: TestClient):
     resp = await client.get("/api/get_download_events_and_clear")
     assert resp.status == 200
     data = await resp.text()
-    assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
+    assert "event,id,timestamp,current_x,current_y" in data, data
     resp = await client.get("/api/get_download_events")
     assert resp.status == 404
 
@@ -451,7 +451,7 @@ async def test_compression(client: TestClient):
     data = await resp.text()
     assert "Content-Encoding" in resp.headers, resp.headers
     assert resp.headers["Content-Encoding"] == "gzip", resp.headers
-    assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
+    assert "event,id,timestamp,current_x,current_y" in data, data
     resp = await client.get(
         "/api/get_download_events", headers={"Accept-Encoding": "deflate"}
     )
@@ -459,4 +459,4 @@ async def test_compression(client: TestClient):
     data = await resp.text()
     assert "Content-Encoding" in resp.headers, resp.headers
     assert resp.headers["Content-Encoding"] == "deflate", resp.headers
-    assert "data,event,id,retry,timestamp,current_x,current_y" in data, data
+    assert "event,id,timestamp,current_x,current_y" in data, data
