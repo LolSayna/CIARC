@@ -29,7 +29,13 @@ from hypercorn.asyncio import serve
 from rift_console.image_helper import filter_by_date, get_angle, get_date
 import rift_console.rift_console
 import shared.constants as con
-from shared.models import State, CameraAngle, ZonedObjective, lens_size_by_angle, live_utc
+from shared.models import (
+    State,
+    CameraAngle,
+    ZonedObjective,
+    lens_size_by_angle,
+    live_utc,
+)
 import rift_console.image_processing
 import rift_console.ciarc_api as ciarc_api
 import rift_console.melvin_api as melvin_api
@@ -52,7 +58,6 @@ app.secret_key = "yoursecret_key"
 console = rift_console.rift_console.RiftConsole()
 
 
-
 # [HELPER]
 async def check_images() -> None:
     folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
@@ -70,6 +75,7 @@ async def check_images() -> None:
         f"Counted {console.console_image_count} images on console from {len(console.console_image_dates)} different dates."
     )
 
+
 def get_console_images() -> list[str]:
     # list all images
     images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
@@ -78,15 +84,15 @@ def get_console_images() -> list[str]:
 
     return images
 
+
 async def info(mes: str) -> None:
     logger.info(mes)
     await flash(mes)
 
+
 async def warning(mes: str) -> None:
     logger.warning(mes)
     await flash(mes)
-
-
 
 
 # [ROUTES]
@@ -103,6 +109,7 @@ async def uploaded_file_live(filename):  # type: ignore
 @app.route(f"/{con.CONSOLE_DOWNLOAD_PATH}/<path:filename>")
 async def uploaded_file_download(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_DOWNLOAD_PATH, filename)
+
 
 @app.route("/stitches")
 async def stitches() -> str:
@@ -127,6 +134,8 @@ async def stitches() -> str:
     return await render_template(
         "stitched.html", images=images, worldMap=worldmap, zoned=zoned, hidden=hidden
     )
+
+
 @app.route("/downloads")
 async def downloads() -> str:
     images = get_console_images()
@@ -166,6 +175,8 @@ async def downloads() -> str:
         wide=wide,
         dates=dates_list,
     )
+
+
 @app.route("/live")
 async def live() -> str:
     # list all images
@@ -189,6 +200,8 @@ async def live() -> str:
     return await render_template(
         "live.html", images=images, count=count, narrow=narrow, normal=normal, wide=wide
     )
+
+
 @app.route("/", methods=["GET"])
 async def index() -> str:
     if console.live_telemetry:
@@ -267,6 +280,7 @@ async def index() -> str:
 
 
 # [BUTTONS]
+
 
 @app.route("/melvonaut_api", methods=["POST"])
 async def melvonaut_api() -> Response:
@@ -392,6 +406,7 @@ async def melvonaut_api() -> Response:
 
     return redirect(url_for("index"))
 
+
 async def async_world_map(filtered_images: list[str], choose_date: str) -> None:
     panorama = rift_console.image_processing.stitch_images(
         image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images
@@ -432,7 +447,9 @@ async def results() -> Response:
             await check_images()
 
         case "worldmap":
-            image_path = con.CONSOLE_STICHED_PATH + form.get("path_world", type=str) or ""
+            image_path = (
+                con.CONSOLE_STICHED_PATH + form.get("path_world", type=str) or ""
+            )
             if not os.path.isfile(path=image_path):
                 await warning(
                     f"Cant upload world map, file: {image_path} does not exist."
@@ -444,9 +461,7 @@ async def results() -> Response:
             if res:
                 await flash(res)
                 if res.startswith("Image uploaded successfully"):
-                    await warning(
-                        f"Worldmap - {image_path}."
-                    )
+                    await warning(f"Worldmap - {image_path}.")
 
         case "obj":
             image_path = con.CONSOLE_STICHED_PATH + form.get("path_obj", type=str) or ""
@@ -502,7 +517,11 @@ async def results() -> Response:
             await warning(
                 f"Starting stitching, found {len(images)} images and {len(filtered_images)} with right day."
             )
-            asyncio.create_task(async_world_map(filtered_images=filtered_images, choose_date=choose_date))
+            asyncio.create_task(
+                async_world_map(
+                    filtered_images=filtered_images, choose_date=choose_date
+                )
+            )
         case "stitch_area":
             start = datetime.datetime.fromisoformat(
                 form.get("start_stitch", type=str) or "2025-01-01T00:00"
@@ -579,6 +598,7 @@ async def results() -> Response:
     await update_telemetry()
 
     return redirect(url_for("index"))
+
 
 # Add/Modify zoned_objectives
 @app.route("/obj_mod", methods=["POST"])
@@ -658,9 +678,7 @@ async def obj_mod() -> Response:
                                 ]
                             )
 
-                await info(
-                    f"Wrote {len(console.zoned_objectives)} to {csv_file_path}."
-                )
+                await info(f"Wrote {len(console.zoned_objectives)} to {csv_file_path}.")
             else:
                 await warning("Cant write objective, no data.")
 
@@ -731,6 +749,7 @@ async def obj_mod() -> Response:
 
     return redirect(url_for("index"))
 
+
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
     # read which button was pressed
@@ -788,7 +807,6 @@ async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> N
     )
 
 
-
 @app.route("/stitch_obj/<int:obj_id>", methods=["POST"])
 async def stitch_obj(obj_id: int) -> Response:
     logger.info(f"Stiching Zoned Objective with id {obj_id}.")
@@ -799,7 +817,9 @@ async def stitch_obj(obj_id: int) -> Response:
             res_obj = obj
             break
     if not res_obj or not res_obj.zone:
-        await warning("Objective Id {obj_id} not found, cant stitch without coordinates.")
+        await warning(
+            "Objective Id {obj_id} not found, cant stitch without coordinates."
+        )
         return redirect(url_for("index"))
     await check_images()
 
@@ -824,8 +844,9 @@ async def stitch_obj(obj_id: int) -> Response:
 
     # run this in background
     asyncio.create_task(async_stitching(res_obj=res_obj, final_images=final_images))
-    
+
     return redirect(url_for("index"))
+
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
 async def del_obj(obj_id: int) -> Response:
@@ -833,6 +854,7 @@ async def del_obj(obj_id: int) -> Response:
     await update_telemetry()
 
     return redirect(url_for("index"))
+
 
 # Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
@@ -905,6 +927,7 @@ async def satellite_handler() -> Response:
     await update_telemetry()
     return redirect(url_for("index"))
 
+
 # Wrapper for all Simulation Manipulation buttons
 @app.route("/control_handler", methods=["POST"])
 async def control_handler() -> Response:
@@ -964,6 +987,7 @@ async def control_handler() -> Response:
 
     await update_telemetry()
     return redirect(url_for("index"))
+
 
 # Pulls API after some changes
 async def update_telemetry() -> None:
