@@ -432,7 +432,7 @@ async def results() -> Response:
             await check_images()
 
         case "worldmap":
-            image_path = form.get("path_world", type=str) or ""
+            image_path = con.CONSOLE_STICHED_PATH + form.get("path_world", type=str) or ""
             if not os.path.isfile(path=image_path):
                 await warning(
                     f"Cant upload world map, file: {image_path} does not exist."
@@ -449,7 +449,7 @@ async def results() -> Response:
                     )
 
         case "obj":
-            image_path = form.get("path_obj", type=str) or ""
+            image_path = con.CONSOLE_STICHED_PATH + form.get("path_obj", type=str) or ""
             id = form.get("objective_id", type=int) or 0
 
             if not os.path.isfile(image_path):
