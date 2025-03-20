@@ -26,6 +26,9 @@ from shared.models import (
 from loguru import logger
 import random
 
+import os
+import psutil
+
 
 class StatePlanner(BaseModel):
     melv_id: int = random.randint(0, 9999)
@@ -310,6 +313,12 @@ class StatePlanner(BaseModel):
             f" Fuel: {self.current_telemetry.fuel}"
         )
 
+        logger.debug(
+            "Current memory usage: "
+            + str(psutil.Process(os.getpid()).memory_info().rss / 1024**2)
+            + " MB"
+        )
+
         # if self.get_current_state() == State.Acquisition:
         #    await self.get_image()
         # logger.debug(f"Threads: {threading.active_count()}")
@@ -546,19 +555,29 @@ class StatePlanner(BaseModel):
         if self.get_current_state() == State.Acquisition:
             await self.get_image()
         while self.get_current_state() == State.Acquisition:
-            current_total_vel = self.current_telemetry.vx + self.current_telemetry.vy
-            if self._accelerating:
-                # If accelerating calculate distance based on current speed and acceleration
-                delay_in_s = (
-                    math.sqrt(
-                        current_total_vel**2
-                        + 2 * con.ACCELERATION * settings.DISTANCE_BETWEEN_IMAGES
-                    )
-                    - current_total_vel
-                ) / con.ACCELERATION
+            if self.current_telemetry is None:
+                logger.debug(
+                    "No telemetry data available. Assuming Observation Refresh Rate."
+                )
+                delay_in_s = float(settings.OBSERVATION_REFRESH_RATE)
             else:
-                # When not accelerating calculate distance based on current speed
-                delay_in_s = float(settings.DISTANCE_BETWEEN_IMAGES) / current_total_vel
+                current_total_vel = (
+                    self.current_telemetry.vx + self.current_telemetry.vy
+                )
+                if self._accelerating:
+                    # If accelerating calculate distance based on current speed and acceleration
+                    delay_in_s = (
+                        math.sqrt(
+                            current_total_vel**2
+                            + 2 * con.ACCELERATION * settings.DISTANCE_BETWEEN_IMAGES
+                        )
+                        - current_total_vel
+                    ) / con.ACCELERATION
+                else:
+                    # When not accelerating calculate distance based on current speed
+                    delay_in_s = (
+                        float(settings.DISTANCE_BETWEEN_IMAGES) / current_total_vel
+                    )
             delay_in_s = delay_in_s / self.get_simulation_speed()
             logger.debug(f"Next image in {delay_in_s}s.")
             image_task = Timer(timeout=delay_in_s, callback=self.get_image).get_task()

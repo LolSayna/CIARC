@@ -327,47 +327,11 @@ class BaseTelemetry(BaseModel):
 
 # TODO
 class Event(BaseModel):
-    data: str = ""
-    event: str = "message"
-    id: Optional[str] = None
-    retry: Optional[bool] = None
+    event: str
+    id: int
     timestamp: Optional[datetime.datetime] = None
     current_x: Optional[float] = None
     current_y: Optional[float] = None
-
-    def dump(self) -> str:
-        lines = []
-        if self.id:
-            lines.append(f"id: {self.id}")
-        if self.event != "message":
-            lines.append(f"event: {self.event}")
-        if self.retry:
-            lines.append(f"retry: {self.retry}")
-        lines.extend(f"data: {d}" for d in self.data.split("\n"))
-        return "\n".join(lines)
-
-    def parse(self, raw) -> None:
-        for line in raw.splitlines():
-            m = SSE_LINE_PATTERN.match(line)
-            if m is None:
-                logger.error(f"Invalid SSE line: {line}")
-                continue
-
-            name = m.group("name")
-            if name == "":
-                continue
-            value = m.group("value")
-            if name == "data":
-                if self.data:
-                    self.data = f"{self.data}\n{value}"
-                else:
-                    self.data = value
-            elif name == "event":
-                self.event = value
-            elif name == "id":
-                self.id = value
-            elif name == "retry":
-                self.retry = bool(value)
 
     def __str__(self) -> str:
         return self.data

@@ -134,6 +134,8 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
     Returns:
         Optional[str]: The ID of the last received announcement, or None if an error occurs.
     """
+    content_line_regex = re.compile(r"^\[(\d+)]\s*(.*)$")
+
     headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
     if last_id:
         headers["Last-Event-ID"] = last_id
@@ -152,7 +154,6 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                     await session.close()
                     return None
                 else:
-                    lines: list[str] = []
                     # logger.error(response.content)
                     # async for line in response.content:
                     #    logger.error(line)
@@ -160,35 +161,30 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
                         line_decoded = line.decode("utf-8")
                         # logger.warning(f"Received announcement {line}")
                         # logger.warning(f"Location is: {state_planner.calc_current_location()}")
+                        # logger.warning(f"Received announcement with content:{line_decoded}")
+                        line_filtered = line_decoded.replace("data:", "").strip()
 
-                        logger.warning(
-                            f"Received announcement with content:{line_decoded}"
-                        )
-                        line_filtered = line_decoded.replace("data:", "")
-                        if line_filtered in {"\n", "\r\n", " \r\n", "\r"}:
-                            if not lines:
-                                continue
-                            if lines[0] == ":ok\n":
-                                lines = []
-                                continue
-                            current_event = Event()
-                            current_event.timestamp = datetime.now(timezone.utc)
-                            current_event.current_x, current_event.current_y = (
-                                state_planner.calc_current_location()
+                        match = content_line_regex.search(line_filtered)
+                        if match:
+                            line_id = int(match.group(1))
+                            line_content = str(match.group(2))
+                            timestamp = datetime.now(timezone.utc)
+                            current_x, current_y = state_planner.calc_current_location()
+
+                            current_event = Event(
+                                event=line_content,
+                                id=line_id,
+                                timestamp=timestamp,
+                                current_x=current_x,
+                                current_y=current_y,
                             )
-                            current_event.parse("".join(lines))
+
                             logger.warning(
                                 f"Received announcement: {current_event.model_dump()}"
                             )
                             await current_event.to_csv()
                             state_planner.recent_events.append(current_event)
-                            last_id = current_event.id
-                            lines = []
-                        else:
-                            logger.debug(
-                                f"Appending event line: {line_filtered}/{repr(line_filtered)}"
-                            )
-                            lines.append(line_filtered)
+                            last_id = str(current_event.id)
         except TimeoutError:
             logger.error("Announcements subscription timed out")
         finally:
