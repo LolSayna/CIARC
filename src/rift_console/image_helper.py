@@ -45,7 +45,10 @@ def filter_by_date(
     res = []
     date_format = "%Y-%m-%dT%H:%M:%S"
     for image in images:
-        date = datetime.datetime.strptime(get_date(image), date_format).replace(tzinfo=datetime.timezone.utc)
+        date = datetime.datetime.strptime(get_date(image), date_format).replace(
+            tzinfo=datetime.timezone.utc
+        )
+        logger.error(f"{date} {start} {end}")
         if date >= start and date <= end:
             res.append(image)
     return res

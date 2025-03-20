@@ -467,13 +467,13 @@
 
     <!-- [Bottom Section] -->
     <div class="container-fluid mt-1">
-      <ul class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#melv">Melvonaut</a></li>
-        <li><a data-toggle="tab" href="#slots">Slots</a></li>
-        <li><a data-toggle="tab" href="#obj">Objectives</a></li>
-        <li><a data-toggle="tab" href="#ebt">EBT</a></li>
-        <li><a data-toggle="tab" href="#upload">Upload</a></li>
-        <li><a data-toggle="tab" href="#achv">Achievements</a></li>
+      <ul class="nav nav-tabs" id="myTabs">
+        <li class="active"><a data-toggle="tab" href="#melv" data-tab="melv">Melvonaut</a></li>
+        <li><a data-toggle="tab" href="#slots" data-tab="slots">Slots</a></li>
+        <li><a data-toggle="tab" href="#obj" data-tab="obj">Objectives</a></li>
+        <li><a data-toggle="tab" href="#ebt" data-tab="ebt">EBT</a></li>
+        <li><a data-toggle="tab" href="#upload" data-tab="upload">Upload</a></li>
+        <li><a data-toggle="tab" href="#achv" data-tab="achv">Achievements</a></li>
       </ul>
     
       <div class="tab-content">
@@ -629,7 +629,10 @@
                   <input type="text" class="form-control" name="y2" placeholder="2000" value="2000">
                 </div>
                 <div class="col-md-2 mt-4">
-                  <button type="submit" class="btn btn-secondary w-100" name="button" value="zoned"">Confirm</button>
+                  <button type="submit" class="btn btn-secondary" name="button" value="zoned">Confirm</button>
+                </div>
+                <div class="col-md-2 mt-4">
+                  <button type="submit" class="btn btn-info" name="button" value="write_obj">Write Objectives</button>
                 </div>
               </div>
             </form>
@@ -763,7 +766,7 @@
                 <div class="col-md-1"></div>
                 <div class="col-md-2">
                   <label for="path_world">Path: (starting in root of repo)</label>
-                  <input type="text" class="form-control" name="path_world" placeholder="media/test.png" value="media/test.png">
+                  <input type="text" class="form-control" name="path_world" placeholder="logs/rift_console/images/stitched/test.png" value="logs/rift_console/images/stitched/test.png">
                 </div>
                 <div class="col-md-1"></div>
                 <div class="col-md-1 mt-3">
@@ -773,24 +776,24 @@
                 <div class="col-md-1 mt-3">
                   <button type="submit" class="btn btn-info" name="button" value="check_images">Check Images</button>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-2 mt-3">
                   <label for="choose_date">Choose date</label>
                   <select name="choose_date" id="choose_date">
                       {% for date in console_image_dates %}
-                          <option value="{{ date[0] }}" {% if selected_value == date[0]|string %}selected{% endif %}>{{ date[0] }} - {{date[1]}}</option>
+                          <option value="{{ date[0] }}" {% if selected_value == date[0]|string %}selected{% endif %}>{{ date[0] }} - {{date[1]}} images</option>
                       {% endfor %}
                   </select>
                 </div>
                 <div class="col-md-1 mt-3">
-                  <button type="submit" class="btn btn-success" name="button" value="stitch">Stitch</button>
+                  <button type="submit" class="btn btn-success" name="button" value="stitch">Stitch World Map</button>
                 </div>
             </div>
             <div class="row mt-2">
-              <h3>Zoned Objective</h2>
+              <h3>Zoned Objective</h3>
                 <div class="col-md-1"></div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <label for="path_obj">Path: (starting in root of repo)</label>
-                  <input type="text" class="form-control" name="path_obj" placeholder="media/test.png" value="media/test.png">
+                  <input type="text" class="form-control" name="path_obj" placeholder="logs/rift_console/images/stitched/test.png" value="logs/rift_console/images/stitched/test.png">
                 </div>
                 <div class="col-md-1">
                   <label for="objective_id">Id:</label>
@@ -798,6 +801,46 @@
                 </div>
                 <div class="col-md-3 mt-3">
                   <button type="submit" class="btn btn-success" name="button" value="obj">Upload</button>
+              </div>
+            </div>
+            <div class="row mt-1">
+              <div class="row">
+                <div class="col-md-1"><h3>Stitch</h3></div>
+                <div class="col-md-2 mt-5">
+                  <label for="start">Start:</label>
+                  <input type="text" class="form-control" name="start_stitch" id="start_stitch">
+                </div>
+                <div class="col-md-2 mt-5">
+                  <label for="end">End:</label>
+                  <input type="text" class="form-control" name="end_stitch" id="end_stitch">
+                </div>
+                <div class="col-md-2 mt-5">
+                  <label for="angle">Camera Angle:</label>
+                  <select name="angle" id="angle" class="form-control">
+                    {% for option in ["narrow", "normal", "wide"] %}
+                        <option value="{{ option }}" {% if selected_value == option %}selected{% endif %}>{{ option|capitalize }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-1 mt-5">
+                  <label for="x1">X_1:</label>
+                  <input type="text" class="form-control" name="x1" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-1 mt-5">
+                  <label for="y1">Y_1:</label>
+                  <input type="text" class="form-control" name="y1" placeholder="1000" value="1000">
+                </div>
+                <div class="col-md-1 mt-5">
+                  <label for="x2">X_2:</label>
+                  <input type="text" class="form-control" name="x2" placeholder="2000" value="2000">
+                </div>
+                <div class="col-md-1 mt-5">
+                  <label for="y2">Y_2:</label>
+                  <input type="text" class="form-control" name="y2" placeholder="2000" value="2000">
+                </div>
+                <div class="col-md-1 mt-5">
+                  <button type="submit" class="btn btn-success" name="button" value="stitch_area">Area</button>
+                </div>
               </div>
             </div>
             <div class="row mt-2">
@@ -880,6 +923,8 @@
       document.getElementById('start').value = `${startS}`;
       document.getElementById('start_ebt').placeholder = `${startS}`;
       document.getElementById('start_ebt').value = `${startS}`;
+      document.getElementById('start_stitch').placeholder = `${startS}`;
+      document.getElementById('start_stitch').value = `${startS}`;
 
       now.setUTCDate(now.getUTCDate() + 1);
       endS = now.toISOString();
@@ -888,12 +933,31 @@
       document.getElementById('end').value = `${endShort}`;
       document.getElementById('end_ebt').placeholder = `${endShort}`;
       document.getElementById('end_ebt').value = `${endShort}`;
+      document.getElementById('end_stitch').placeholder = `${endShort}`;
+      document.getElementById('end_stitch').value = `${endShort}`;
     }
     // Initial call
     updateTime();
     updateFormTime();
     // Update every second
     setInterval(updateTime, 1000);
+
+    // rember last active tab
+    $(document).ready(function() {
+      // Check if there's a stored tab
+      var activeTab = localStorage.getItem('activeTab');
+      if (activeTab) {
+          $('#myTabs a[href="' + activeTab + '"]').tab('show');
+      } else {
+          $('#myTabs a:first').tab('show'); // Default to the first tab
+      }
+  
+      // Store the selected tab in localStorage
+      $('#myTabs a').on('shown.bs.tab', function (e) {
+          var activeTab = $(e.target).attr('href');
+          localStorage.setItem('activeTab', activeTab);
+      });
+  });
   </script>
   </body>
 </html>

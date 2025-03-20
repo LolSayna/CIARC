@@ -364,7 +364,9 @@ class StatePlanner(BaseModel):
                         else:
                             logger.debug("start image")
                             loop = asyncio.get_event_loop()
-                            self._run_get_image_task = loop.create_task(self.run_get_image())
+                            self._run_get_image_task = loop.create_task(
+                                self.run_get_image()
+                            )
                         await self.control_acquisition()
                     case State.Charge:
                         pass
