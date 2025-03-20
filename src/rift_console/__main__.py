@@ -29,7 +29,7 @@ from hypercorn.asyncio import serve
 from rift_console.image_helper import filter_by_date, get_angle, get_date
 import rift_console.rift_console
 import shared.constants as con
-from shared.models import State, CameraAngle, lens_size_by_angle, live_utc
+from shared.models import State, CameraAngle, ZonedObjective, lens_size_by_angle, live_utc
 import rift_console.image_processing
 import rift_console.ciarc_api as ciarc_api
 import rift_console.melvin_api as melvin_api
@@ -392,6 +392,34 @@ async def melvonaut_api() -> Response:
 
     return redirect(url_for("index"))
 
+async def async_world_map(filtered_images: list[str], choose_date: str) -> None:
+    panorama = rift_console.image_processing.stitch_images(
+        image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images
+    )
+
+    remove_offset = (
+        con.STITCHING_BORDER,
+        con.STITCHING_BORDER,
+        con.WORLD_X + con.STITCHING_BORDER,
+        con.WORLD_Y + con.STITCHING_BORDER,
+    )
+    panorama = panorama.crop(remove_offset)
+
+    space = ""
+    count = 0
+    path = f"{con.CONSOLE_STICHED_PATH}worldmap_{len(filtered_images)}_{choose_date}{space}.png"
+    while os.path.isfile(path):
+        count += 1
+        space = "_" + str(count)
+        path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
+
+    panorama.save(path)
+
+    await warning(
+        f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}"
+    )
+
+
 # Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
 async def results() -> Response:
@@ -417,7 +445,7 @@ async def results() -> Response:
                 await flash(res)
                 if res.startswith("Image uploaded successfully"):
                     await warning(
-                        f"Worldmap - {image_path}}."
+                        f"Worldmap - {image_path}."
                     )
 
         case "obj":
@@ -471,38 +499,10 @@ async def results() -> Response:
             for image in images:
                 if choose_date in image:
                     filtered_images.append(image)
-            logger.warning(
+            await warning(
                 f"Starting stitching, found {len(images)} images and {len(filtered_images)} with right day."
             )
-
-            panorama = rift_console.image_processing.stitch_images(
-                image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images
-            )
-
-            remove_offset = (
-                con.STITCHING_BORDER,
-                con.STITCHING_BORDER,
-                con.WORLD_X + con.STITCHING_BORDER,
-                con.WORLD_Y + con.STITCHING_BORDER,
-            )
-            panorama = panorama.crop(remove_offset)
-
-            space = ""
-            count = 0
-            path = f"{con.CONSOLE_STICHED_PATH}worldmap_{len(filtered_images)}_{choose_date}{space}.png"
-            while os.path.isfile(path):
-                count += 1
-                space = "_" + str(count)
-                path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
-
-            panorama.save(path)
-
-            logger.warning(
-                f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}"
-            )
-            await flash(
-                f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}"
-            )
+            asyncio.create_task(async_world_map(filtered_images=filtered_images, choose_date=choose_date))
         case "stitch_area":
             start = datetime.datetime.fromisoformat(
                 form.get("start_stitch", type=str) or "2025-01-01T00:00"
@@ -746,39 +746,9 @@ async def book_slot(slot_id: int) -> Response:
 
     return redirect(url_for("index"))
 
-@app.route("/stitch_obj/<int:obj_id>", methods=["POST"])
-async def stitch_obj(obj_id: int) -> Response:
-    logger.info(f"Stiching Zoned Objective with id {obj_id}.")
 
-    res_obj = None
-    for obj in console.zoned_objectives:
-        if obj.id == obj_id:
-            res_obj = obj
-            break
-    if not res_obj or not res_obj.zone:
-        await warning("Objective Id {obj_id} not found, cant stitch without coordinates.")
-        return redirect(url_for("index"))
-    await check_images()
-
-    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
-    images = [str(file) for file in folder.rglob("*.png") if file.is_file()]
-
-    filtered_images = []
-    for image in images:
-        if res_obj.optic_required in image:
-            filtered_images.append(image)
-
-    final_images = filter_by_date(
-        images=filtered_images, start=res_obj.start, end=res_obj.end
-    )
-
-    message = f"{len(filtered_images)} have right lens of which {len(final_images)} are in time window."
-    await warning(message)
-
-    if len(final_images) == 0:
-        await warning("Aborting since 0 images")
-        return redirect(url_for("index"))
-
+# helper func
+async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> None:
     final_images = [image.split("/")[-1] for image in final_images]
 
     panorama = rift_console.image_processing.stitch_images(
@@ -817,6 +787,44 @@ async def stitch_obj(obj_id: int) -> Response:
         f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}"
     )
 
+
+
+@app.route("/stitch_obj/<int:obj_id>", methods=["POST"])
+async def stitch_obj(obj_id: int) -> Response:
+    logger.info(f"Stiching Zoned Objective with id {obj_id}.")
+
+    res_obj = None
+    for obj in console.zoned_objectives:
+        if obj.id == obj_id:
+            res_obj = obj
+            break
+    if not res_obj or not res_obj.zone:
+        await warning("Objective Id {obj_id} not found, cant stitch without coordinates.")
+        return redirect(url_for("index"))
+    await check_images()
+
+    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+    images = [str(file) for file in folder.rglob("*.png") if file.is_file()]
+
+    filtered_images = []
+    for image in images:
+        if res_obj.optic_required in image:
+            filtered_images.append(image)
+
+    final_images = filter_by_date(
+        images=filtered_images, start=res_obj.start, end=res_obj.end
+    )
+
+    message = f"{len(filtered_images)} have right lens of which {len(final_images)} are in time window."
+    await warning(message)
+
+    if len(final_images) == 0:
+        await warning("Aborting since 0 images")
+        return redirect(url_for("index"))
+
+    # run this in background
+    asyncio.create_task(async_stitching(res_obj=res_obj, final_images=final_images))
+    
     return redirect(url_for("index"))
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
