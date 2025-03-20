@@ -117,8 +117,8 @@ class Achievement(BaseModel):
     done: bool
     points: int
     description: str
-    goal_parameter_threshold: Union[bool, int]
-    goal_parameter: Union[bool, int]
+    goal_parameter_threshold: Union[bool, int, float, str]
+    goal_parameter: Union[bool, int, float, str]
 
     @staticmethod
     def parse_api(data: dict) -> list["Achievement"]:

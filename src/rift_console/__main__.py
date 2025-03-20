@@ -52,6 +52,44 @@ app.secret_key = "yoursecret_key"
 console = rift_console.rift_console.RiftConsole()
 
 
+
+# [HELPER]
+async def check_images() -> None:
+    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+    console.console_image_count = sum(file.is_file() for file in folder.rglob("*.png"))
+    dates = set()
+    date_counts: dict[str, int] = defaultdict(int)
+    for image in folder.rglob("*.png"):
+        dates.add(get_date(image.name)[:10])
+        date_counts[get_date(image.name)[:10]] += 1
+    dates_list = list(dates)
+    dates_list.sort(reverse=True)
+    console.console_image_dates = [(date, date_counts[date]) for date in dates_list]
+
+    await info(
+        f"Counted {console.console_image_count} images on console from {len(console.console_image_dates)} different dates."
+    )
+
+def get_console_images() -> list[str]:
+    # list all images
+    images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
+    # filter to only png
+    images = [s for s in images if s.endswith(".png")]
+
+    return images
+
+async def info(mes: str) -> None:
+    logger.info(mes)
+    await flash(mes)
+
+async def warning(mes: str) -> None:
+    logger.warning(mes)
+    await flash(mes)
+
+
+
+
+# [ROUTES]
 @app.route(f"/{con.CONSOLE_STICHED_PATH}/<path:filename>")
 async def uploaded_file_stitched(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_STICHED_PATH, filename)
@@ -65,7 +103,6 @@ async def uploaded_file_live(filename):  # type: ignore
 @app.route(f"/{con.CONSOLE_DOWNLOAD_PATH}/<path:filename>")
 async def uploaded_file_download(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_DOWNLOAD_PATH, filename)
-
 
 @app.route("/stitches")
 async def stitches() -> str:
@@ -90,17 +127,6 @@ async def stitches() -> str:
     return await render_template(
         "stitched.html", images=images, worldMap=worldmap, zoned=zoned, hidden=hidden
     )
-
-
-def get_console_images() -> list[str]:
-    # list all images
-    images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
-    # filter to only png
-    images = [s for s in images if s.endswith(".png")]
-
-    return images
-
-
 @app.route("/downloads")
 async def downloads() -> str:
     images = get_console_images()
@@ -140,8 +166,6 @@ async def downloads() -> str:
         wide=wide,
         dates=dates_list,
     )
-
-
 @app.route("/live")
 async def live() -> str:
     # list all images
@@ -165,8 +189,6 @@ async def live() -> str:
     return await render_template(
         "live.html", images=images, count=count, narrow=narrow, normal=normal, wide=wide
     )
-
-
 @app.route("/", methods=["GET"])
 async def index() -> str:
     if console.live_telemetry:
@@ -244,6 +266,8 @@ async def index() -> str:
         )
 
 
+# [BUTTONS]
+
 @app.route("/melvonaut_api", methods=["POST"])
 async def melvonaut_api() -> Response:
     global console
@@ -285,11 +309,11 @@ async def melvonaut_api() -> Response:
                         ) as f:
                             f.write(r.content)
                         success += 1
-                        # logger.info(f'Downloaded "{image}" success!')
+                        logger.info(f'Downloaded "{image}" success!')
                     else:
                         failed += 1
                         logger.warning(f'File "{image}" failed!')
-                await flash(
+                await info(
                     f"Downloaded Images from Melvonaut, success: {success}, failed: {failed}, already exisiting: {already_there}"
                 )
             else:
@@ -299,13 +323,12 @@ async def melvonaut_api() -> Response:
             console.console_image_count = sum(
                 file.is_file() for file in folder.rglob("*.png")
             )
-
         case "clear":
             if melvin_api.clear_images():
                 if console.melvonaut_image_count != -1:
-                    await flash(f"Cleared {console.melvonaut_image_count} images.")
+                    await info(f"Cleared {console.melvonaut_image_count} images.")
                 else:
-                    await flash("Cleared all images.")
+                    await info("Cleared all images.")
                 console.melvonaut_image_count = 0
             else:
                 await flash("Clearing of images failed!")
@@ -334,7 +357,7 @@ async def melvonaut_api() -> Response:
                     else:
                         failed += 1
                         logger.warning(f'File "{log}" failed!')
-                await flash(
+                await info(
                     f"Downloaded Logs from Melvonaut, success: {success}, failed: {failed} to {con.CONSOLE_FROM_MELVONAUT_PATH + dir}"
                 )
             else:
@@ -365,31 +388,9 @@ async def melvonaut_api() -> Response:
             res = melvin_api.clear_events()
             await flash(res)
         case _:
-            logger.error(f"Unknown button pressed: {button}")
-            await flash(f"Unknown button pressed: {button}.")
+            await warning(f"Unknown button pressed: {button}.")
 
     return redirect(url_for("index"))
-
-
-async def check_images() -> None:
-    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
-    console.console_image_count = sum(file.is_file() for file in folder.rglob("*.png"))
-    dates = set()
-    date_counts: dict[str, int] = defaultdict(int)
-    for image in folder.rglob("*.png"):
-        dates.add(get_date(image.name)[:10])
-        date_counts[get_date(image.name)[:10]] += 1
-    dates_list = list(dates)
-    dates_list.sort(reverse=True)
-    console.console_image_dates = [(date, date_counts[date]) for date in dates_list]
-
-    logger.info(
-        f"Counted images on console, found {console.console_image_count} from {len(console.console_image_dates)} different dates."
-    )
-    await flash(
-        f"Counted images on console, found {console.console_image_count} from {len(console.console_image_dates)} different dates."
-    )
-
 
 # Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
@@ -405,10 +406,7 @@ async def results() -> Response:
         case "worldmap":
             image_path = form.get("path_world", type=str) or ""
             if not os.path.isfile(path=image_path):
-                await flash(
-                    f"Cant upload world map, file: {image_path} does not exist."
-                )
-                logger.warning(
+                await warning(
                     f"Cant upload world map, file: {image_path} does not exist."
                 )
                 return redirect(url_for("index"))
@@ -418,11 +416,8 @@ async def results() -> Response:
             if res:
                 await flash(res)
                 if res.startswith("Image uploaded successfully"):
-                    await flash(
-                        f"Worldmap - {image_path} - {live_utc().strftime("%d/%m/%Y")}."
-                    )
-                    logger.warning(
-                        f"Worldmap uploaded - {image_path} - {live_utc().strftime("%d/%m/%Y")}."
+                    await warning(
+                        f"Worldmap - {image_path}}."
                     )
 
         case "obj":
@@ -430,10 +425,7 @@ async def results() -> Response:
             id = form.get("objective_id", type=int) or 0
 
             if not os.path.isfile(image_path):
-                await flash(
-                    f"Cant upload objective {id}, file: {image_path} does not exist."
-                )
-                logger.warning(
+                await warning(
                     f"Cant upload objective {id}, file: {image_path} does not exist."
                 )
                 return redirect(url_for("index"))
@@ -443,10 +435,9 @@ async def results() -> Response:
             if res:
                 await flash(res)
                 if res.startswith("Image uploaded successfully"):
-                    await flash(f"Objective {id} - {image_path}")
-                    logger.warning(f"Objective {id} uploaded - {image_path}")
+                    await warning(f"Objective {id} - {image_path}")
             else:
-                await flash(f"Could not upload objective {id} - {image_path}")
+                await warning(f"Could not upload objective {id} - {image_path}")
 
         case "beacon":
             id = form.get("beacon_id", type=int) or 0
@@ -578,21 +569,16 @@ async def results() -> Response:
                 panorama_path=path, X1=zone[0], Y1=zone[1], X2=zone[2], Y2=zone[3]
             )
 
-            logger.warning(
-                f"Saved stitch of {optic_required}_{zone[0]}_{zone[1]}_{zone[2]}_{zone[3]} - {len(final_images)} images to {path}"
-            )
-            await flash(
+            await warning(
                 f"Saved stitch of {optic_required}_{zone[0]}_{zone[1]}_{zone[2]}_{zone[3]} - {len(final_images)} images to {path}"
             )
 
         case _:
-            logger.error(f"Unknown button pressed: {button}")
-            await flash(f"Unknown button pressed: {button}.")
+            await warning(f"Unknown button pressed: {button}.")
 
     await update_telemetry()
 
     return redirect(url_for("index"))
-
 
 # Add/Modify zoned_objectives
 @app.route("/obj_mod", methods=["POST"])
@@ -672,15 +658,11 @@ async def obj_mod() -> Response:
                                 ]
                             )
 
-                logger.info(
-                    f"Wrote {len(console.zoned_objectives)} to {csv_file_path}."
-                )
-                await flash(
+                await info(
                     f"Wrote {len(console.zoned_objectives)} to {csv_file_path}."
                 )
             else:
-                logger.warning("Cant write objective, no data.")
-                await flash("Cant write objective, no data.")
+                await warning("Cant write objective, no data.")
 
         case "zoned":
             secret = form.get("secret", type=str)
@@ -743,13 +725,11 @@ async def obj_mod() -> Response:
             ):
                 await flash("Adding EBT Objective failed, check logs.")
         case _:
-            logger.error(f"Unknown button pressed: {button}")
-            await flash(f"Unknown button pressed: {button}.")
+            await warning(f"Unknown button pressed: {button}.")
 
     await update_telemetry()
 
     return redirect(url_for("index"))
-
 
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
@@ -766,7 +746,6 @@ async def book_slot(slot_id: int) -> Response:
 
     return redirect(url_for("index"))
 
-
 @app.route("/stitch_obj/<int:obj_id>", methods=["POST"])
 async def stitch_obj(obj_id: int) -> Response:
     logger.info(f"Stiching Zoned Objective with id {obj_id}.")
@@ -777,10 +756,7 @@ async def stitch_obj(obj_id: int) -> Response:
             res_obj = obj
             break
     if not res_obj or not res_obj.zone:
-        logger.warning(
-            "Objective Id {obj_id} not found, cant stitch without coordinates."
-        )
-        await flash("Objective Id {obj_id} not found, cant stitch without coordinates.")
+        await warning("Objective Id {obj_id} not found, cant stitch without coordinates.")
         return redirect(url_for("index"))
     await check_images()
 
@@ -797,12 +773,10 @@ async def stitch_obj(obj_id: int) -> Response:
     )
 
     message = f"{len(filtered_images)} have right lens of which {len(final_images)} are in time window."
-    logger.warning(message)
-    await flash(message)
+    await warning(message)
 
     if len(final_images) == 0:
-        logger.warning("Aborting since 0 images")
-        await flash("Aborting since 0 images")
+        await warning("Aborting since 0 images")
         return redirect(url_for("index"))
 
     final_images = [image.split("/")[-1] for image in final_images]
@@ -839,15 +813,11 @@ async def stitch_obj(obj_id: int) -> Response:
         Y2=res_obj.zone[3],
     )
 
-    logger.warning(
-        f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}"
-    )
-    await flash(
+    await warning(
         f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}"
     )
 
     return redirect(url_for("index"))
-
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
 async def del_obj(obj_id: int) -> Response:
@@ -855,7 +825,6 @@ async def del_obj(obj_id: int) -> Response:
     await update_telemetry()
 
     return redirect(url_for("index"))
-
 
 # Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
@@ -928,7 +897,6 @@ async def satellite_handler() -> Response:
     await update_telemetry()
     return redirect(url_for("index"))
 
-
 # Wrapper for all Simulation Manipulation buttons
 @app.route("/control_handler", methods=["POST"])
 async def control_handler() -> Response:
@@ -984,12 +952,10 @@ async def control_handler() -> Response:
             else:
                 logger.warning("Cant change sim_speed since speed not set!")
         case _:
-            logger.error(f"Unknown button pressed: {button}")
-            await flash(f"Unknown button pressed: {button}.")
+            await warning(f"Unknown button pressed: {button}.")
 
     await update_telemetry()
     return redirect(url_for("index"))
-
 
 # Pulls API after some changes
 async def update_telemetry() -> None:

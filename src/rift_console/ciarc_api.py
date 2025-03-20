@@ -379,10 +379,10 @@ def upload_objective(image_path: str, objective_id: int) -> Any:
     )
     if d:
         logger.info(f"Console: Uploaded objective - {d}.")
-        shutil.copyfile(
-            image_path,
-            "src/rift_console/static/media/" + str(objective_id) + "objective.png",
-        )
+        # shutil.copyfile(
+        #     image_path,
+        #     con.CONSOLE_STICHED_PATH + str(objective_id) + "objective.png",
+        # )
         return d
     else:
         logger.warning("Console: could not upload objective")
