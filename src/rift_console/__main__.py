@@ -306,17 +306,17 @@ async def melvonaut_api() -> Response:
 
         case "mapping" | "ebt":
             if melvin_api.set_setting(setting="CURRENT_MELVIN_TASK", value=button):
-                await info(f"Set MelvinSettings-Task to {button}.")
+                await info(f"Set MelvinSettings-Task to {button} done.")
                 console.melvin_task = melvin_api.get_setting(
                     setting="CURRENT_MELVIN_TASK"
                 )
             else:
-                await warning(f"Set MelvinSettings-Task to mapping {button}!")
+                await warning(f"Set MelvinSettings-Task to {button} failed!")
         case "narrow" | "normal" | "wide":
             if melvin_api.set_setting(
                 setting="TARGET_CAMERA_ANGLE_ACQUISITION", value=button
             ):
-                await info(f"Set MelvinSettings-Angle to {button}.")
+                await info(f"Set MelvinSettings-Angle to {button} done.")
                 console.melvin_lens = melvin_api.get_setting(
                     setting="TARGET_CAMERA_ANGLE_ACQUISITION"
                 )

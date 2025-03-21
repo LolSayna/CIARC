@@ -46,7 +46,7 @@ def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) ->
             return {}
         case _:
             # unknow error
-            logger.warning(f"Unkown error, could not contact satellite? - {r}.")
+            logger.warning(f"Unknown error, could not contact satellite? - {r}.")
             return {}
 
 
@@ -104,7 +104,7 @@ def set_setting(setting: str, value: str) -> bool:
         check = melvonaut_api(
             method=HttpCode.POST, endpoint="/api/post_get_setting", json={setting: ""}
         )
-
+        logger.error(f"{check.json()} {value}")
         if check.json()[setting] == value:
             logger.info(f'Mevlonaut set_Settting "{setting}" to "{value}" done.')
             return True
