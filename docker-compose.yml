@@ -15,6 +15,7 @@ services:
       #- ./data:/app/data
       - ./.env:/app/.env
       - ./logs/rift_console:/app/logs/rift_console
+      - ./logs/melvonaut:/app/logs/melvonaut
 
   mkdocs:
     build:

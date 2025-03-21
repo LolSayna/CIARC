@@ -108,7 +108,7 @@ def set_setting(setting: str, value: str) -> bool:
         if check.json()[setting] == value:
             logger.info(f'Mevlonaut set_Settting "{setting}" to "{value}" done.')
             return True
-    logger.warning('Mevlonaut set_Settting "{setting}" to "{value}" failed.')
+    logger.warning(f'Mevlonaut set_Settting "{setting}" to "{value}" failed.')
     return False
 
 
