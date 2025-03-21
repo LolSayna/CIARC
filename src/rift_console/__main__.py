@@ -255,6 +255,8 @@ async def index() -> str:
             melvonaut_image_count=console.melvonaut_image_count,
             console_image_count=console.console_image_count,
             console_image_dates=console.console_image_dates,
+            melvin_task=console.melvin_task,
+            melvin_lens=console.melvin_lens,
         )
     else:
         return await render_template(
@@ -276,6 +278,8 @@ async def index() -> str:
             melvonaut_image_count=console.melvonaut_image_count,
             console_image_count=console.console_image_count,
             console_image_dates=console.console_image_dates,
+            melvin_task=console.melvin_task,
+            melvin_lens=console.melvin_lens,
         )
 
 
@@ -295,6 +299,29 @@ async def melvonaut_api() -> Response:
             console.live_melvonaut_api = melvin_api.live_melvonaut()
             if not console.live_melvonaut_api:
                 await flash("Could not contact Melvonaut API - live_melvonaut.")
+            console.melvin_task = melvin_api.get_setting(setting="CURRENT_MELVIN_TASK")
+            console.melvin_lens = melvin_api.get_setting(
+                setting="TARGET_CAMERA_ANGLE_ACQUISITION"
+            )
+
+        case "mapping" | "ebt":
+            if melvin_api.set_setting(setting="CURRENT_MELVIN_TASK", value=button):
+                await info(f"Set MelvinSettings-Task to {button}.")
+                console.melvin_task = melvin_api.get_setting(
+                    setting="CURRENT_MELVIN_TASK"
+                )
+            else:
+                await warning(f"Set MelvinSettings-Task to mapping {button}!")
+        case "narrow" | "normal" | "wide":
+            if melvin_api.set_setting(
+                setting="TARGET_CAMERA_ANGLE_ACQUISITION", value=button
+            ):
+                await info(f"Set MelvinSettings-Angle to {button}.")
+                console.melvin_lens = melvin_api.get_setting(
+                    setting="TARGET_CAMERA_ANGLE_ACQUISITION"
+                )
+            else:
+                await warning(f"Set MelvinSettings-Angle to {button} failed!")
         case "count":
             await check_images()
 
@@ -447,8 +474,8 @@ async def results() -> Response:
             await check_images()
 
         case "worldmap":
-            image_path = (
-                con.CONSOLE_STICHED_PATH + form.get("path_world", type=str) or ""
+            image_path = con.CONSOLE_STICHED_PATH + (
+                form.get("path_world", type=str) or "error_path"
             )
             if not os.path.isfile(path=image_path):
                 await warning(
@@ -464,7 +491,9 @@ async def results() -> Response:
                     await warning(f"Worldmap - {image_path}.")
 
         case "obj":
-            image_path = con.CONSOLE_STICHED_PATH + form.get("path_obj", type=str) or ""
+            image_path = con.CONSOLE_STICHED_PATH + (
+                form.get("path_obj", type=str) or "error_path"
+            )
             id = form.get("objective_id", type=int) or 0
 
             if not os.path.isfile(image_path):
@@ -793,6 +822,10 @@ async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> N
         path = f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
 
     panorama.save(path)
+
+    if not res_obj.zone:
+        await warning(f"{res_obj} has no zone, can not stitch, aborting!")
+        return
 
     rift_console.image_processing.cut(
         panorama_path=path,

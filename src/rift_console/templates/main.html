@@ -142,6 +142,7 @@
               <div class="progress">
                 <div class="progress-bar" style="width: {{api.cpu_perc}}%;" aria-valuenow="{{api.cpu_perc}}" aria-valuemin="0" aria-valuemax="100">CPU Util {{api.cpu_perc}}%</div>
               </div>
+              <p>Current Task: {{melvin_task}} & lens: {{melvin_lens}}</p>
             {% else %}
             <p>No data avaiable</p>
             {% endif %}
@@ -435,14 +436,11 @@
               </div>
               <!-- State -->
               <div class="row">
-                <div class="col-md-4">
-                  <button type="submit" class="btn btn-success w-100" name="button" value="acquisition">Acq.</button>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="mapping">Mapping</button>
                 </div>
-                <div class="col-md-4">
-                  <button type="submit" class="btn btn-success w-100" name="button" value="charge">Charge</button>
-                </div>
-                <div class="col-md-4">
-                  <button type="submit" class="btn btn-success w-100" name="button" value="communication">Com.</button>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-success w-100" name="button" value="ebt">Communication</button>
                 </div>
               </div>
               <!-- Camera angle -->

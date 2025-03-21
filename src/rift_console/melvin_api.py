@@ -12,7 +12,7 @@ url = "0.0.0.0"
 port = "8080"
 
 
-def melvonaut_api(method: HttpCode, endpoint: str, json_str: str = "") -> Any:
+def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) -> Any:
     try:
         with requests.Session() as s:
             match method:
@@ -22,7 +22,7 @@ def melvonaut_api(method: HttpCode, endpoint: str, json_str: str = "") -> Any:
                     r = s.post(
                         "http://" + url + ":" + port + endpoint,
                         timeout=5,
-                        json={"file": json_str},
+                        json=json,
                     )
 
     except requests.exceptions.ConnectionError:
@@ -74,6 +74,42 @@ def clear_events() -> str:
         res = "Mevlonaut get_clear_events failed, is okay if event-log is empty."
     logger.warning(res)
     return res
+
+
+def get_setting(setting: str) -> str:
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return ""
+    check = melvonaut_api(
+        method=HttpCode.POST, endpoint="/api/post_get_setting", json={setting: ""}
+    )
+
+    if check:
+        value = str(check.json()[setting])
+        logger.info(f'Mevlonaut get settting "{setting}" is "{value}" done.')
+        return value
+    logger.warning('Mevlonaut get setting "{setting}" failed.')
+    return ""
+
+
+def set_setting(setting: str, value: str) -> bool:
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return False
+    r = melvonaut_api(
+        method=HttpCode.POST, endpoint="/api/post_set_setting", json={setting: value}
+    )
+
+    if r:
+        check = melvonaut_api(
+            method=HttpCode.POST, endpoint="/api/post_get_setting", json={setting: ""}
+        )
+
+        if check.json()[setting] == value:
+            logger.info(f'Mevlonaut set_Settting "{setting}" to "{value}" done.')
+            return True
+    logger.warning('Mevlonaut set_Settting "{setting}" to "{value}" failed.')
+    return False
 
 
 def download_events() -> str:
@@ -184,7 +220,7 @@ def get_download_save_log(log_name: str) -> Any:
         return None
 
     r = melvonaut_api(
-        method=HttpCode.POST, endpoint="/api/post_download_log", json_str=log_name
+        method=HttpCode.POST, endpoint="/api/post_download_log", json={"file": log_name}
     )
 
     if r:
@@ -217,7 +253,9 @@ def get_download_save_image(image_name: str) -> Any:
         return None
 
     r = melvonaut_api(
-        method=HttpCode.POST, endpoint="/api/post_download_image", json_str=image_name
+        method=HttpCode.POST,
+        endpoint="/api/post_download_image",
+        json={"file": image_name},
     )
 
     if r:
