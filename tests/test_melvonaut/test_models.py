@@ -24,6 +24,6 @@ async def initialize_events():
 
 
 def test_load_events_from_csv(initialize_events):
-    events = Event.load_events_from_csv()
+    events = Event.load_events_from_csv(path=con.EVENT_LOCATION_CSV)
     assert len(events) > 0
     assert isinstance(events[0], Event)

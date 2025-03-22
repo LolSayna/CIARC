@@ -4,6 +4,10 @@ from loguru import logger
 
 import shared.constants as con
 from melvonaut.settings import settings
+from shared.models import Event
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 ##### LOGGING #####
 logger.remove()
@@ -25,14 +29,21 @@ class ping:
 
 
 # [CONSTANTS]
-scaling_factor = 100
+scaling_factor = 1
 # ( 20400, 1400)
 
 x_0 = 0
+
 y_0 = 0
 x_max = int(con.WORLD_X / scaling_factor)
 y_max = int(con.WORLD_Y / scaling_factor)
 max_offset = 325
+
+path: str = con.CONSOLE_FROM_MELVONAUT_PATH + "Events.csv"
+id = 125
+identifyer: str = f"GALILEO_MSG_EB,ID_{id},DISTANCE_"
+
+events = Event.load_events_from_csv(path=path)
 
 # [DATA] x, y, distance
 # data = [(4097, 7652, 2041), (5758, 8357, 688), (6220, 8553, 1075), (7245, 8989, 1669)]
@@ -52,16 +63,35 @@ data = [
 # [PREPROCESSING]
 processed = []
 print(f"World is ({x_0},{y_0}) to ({x_max},{y_max}).")
-for d in data:
-    s = ping(
-        x=int(d[0] / scaling_factor),
-        y=int(d[1] / scaling_factor),
-        d=d[2] / scaling_factor,
-        mind=int((d[2] - max_offset) / scaling_factor),
-        maxd=int((d[2] + max_offset) / scaling_factor),
-    )
-    processed.append(s)
-    print(f"Added: {s}")
+# for d in data:
+#     s = ping(
+#         x=int(d[0] / scaling_factor),
+#         y=int(d[1] / scaling_factor),
+#         d=d[2] / scaling_factor,
+#         mind=int((d[2] - max_offset) / scaling_factor),
+#         maxd=int((d[2] + max_offset) / scaling_factor),
+#     )
+#     processed.append(s)
+#     print(f"Added: {s}")
+
+
+def f(d: float) -> float:
+    res = 225 + ((0.4 * (d + 1)) / 4)
+    return float(res)
+
+
+for event in events:
+    if identifyer in event.event:
+        (d, x, y) = event.easy_parse()
+        s = ping(
+            x=int(x / scaling_factor),
+            y=int(y / scaling_factor),
+            d=d / scaling_factor,
+            mind=int((d - f(d)) / scaling_factor),
+            maxd=int((d + f(d)) / scaling_factor),
+        )
+        processed.append(s)
+
 
 print("Done parsing")
 
@@ -101,5 +131,50 @@ for x, y in res:
     if is_valid:
         filtered_res.append((x, y))
 
-print(filtered_res)
+# print(filtered_res)
 print(f"{len(filtered_res)} many matched over all points")
+
+x_list, y_list = [], []
+for x, y in filtered_res:
+    x_list.append(x)
+    y_list.append(y)
+
+
+def find_centroid(points: list[tuple[int, int]]) -> tuple[float, float]:
+    # Unpack the list of points into two lists: xs and ys
+    xs, ys = zip(*points)
+
+    # Calculate the centroid coordinates
+    centroid_x = sum(xs) / len(xs)
+    centroid_y = sum(ys) / len(ys)
+
+    return (centroid_x, centroid_y)
+
+
+# Example usage:
+centroid = find_centroid(filtered_res)
+print("The centroid of the points is:", int(centroid[0]), int(centroid[1]))
+
+
+fig = plt.figure()
+plt.xlabel("Width")
+plt.ylabel("Height")
+ax = fig.gca()
+for p in processed:
+    circle_inner = patches.Circle(
+        (p.x, p.y), p.mind, edgecolor="green", facecolor="none", linewidth=0.1
+    )
+    circle_outer = patches.Circle(
+        (p.x, p.y), p.maxd, edgecolor="blue", facecolor="none", linewidth=0.1
+    )
+    ax.add_patch(circle_inner)
+    ax.add_patch(circle_outer)
+circle_guess = patches.Circle(
+    (centroid[0], centroid[1]), 75, edgecolor="yellow", linewidth=1
+)
+ax.add_patch(circle_guess)
+ax.plot(x_list, y_list, "ro")
+# ax.plot(centroid[0], centroid[1], color='yellow', marker='o')
+# ax.set_xlim(0,x_max)
+# ax.set_ylim(0, y_max)
+plt.show()

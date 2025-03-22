@@ -58,7 +58,7 @@ class StatePlanner(BaseModel):
     _current_obj_name: str = ""
 
     def model_post_init(self, __context__: Any) -> None:
-        self.recent_events = Event.load_events_from_csv()
+        self.recent_events = Event.load_events_from_csv(path=con.EVENT_LOCATION_CSV)
 
     def get_current_state(self) -> State:
         if self.current_telemetry is None:

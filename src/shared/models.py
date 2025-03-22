@@ -272,6 +272,10 @@ def live_utc() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
 
 
+def time_seconds(date: datetime.datetime) -> str:
+    return date.strftime("%Y-%m-%dT%H:%M:%S")
+
+
 class MelvinImage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -334,7 +338,16 @@ class Event(BaseModel):
     current_y: Optional[float] = None
 
     def __str__(self) -> str:
-        return self.data
+        return f"Event: {self.event} (x,y)=({self.current_x},{self.current_y}) t={time_seconds(self.timestamp)}"
+
+    def easy_parse(self) -> tuple[float, float, float]:
+        pattern = "DISTANCE_(\d+\.\d+)"
+        dist = re.findall(pattern, self.event)[0]
+        if dist and self.current_x and self.current_y:
+            return (float(dist), self.current_x, self.current_y)
+        else:
+            logger.warning(f"Tried to parse incomplete event: {self}")
+            return (0.0, 0.0, 0.0)
 
     async def to_csv(self) -> None:
         event_dict = self.model_dump()
@@ -353,12 +366,12 @@ class Event(BaseModel):
             # logger.debug(f"Writing event to {con.EVENT_LOCATION_CSV}")
 
     @staticmethod
-    def load_events_from_csv() -> list["Event"]:
+    def load_events_from_csv(path: str) -> list["Event"]:
         events = []
-        if not Path(con.EVENT_LOCATION_CSV).is_file():
-            logger.warning(f"No event file found under {con.EVENT_LOCATION_CSV}")
+        if not Path(path).is_file():
+            logger.warning(f"No event file found under {path}")
         else:
-            with open(con.EVENT_LOCATION_CSV, "r") as f:
+            with open(path, "r") as f:
                 for row in csv.DictReader(f):
                     read_event = Event(
                         event=row["event"],
@@ -368,5 +381,5 @@ class Event(BaseModel):
                         current_y=row["current_y"],
                     )
                     events.append(read_event)
-            logger.info(f"Loaded {len(events)} events from {con.EVENT_LOCATION_CSV}")
+            logger.info(f"Loaded {len(events)} events from {path}")
         return events
