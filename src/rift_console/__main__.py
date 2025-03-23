@@ -527,7 +527,7 @@ async def results() -> Response:
                     "The beacon could not be found around the given location"
                 ):
                     await flash(
-                        f"Attempts made: {res["attempts_made"]} of 3, Location was ({height},{width})"
+                        f"Attempts made: {res["attempts_made"]} of 3, guess was ({width},{height})"
                     )
                 if status.startswith("No more rescue attempts left"):
                     await flash(f"for EBT: {id}")
