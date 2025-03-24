@@ -157,13 +157,10 @@ class StatePlanner(BaseModel):
         async with aiohttp.ClientSession() as session:
             async with session.put(con.CONTROL_ENDPOINT, json=request_body) as response:
                 if response.status == 200:
+                    self.current_telemetry.angle = new_angle
                     logger.info(f"Camera angle set to {new_angle}")
                 else:
                     logger.error(f"Failed to set camera angle to {new_angle}")
-        # set if angle got set
-        # TODO fix later
-        # await loop.run_get_observations()
-        # await loop.create_task(get_observations())
 
     async def trigger_state_transition(self, new_state: State) -> None:
         if new_state in [State.Transition, State.Unknown, State.Deployment, State.Safe]:
@@ -244,12 +241,14 @@ class StatePlanner(BaseModel):
                 # in EBT leave once everything is set
                 if settings.CURRENT_MELVIN_TASK == MELVINTask.EBT:
                     if (
-                        self.current_telemetry.angle
+                        self._target_vel_x
+                        and self._target_vel_y
+                        and self.current_telemetry.angle
                         == settings.TARGET_CAMERA_ANGLE_ACQUISITION
-                        or self._target_vel_x == self.current_telemetry.vx
-                        or self._target_vel_y == self.current_telemetry.vy
+                        and self._target_vel_x == self.current_telemetry.vx
+                        and self._target_vel_y == self.current_telemetry.vy
                     ):
-                        await self.trigger_state_transition(State.Acquisition)
+                        await self.trigger_state_transition(State.Communication)
 
                 await self.switch_if_battery_low(State.Charge, State.Acquisition)
 
@@ -262,21 +261,23 @@ class StatePlanner(BaseModel):
                     if settings.CURRENT_MELVIN_TASK == MELVINTask.EBT:
                         # starting ebt, but speed/angle not set yet
 
-                        # if self.current_telemetry.angle != con.TARGET_CAMERA_ANGLE_ACQUISITION or self._target_vel_x != self.current_telemetry.vx or self._target_vel_y != self.current_telemetry.vy:
+                        logger.error(
+                            f"EBT Task, Angle: telemetry: {self.current_telemetry.angle} vs target: {settings.TARGET_CAMERA_ANGLE_ACQUISITION}"
+                        )
+                        logger.error(
+                            f"EBT Task, vx: {self.current_telemetry.vx} vs target: {self._target_vel_x}"
+                        )
+                        logger.error(
+                            f"EBT Task, vy: {self.current_telemetry.vy} vs target: {self._target_vel_y}"
+                        )
                         if (
-                            self.current_telemetry.angle
+                            self._target_vel_x is None
+                            or self._target_vel_y is None
+                            or self.current_telemetry.angle
                             != settings.TARGET_CAMERA_ANGLE_ACQUISITION
+                            or self._target_vel_x != self.current_telemetry.vx
+                            or self._target_vel_y != self.current_telemetry.vy
                         ):
-                            logger.info("In Ebt, setting up angle")
-                            logger.info(
-                                f"{self.current_telemetry.angle} { settings.TARGET_CAMERA_ANGLE_ACQUISITION}"
-                            )
-                            logger.info(
-                                f"{self._target_vel_x} {self.current_telemetry.vx}"
-                            )
-                            logger.info(
-                                f"{self._target_vel_y} {self.current_telemetry.vy}"
-                            )
                             await self.trigger_state_transition(State.Acquisition)
                         else:
                             # logger.info("starting comms!")
@@ -641,8 +642,8 @@ class StatePlanner(BaseModel):
         await self.trigger_camera_angle_change(settings.TARGET_CAMERA_ANGLE_ACQUISITION)
 
         # TODO stop velocity change if battery is low
-        if self.current_telemetry and self.current_telemetry.battery < 25:
-            logger.error("Battery low, TODO")
+        if self.current_telemetry and self.current_telemetry.battery < 10:
+            logger.error("Battery low, cant accelerate any more!")
 
         match settings.TARGET_CAMERA_ANGLE_ACQUISITION:
             case CameraAngle.Wide:

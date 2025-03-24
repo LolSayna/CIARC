@@ -1,4 +1,5 @@
 from typing import Any, Optional
+import paramiko
 from pydantic import BaseModel
 import requests
 import csv
@@ -10,6 +11,42 @@ import shared.constants as con
 # TODO
 url = "0.0.0.0"
 port = "8080"
+
+
+# TODO not tested so far
+def create_tunnel() -> None:
+    with open(".ssh-pw") as file:
+        PASSWORD = file.read()
+    REMOTE_USER = "root"  # Remote SSH username
+    REMOTE_HOST = "10.100.50.1"  # Remote host IP
+    LOCAL_PORT = 8080  # Local port to forward
+    REMOTE_PORT = 8080  # Remote port to forward to
+
+    # Create an SSH client
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        # Connect to the remote host using the given password
+        client.connect(hostname=REMOTE_HOST, username=REMOTE_USER, password=PASSWORD)
+
+        # Set up port forwarding
+        transport = client.get_transport()
+        local_address = ("localhost", LOCAL_PORT)
+        remote_address = ("localhost", REMOTE_PORT)
+        if transport:
+            channel = transport.open_channel(
+                "direct-tcpip", remote_address, local_address
+            )
+
+        logger.info(f"Port forwarding {LOCAL_PORT} -> {REMOTE_PORT} on {REMOTE_HOST}")
+
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+
+    finally:
+        channel.close()
+        client.close()
 
 
 def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) -> Any:

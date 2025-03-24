@@ -641,7 +641,7 @@ async def obj_mod() -> Response:
             await update_telemetry()
             if console.zoned_objectives:
                 csv_file_path = (
-                    con.CONSOLE_FROM_MELVONAUT_PATH
+                    con.CONSOLE_LOG_PATH
                     + "ObjectiveDump_"
                     + str(len(console.zoned_objectives))
                     + "_"
