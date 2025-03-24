@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 from loguru import logger
@@ -150,7 +151,16 @@ def draw_res(
         logger.info(f"Centroid is: ({int(centroid[0])},{int(centroid[1])})")
         plt.show()
     else:
-        plt.savefig(con.CONSOLE_EBT_PATH + f"EBT_{id}_{len(pings)}.png", dpi=1000)
+        space = ""
+        count = 0
+        path = (
+            con.CONSOLE_EBT_PATH + f"EBT_{id}_{len(pings)}.png"
+        )
+        while os.path.isfile(path):
+            count += 1
+            space = "_" + str(count)
+            path = con.CONSOLE_EBT_PATH + f"EBT_{id}_{len(pings)}{space}.png"
+        plt.savefig(path, dpi=1000)
 
     return (int(centroid[0]), int(centroid[1]))
 

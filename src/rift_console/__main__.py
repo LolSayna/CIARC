@@ -443,26 +443,33 @@ async def melvonaut_api() -> Response:
             console.console_image_count = sum(
                 file.is_file() for file in folder.rglob("*.png")
             )
-
         case "clear_logs":
             if melvin_api.clear_logs():
                 await flash("Cleared all logs.")
             else:
                 await flash("Clearing of logs failed!")
-
         case "down_telemetry":
             res = melvin_api.download_telemetry()
-            await flash(res)
+            if res:
+                await flash(res)
+            else:
+                await flash("Could not contact Melvonaut API - cant download telemetry.")
         case "clear_telemetry":
             res = melvin_api.clear_telemetry()
-            await flash(res)
-
+            if res:
+                await flash(res)
+            else:
+                await flash("Could not contact Melvonaut API - cant clear telemetry.")
         case "down_events":
-            res = melvin_api.download_events()
-            await flash(res)
+            if res:
+                await flash(res)
+            else:
+                await flash("Could not contact Melvonaut API - cant download events.")
         case "clear_events":
-            res = melvin_api.clear_events()
-            await flash(res)
+            if res:
+                await flash(res)
+            else:
+                await flash("Could not contact Melvonaut API - cant clear events.")
         case _:
             await warning(f"Unknown button pressed: {button}.")
 
