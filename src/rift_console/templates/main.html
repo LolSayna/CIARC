@@ -746,7 +746,6 @@
                 <td>{{ obj.description }}</td>
                 <td>{{ obj.start.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
                 <td>{{ obj.end.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
-                { for}
                 {% if obj.id in completed_ids %}
                 <td>{{ obj.attempts_made }} - FOUND</td>
                 {% else %}
