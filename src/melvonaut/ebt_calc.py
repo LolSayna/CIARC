@@ -119,17 +119,17 @@ def draw_res(
     ax.set_ylim(0, y_max)
 
     # plot matched area
-    ax.plot(x_list, y_list, "ro", zorder=1)
+    ax.plot(x_list, y_list, "ro", zorder=4)
     legend_area = patches.Patch(edgecolor="red", facecolor="red", linewidth=1, label='Matched area')
 
     # plot pings
     for p in pings:
         ax.plot(p.x, p.y, 'x', color='grey', markersize=5, zorder=3)
         circle_inner = patches.Circle(
-            (p.x, p.y), p.mind, edgecolor="green", facecolor="none", linewidth=0.2
+            (p.x, p.y), p.mind, edgecolor="green", facecolor="none", linewidth=0.2, zorder=2
         )
         circle_outer = patches.Circle(
-            (p.x, p.y), p.maxd, edgecolor="blue", facecolor="none", linewidth=0.2
+            (p.x, p.y), p.maxd, edgecolor="blue", facecolor="none", linewidth=0.2, zorder=2
         )
         ax.add_patch(circle_inner)
         ax.add_patch(circle_outer)
@@ -140,7 +140,7 @@ def draw_res(
 
     # plot centroid
     circle_guess = patches.Circle(
-        (centroid[0], centroid[1]), 75, edgecolor="violet", facecolor="violet", linewidth=1, zorder=2
+        (centroid[0], centroid[1]), 75, edgecolor="violet", facecolor="violet", linewidth=1, zorder=5
     )
     ax.add_patch(circle_guess)
     legend_guess = patches.Patch(edgecolor="violet", facecolor="violet", linewidth=1, label=f'Best guess\n({int(centroid[0])}, {int(centroid[1])})')
