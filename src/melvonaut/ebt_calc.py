@@ -111,34 +111,46 @@ def draw_res(
     centroid = find_centroid(res)
 
     plt.style.use("bmh")
-    fig = plt.figure()
+    _, ax = plt.subplots()
     plt.title(f"Emergency Beacon Tracker {id} - {len(pings)} pings")
     plt.xlabel("Width")
     plt.ylabel("Height")
-    ax = fig.gca()
     ax.set_xlim(0, x_max)
     ax.set_ylim(0, y_max)
 
+    # plot matched area
+    ax.plot(x_list, y_list, "ro", zorder=1)
+    legend_area = patches.Patch(edgecolor="red", facecolor="red", linewidth=1, label='Matched area')
+
+    # plot pings
     for p in pings:
+        ax.plot(p.x, p.y, 'x', color='grey', markersize=5, zorder=3)
         circle_inner = patches.Circle(
-            (p.x, p.y), p.mind, edgecolor="green", facecolor="none", linewidth=0.1
+            (p.x, p.y), p.mind, edgecolor="green", facecolor="none", linewidth=0.2
         )
         circle_outer = patches.Circle(
-            (p.x, p.y), p.maxd, edgecolor="blue", facecolor="none", linewidth=0.1
+            (p.x, p.y), p.maxd, edgecolor="blue", facecolor="none", linewidth=0.2
         )
         ax.add_patch(circle_inner)
         ax.add_patch(circle_outer)
+    legend_point = plt.Line2D([0], [0], linestyle='None', marker='x', markerfacecolor='grey', markeredgecolor='grey', markersize=6, label='Ping Location')
+    legend_inner = patches.Patch(edgecolor="green", facecolor="none", linewidth=1, label='Minimum Distance')
+    legend_outer = patches.Patch(edgecolor="blue", facecolor="none", linewidth=1, label='Maximum Distance')
+
+
+    # plot centroid
     circle_guess = patches.Circle(
-        (centroid[0], centroid[1]), 75, edgecolor="yellow", linewidth=1
+        (centroid[0], centroid[1]), 75, edgecolor="violet", facecolor="violet", linewidth=1, zorder=2
     )
     ax.add_patch(circle_guess)
-    ax.plot(x_list, y_list, "ro")
-    ax.plot(centroid[0], centroid[1], color="yellow", marker="o")
+    legend_guess = patches.Patch(edgecolor="violet", facecolor="violet", linewidth=1, label=f'Best guess\n({int(centroid[0])}, {int(centroid[1])})')
 
-    plt.savefig(con.CONSOLE_EBT_PATH + f"EBT_{id}_{len(pings)}.png", dpi=1000)
+    ax.legend(handles=[legend_point, legend_inner, legend_outer, legend_guess, legend_area], loc='best')
     if show:
         logger.info(f"Centroid is: ({int(centroid[0])},{int(centroid[1])})")
         plt.show()
+    else:
+        plt.savefig(con.CONSOLE_EBT_PATH + f"EBT_{id}_{len(pings)}.png", dpi=1000)
 
     return (int(centroid[0]), int(centroid[1]))
 
