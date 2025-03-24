@@ -58,6 +58,10 @@ logger.add(
 
 app = Quart(__name__)
 app.secret_key = "yoursecret_key"
+app.config['ebt'] = con.CONSOLE_EBT_PATH
+app.config['live'] = con.CONSOLE_LIVE_PATH
+app.config['stitched'] = con.CONSOLE_STICHED_PATH
+app.config['downloaded'] = con.CONSOLE_DOWNLOAD_PATH
 console = rift_console.rift_console.RiftConsole()
 
 
@@ -160,7 +164,7 @@ async def stitches() -> str:
     logger.warning(f"Showing {count} stitched images.")
     # logger.info(f"Images: {images}")
     return await render_template(
-        "stitched.html", images=images, worldMap=worldmap, zoned=zoned, hidden=hidden
+        "stitched.html", images=images, count=count, worldMap=worldmap, zoned=zoned, hidden=hidden
     )
 
 
