@@ -110,7 +110,8 @@ def draw_res(
         x_list.append(x)
         y_list.append(y)
 
-    centroid = find_centroid(res)
+    if res:
+        centroid = find_centroid(res)
 
     plt.style.use("bmh")
     _, ax = plt.subplots()
@@ -164,29 +165,44 @@ def draw_res(
         edgecolor="blue", facecolor="none", linewidth=1, label="Maximum Distance"
     )
 
-    # plot centroid
-    circle_guess = patches.Circle(
-        (centroid[0], centroid[1]),
-        75,
-        edgecolor="violet",
-        facecolor="violet",
-        linewidth=1,
-        zorder=5,
-    )
-    ax.add_patch(circle_guess)
-    legend_guess = patches.Patch(
-        edgecolor="violet",
-        facecolor="violet",
-        linewidth=1,
-        label=f"Best guess\n({int(centroid[0])}, {int(centroid[1])})",
-    )
+    if res:
+        # plot centroid
+        circle_guess = patches.Circle(
+            (centroid[0], centroid[1]),
+            75,
+            edgecolor="violet",
+            facecolor="violet",
+            linewidth=1,
+            zorder=5,
+        )
+        ax.add_patch(circle_guess)
+        legend_guess = patches.Patch(
+            edgecolor="violet",
+            facecolor="violet",
+            linewidth=1,
+            label=f"Best guess\n({int(centroid[0])}, {int(centroid[1])})",
+        )
+        ax.legend(
+            handles=[
+                legend_point,
+                legend_inner,
+                legend_outer,
+                legend_guess,
+                legend_area,
+            ],
+            loc="best",
+        )
+    else:
+        ax.legend(
+            handles=[legend_point, legend_inner, legend_outer, legend_area],
+            loc="best",
+        )
 
-    ax.legend(
-        handles=[legend_point, legend_inner, legend_outer, legend_guess, legend_area],
-        loc="best",
-    )
     if show:
-        logger.info(f"Centroid is: ({int(centroid[0])},{int(centroid[1])})")
+        if res:
+            logger.info(f"Centroid is: ({int(centroid[0])},{int(centroid[1])})")
+        else:
+            logger.warning("Could not match any points!")
         plt.show()
     else:
         space = ""
@@ -197,8 +213,10 @@ def draw_res(
             space = "_" + str(count)
             path = con.CONSOLE_EBT_PATH + f"EBT_{id}_{len(pings)}{space}.png"
         plt.savefig(path, dpi=1000)
-
-    return (int(centroid[0]), int(centroid[1]))
+    if res:
+        return (int(centroid[0]), int(centroid[1]))
+    else:
+        return (-1, -1)
 
 
 if __name__ == "__main__":
