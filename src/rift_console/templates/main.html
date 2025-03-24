@@ -36,6 +36,14 @@
           margin: 0 10px;
           transform: rotate(90deg);
       }
+      .image-with-text {
+        text-align: center;
+      }
+      
+      .image-with-text p {
+        margin: 0;
+        font-size: 12px;
+      }
 
       /* For zoned objective table */
       table {
@@ -79,13 +87,22 @@
           <h1 class="text-center text-primary">Rift Console</h1>
         </div>        
         
-        <div class="col-md-3 mt-2">
+        <div class="col-md-3 mt-3">
           <div class="button-container">
-            <img src="{{ url_for('static', filename='images/' + prev_state + '.png') }}" alt="prev_state" class="smaller_img">
+            <div class="image-with-text">
+              <img src="{{ url_for('static', filename='images/' + prev_state + '.png') }}" alt="prev_state" class="smaller_img">
+              <p>Previous: {{prev_state}}</p>
+            </div>
             <div class="arrow"></div>
-            <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="current_state">
+            <div class="image-with-text">
+              <img src="{{ url_for('static', filename='images/' + state + '.png') }}" alt="current_state">
+              <p>Current: {{state}}</p>
+            </div>
             <div class="arrow"></div>
-            <img src="{{ url_for('static', filename='images/' + next_state + '.png') }}" alt="next_state" class="smaller_img">
+            <div class="image-with-text">
+              <img src="{{ url_for('static', filename='images/' + next_state + '.png') }}" alt="next_state" class="smaller_img">
+              <p>Upcoming: {{next_state}}</p>
+            </div>
           </div>
         </div>
         <div class="col-md-4">

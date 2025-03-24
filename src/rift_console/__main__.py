@@ -461,11 +461,13 @@ async def melvonaut_api() -> Response:
             else:
                 await flash("Could not contact Melvonaut API - cant clear telemetry.")
         case "down_events":
+            res = melvin_api.download_events()
             if res:
                 await flash(res)
             else:
                 await flash("Could not contact Melvonaut API - cant download events.")
         case "clear_events":
+            res = melvin_api.clear_events()
             if res:
                 await flash(res)
             else:
