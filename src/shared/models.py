@@ -352,7 +352,7 @@ class Event(BaseModel):
         return f"Event: {self.event} (x,y)=({self.current_x},{self.current_y}) t={time_seconds(self.timestamp)}"
 
     def easy_parse(self) -> tuple[float, float, float]:
-        pattern = "DISTANCE_(\d+\.\d+)"
+        pattern = r"DISTANCE_(\d+\.\d+)"
         dist = re.findall(pattern, self.event)[0]
         if dist and self.current_x and self.current_y:
             return (float(dist), self.current_x, self.current_y)
