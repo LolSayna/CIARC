@@ -261,15 +261,15 @@ class StatePlanner(BaseModel):
                     if settings.CURRENT_MELVIN_TASK == MELVINTask.EBT:
                         # starting ebt, but speed/angle not set yet
 
-                        logger.error(
+                        logger.debug(
                             f"EBT Task, Angle: telemetry: {self.current_telemetry.angle} vs target: {settings.TARGET_CAMERA_ANGLE_ACQUISITION}"
                         )
-                        logger.error(
-                            f"EBT Task, vx: {self.current_telemetry.vx} vs target: {self._target_vel_x}"
-                        )
-                        logger.error(
-                            f"EBT Task, vy: {self.current_telemetry.vy} vs target: {self._target_vel_y}"
-                        )
+                        # logger.info(
+                        #     f"EBT Task, vx: {self.current_telemetry.vx} vs target: {self._target_vel_x}"
+                        # )
+                        # logger.info(
+                        #     f"EBT Task, vy: {self.current_telemetry.vy} vs target: {self._target_vel_y}"
+                        # )
                         if (
                             self._target_vel_x is None
                             or self._target_vel_y is None

@@ -4,6 +4,7 @@ from collections import defaultdict
 import csv
 from pathlib import Path
 import pathlib
+import re
 import sys
 import datetime
 import os
@@ -26,10 +27,12 @@ import asyncio
 from hypercorn.asyncio import serve
 
 # shared imports
+from melvonaut import ebt_calc
 from rift_console.image_helper import filter_by_date, get_angle, get_date
 import rift_console.rift_console
 import shared.constants as con
 from shared.models import (
+    Event,
     State,
     CameraAngle,
     ZonedObjective,
@@ -109,6 +112,31 @@ async def uploaded_file_live(filename):  # type: ignore
 @app.route(f"/{con.CONSOLE_DOWNLOAD_PATH}/<path:filename>")
 async def uploaded_file_download(filename):  # type: ignore
     return await send_from_directory(con.CONSOLE_DOWNLOAD_PATH, filename)
+
+
+@app.route(f"/{con.CONSOLE_EBT_PATH}/<path:filename>")
+async def uploaded_file_ebt(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_EBT_PATH, filename)
+
+
+@app.route("/view_ebt")
+async def view_ebt() -> str:
+    # list all images
+    images = os.listdir(con.CONSOLE_EBT_PATH)
+    # filter to only png
+    images = [s for s in images if s.endswith(".png")]
+
+    # sort by date modifyed, starting with the newest
+    images.sort(
+        key=lambda x: os.path.getmtime(Path(con.CONSOLE_EBT_PATH) / x), reverse=True
+    )
+    # only take first CONSOLE_IMAGE_VIEWER_LIMIT
+    images = images[: con.CONSOLE_IMAGE_VIEWER_LIMIT]
+
+    count = len(images)
+    logger.warning(f"Showing {count} images of ebt.")
+    # logger.info(f"Images: {images}")
+    return await render_template("ebt.html", images=images, count=count)
 
 
 @app.route("/stitches")
@@ -242,6 +270,7 @@ async def index() -> str:
             zoned_objectives=console.zoned_objectives,
             beacon_objectives=console.beacon_objectives,
             achievements=console.achievements,
+            completed_ids=console.completed_ids,
             # slot times
             next_slot_start=console.slots[0].start.strftime("%H:%M:%S"),
             slot_ends=console.slots[0].end.strftime("%H:%M:%S"),
@@ -257,6 +286,8 @@ async def index() -> str:
             console_image_dates=console.console_image_dates,
             melvin_task=console.melvin_task,
             melvin_lens=console.melvin_lens,
+            # ebt ping list
+            ebt_ping_list=console.ebt_ping_list,
         )
     else:
         return await render_template(
@@ -472,6 +503,48 @@ async def results() -> Response:
     match button:
         case "check_images":
             await check_images()
+        case "check_pings":
+            files = os.listdir(con.CONSOLE_FROM_MELVONAUT_PATH)
+            # filter to only png
+            files = [
+                f
+                for f in files
+                if f.startswith("MelvonautEvents") and f.endswith(".csv")
+            ]
+
+            if len(files) == 0:
+                await warning("No Events files, aborting!")
+                return redirect(url_for("index"))
+            # sort by date modifyed, starting with the newest
+            files.sort(
+                key=lambda x: os.path.getmtime(
+                    Path(con.CONSOLE_FROM_MELVONAUT_PATH) / x
+                ),
+                reverse=True,
+            )
+            events = Event.load_events_from_csv(
+                path=con.CONSOLE_FROM_MELVONAUT_PATH + files[0]
+            )
+            console.console_found_events = events
+            await flash(f"Loading file {con.CONSOLE_FROM_MELVONAUT_PATH + files[0]}.")
+            found_ids = set()
+            ping_count: dict[int, int] = defaultdict(int)
+            total_pings = 0
+            pattern = r"GALILEO_MSG_EB,ID_(\d+),DISTANCE_"
+            for event in events:
+                match = re.search(pattern, event.event)
+                if match:
+                    matched_id = int(match.group(1))
+                    found_ids.add(matched_id)
+                    ping_count[matched_id] += 1
+                    total_pings += 1
+            ids_list = list(found_ids)
+            ids_list.sort()
+
+            console.ebt_ping_list = [(id, ping_count[id]) for id in ids_list]
+            await info(
+                f"Log contained {total_pings} pings of {len(console.ebt_ping_list)} different events."
+            )
 
         case "worldmap":
             image_path = con.CONSOLE_STICHED_PATH + (
@@ -522,20 +595,35 @@ async def results() -> Response:
             )
             if res:
                 status: str = res["status"]
-                await flash(status)
+                await flash(status + f" (id was {id}).")
                 if status.startswith(
                     "The beacon could not be found around the given location"
                 ):
                     await flash(
                         f"Attempts made: {res["attempts_made"]} of 3, guess was ({width},{height})"
                     )
-                if status.startswith("No more rescue attempts left"):
-                    await flash(f"for EBT: {id}")
+                if status.startswith("The beacon was found!"):
+                    console.completed_ids.append(id)
+        case "calc_ebt":
+            id = form.get("choose_id", type=int) or 0
+            if not id or id == 0:
+                await warning("Tried to calculate ebt but no id given, aborting.")
+                return redirect(url_for("index"))
+            # parse list of pings
+            pings = ebt_calc.parse_pings(id=id, events=console.console_found_events)
+            # find points that are in all circles
+            res = ebt_calc.find_matches(pings=pings)
+
+            (x, y) = ebt_calc.draw_res(id=id, res=res, pings=pings)
+
+            await flash(
+                f"For EBT_{id} found {len(res)} points that are matched by {len(pings)} pings. Centoid is: ({x},{y})"
+            )
+
         case "stitch":
             choose_date = form.get("choose_date", type=str)
             if not choose_date:
-                logger.warning("Tried to stitch worldmap but no date given, aborting.")
-                await flash("Tried to stitch worldmap but no date given, aborting.")
+                await warning("Tried to stitch worldmap but no date given, aborting.")
                 return redirect(url_for("index"))
 
             images = get_console_images()

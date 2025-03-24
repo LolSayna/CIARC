@@ -329,7 +329,18 @@ class BaseTelemetry(BaseModel):
         )
 
 
-# TODO
+class Ping:
+    def __init__(self, x: int, y: int, d: float, mind: int, maxd: int):
+        self.x = x
+        self.y = y
+        self.d = d
+        self.mind = mind
+        self.maxd = maxd
+
+    def __str__(self) -> str:
+        return f"Ping: x={self.x}, y={self.y}, d={self.d}, mind={self.mind}, maxd={self.maxd}"
+
+
 class Event(BaseModel):
     event: str
     id: int

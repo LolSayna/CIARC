@@ -320,14 +320,15 @@
               <a href="{{ url_for('live') }}" class="btn btn-success w-100" target="_blank">View Snapshots</a>
             </div>
             <div class="col-md-2">
-
               <a href="{{ url_for('downloads') }}" class="btn btn-success w-100" target="_blank">View Downloads</a>
             </div>
             <div class="col-md-2">
-
               <a href="{{ url_for('stitches') }}" class="btn btn-success w-100" target="_blank">View Stitches</a>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-2">
+              <a href="{{ url_for('view_ebt') }}" class="btn btn-success w-100" target="_blank">View EBT</a>
+            </div>
+            <div class="col-md-4">
             </div>
           </div>
         </div>
@@ -745,7 +746,12 @@
                 <td>{{ obj.description }}</td>
                 <td>{{ obj.start.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
                 <td>{{ obj.end.strftime("%Y-%m-%dT%H:%M:%S") }}</td>
+                { for}
+                {% if obj.id in completed_ids %}
+                <td>{{ obj.attempts_made }} - FOUND</td>
+                {% else %}
                 <td>{{ obj.attempts_made }}</td>
+                {% endif %}
                 <td>{{ obj.decrease_rate }}</td>
                 <td>
                   <form action="{{ url_for('del_obj', obj_id=obj.id) }}" method="post">
@@ -797,8 +803,22 @@
                   <label for="objective_id">Id:</label>
                   <input type="text" class="form-control" name="objective_id" placeholder="1" value="1">
                 </div>
-                <div class="col-md-3 mt-3">
+                <div class="col-md-2 mt-3">
                   <button type="submit" class="btn btn-success" name="button" value="obj">Upload</button>
+              </div>
+              <div class="col-md-1 mt-3">
+                <button type="submit" class="btn btn-info" name="button" value="check_pings">Check Pings</button>
+              </div>
+              <div class="col-md-2 mt-3">
+                <label for="choose_id">Choose id</label>
+                <select name="choose_id" id="choose_id">
+                    {% for id in ebt_ping_list %}
+                        <option value="{{ id[0] }}" {% if selected_value == id[0]|string %}selected{% endif %}>{{ id[0] }} - {{id[1]}} pings</option>
+                    {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-1 mt-3">
+                <button type="submit" class="btn btn-success" name="button" value="calc_ebt">Calculate EBT</button>
               </div>
             </div>
             <div class="row mt-1">

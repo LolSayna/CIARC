@@ -7,6 +7,7 @@ from shared.models import (
     Achievement,
     BaseTelemetry,
     BeaconObjective,
+    Event,
     Slot,
     State,
     ZonedObjective,
@@ -25,6 +26,7 @@ class RiftConsole:
     slots: list[Slot] = []
     zoned_objectives: list[ZonedObjective] = []
     beacon_objectives: list[BeaconObjective] = []
+    completed_ids: list[int] = []
     achievements: list[Achievement] = []
     past_traj: list[tuple[int, int]] = []
     future_traj: list[tuple[int, int]] = []
@@ -32,6 +34,8 @@ class RiftConsole:
     melvonaut_image_count: int = -1  # -1 indicates no data
     console_image_count: int = -1  # -1 indicates no data
     console_image_dates: list[tuple[str, int]] = []
+    ebt_ping_list: list[tuple[int, int]] = []
+    console_found_events: list[Event] = []
     melvin_task: str = ""
     melvin_lens: str = ""
 

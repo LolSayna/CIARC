@@ -171,6 +171,7 @@ letsencrypt/
 media
 logs/melvonaut/images
 logs/rift_console/images/*.png
+logs/rift_console/images/ebt/*.png
 logs/rift_console/images/live/*.png
 logs/rift_console/images/stitched/*.png
 logs/rift_console/images/download/*.png

@@ -19,6 +19,7 @@ CONSOLE_FROM_MELVONAUT_PATH = "logs/rift_console/from_melvonaut/"
 CONSOLE_LIVE_PATH = "logs/rift_console/images/live/"
 CONSOLE_DOWNLOAD_PATH = "logs/rift_console/images/download/"
 CONSOLE_STICHED_PATH = "logs/rift_console/images/stitched/"
+CONSOLE_EBT_PATH = "logs/rift_console/images/ebt/"
 MEL_PERSISTENT_SETTINGS = "logs/melvonaut/persistent_settings.json"
 
 # [TRAJECTORY]
