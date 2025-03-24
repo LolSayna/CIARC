@@ -122,7 +122,7 @@ def draw_res(
     ax.set_ylim(0, y_max)
 
     # plot matched area
-    ax.plot(x_list, y_list, "ro", zorder=4)
+    ax.plot(x_list, y_list, "ro", markersize=0.01, zorder=4)
     legend_area = patches.Patch(
         edgecolor="red", facecolor="red", linewidth=1, label="Matched area"
     )
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     # Open idea: use midpoint circle algorithm? -> not used for now
     logger.info("Running from cli.")
 
-    id = 102
+    id = 201
     path: str = con.CONSOLE_FROM_MELVONAUT_PATH + "MelvonautEvents.csv"
     events = Event.load_events_from_csv(path=path)
 
