@@ -16,10 +16,10 @@ import shared.constants as con
 url = "localhost"
 port = "8080"
 
-# ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s
 
 def create_tunnel() -> None:
-    cmd = "ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s"
+    # cmd = "ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s"
+    cmd = "sshpass -f CIARC/.ssh-pw ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s"
     timeout = 60 * 15  #kill connection after 15 min
 
     process = subprocess.Popen(cmd, shell=True, preexec_fn=os.setsid)
