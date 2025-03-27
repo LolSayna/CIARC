@@ -30,7 +30,7 @@ class CameraAngle(StrEnum):
 
 
 class Slot(BaseModel):
-    id: Optional[int]
+    id: int
     start: datetime.datetime
     end: datetime.datetime
     enabled: bool
@@ -48,7 +48,7 @@ class Slot(BaseModel):
 
 
 class ZonedObjective(BaseModel):
-    id: Optional[int]  # could be null acording to Dto
+    id: int  # could be null acording to Dto
     name: str
     start: datetime.datetime
     end: datetime.datetime
@@ -95,7 +95,7 @@ class ZonedObjective(BaseModel):
 
 
 class BeaconObjective(BaseModel):
-    id: Optional[int]
+    id: int
     name: str
     start: datetime.datetime
     end: datetime.datetime
@@ -343,7 +343,7 @@ class Ping:
 
 class Event(BaseModel):
     event: str
-    id: Optional[int]
+    id: int
     timestamp: Optional[datetime.datetime] = None
     current_x: Optional[float] = None
     current_y: Optional[float] = None

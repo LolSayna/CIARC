@@ -614,13 +614,13 @@ class StatePlanner(BaseModel):
                     logger.error(f"Using fixed_objective, current task: {obj}")
                     current_obj = obj
                     break
-        """
-        if current_obj and current_obj.id:
+
+        if current_obj:
             settings.START_TIME = current_obj.start
             settings.STOP_TIME = current_obj.end
             settings.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
 
-            self._current_obj_name = str(current_obj.id or 0) + current_obj.name.replace(
+            self._current_obj_name = str(current_obj.id) + current_obj.name.replace(
                 " ", ""
             )
 
@@ -636,7 +636,7 @@ class StatePlanner(BaseModel):
 
             except subprocess.CalledProcessError as e:
                 logger.info(f"z_obj could not mkdir: {e}")
-        """
+
         # check if change occured and cut the last image
 
         await self.trigger_camera_angle_change(settings.TARGET_CAMERA_ANGLE_ACQUISITION)
