@@ -615,11 +615,11 @@ class StatePlanner(BaseModel):
                     current_obj = obj
                     break
 
-        if current_obj:
+        if current_obj and current_obj.id:
             settings.START_TIME = current_obj.start
             settings.STOP_TIME = current_obj.end
             settings.TARGET_CAMERA_ANGLE_ACQUISITION = current_obj.optic_required
-
+            
             self._current_obj_name = str(current_obj.id) + current_obj.name.replace(
                 " ", ""
             )
