@@ -74,44 +74,6 @@ def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) ->
             return {}
 
 
-# # TODO not tested so far
-# def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) -> Any:
-#     with open(".ssh-pw") as file:
-#         PASSWORD = file.read()
-#     REMOTE_USER = "root"  # Remote SSH username
-#     REMOTE_HOST = "10.100.50.1"  # Remote host IP
-#     LOCAL_PORT = 8080  # Local port to forward
-#     REMOTE_PORT = 8080  # Remote port to forward to
-
-#     # Create an SSH client
-#     client = paramiko.SSHClient()
-#     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-#     try:
-#         # Connect to the remote host using the given password
-#         client.connect(hostname=REMOTE_HOST, username=REMOTE_USER, password=PASSWORD)
-
-#         # Set up port forwarding
-#         transport = client.get_transport()
-#         local_address = ("localhost", LOCAL_PORT)
-#         remote_address = ("localhost", REMOTE_PORT)
-#         if transport:
-#             channel = transport.open_channel(
-#                 "direct-tcpip", remote_address, local_address
-#             )
-
-#         logger.info(f"Port forwarding {LOCAL_PORT} -> {REMOTE_PORT} on {REMOTE_HOST}")
-#         return melvonaut_api(method=method, endpoint=endpoint, json=json)
-
-#     except Exception as e:
-#         logger.error(f"An error occurred: {e}")
-
-#     finally:
-#         logger.info(f"Close tunnel.")
-#         channel.close()
-#         client.close()
-
-
 class MelvonautTelemetry(BaseModel):
     disk_total: int
     disk_free: int
