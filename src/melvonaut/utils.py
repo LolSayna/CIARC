@@ -15,10 +15,26 @@ file_log_handler_id = None
 def melvin_notifier(
     body: str, title: str, notify_type: NotifyType, *args: Any, **kwargs: dict[str, Any]
 ) -> None:
+    """Melvin-specific notification handler.
+
+    Just prints to stdout.
+
+    Args:
+        body (str): The message body.
+        title (str): The notification title.
+        notify_type (NotifyType): The type of notification.
+        *args (Any): Additional arguments.
+        **kwargs (dict[str, Any]): Additional keyword arguments.
+    """
     print("MELVIN HERE!")
 
 
 def setup_logging() -> None:
+    """Configures the logging system for the application.
+
+    This function removes existing log handlers, sets up terminal logging,
+    and configures Apprise notifications for Discord and Melvin events.
+    """
     logger.remove()
     logger.add(
         sink=sys.stdout,
@@ -40,6 +56,10 @@ def setup_logging() -> None:
 
 
 def setup_file_logging() -> None:
+    """Configures file-based logging with rotation at midnight.
+
+    If a file log handler already exists, it is removed before adding a new one.
+    """
     global file_log_handler_id
     if file_log_handler_id is not None:
         logger.remove(file_log_handler_id)  # type: ignore

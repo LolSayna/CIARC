@@ -101,6 +101,11 @@ class Settings(BaseModel):
 
     # load settings
     def load_settings(self) -> None:
+        """Loads settings from a persistent JSON file.
+        
+        If the settings file does not exist or contains invalid JSON, 
+        the overrides dictionary is reset to an empty state.
+        """
         if not pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
             logger.debug("Settings don't exist")
             self.OVERRIDES = {}
@@ -118,15 +123,31 @@ class Settings(BaseModel):
 
     # save settings
     def save_settings(self) -> None:
+        """Saves the current settings overrides to a persistent JSON file."""
         with open(con.MEL_PERSISTENT_SETTINGS, "w") as f:
             f.write(json.dumps(self.OVERRIDES))
 
     # get settings
     def get_setting(self, key: str, default: Any = None) -> Any:
+        """Retrieves a setting value from overrides or returns the default.
+
+        Args:
+            key (str): The setting key to retrieve.
+            default (Any, optional): The default value if the key is not found. Defaults to None.
+
+        Returns:
+            Any: The value of the setting if it exists, otherwise the default.
+        """
         return self.OVERRIDES.get(key.upper(), default)
 
     # set setting
     def set_setting(self, key: str, value: Any) -> None:
+        """Sets a single setting in overrides and saves the settings.
+
+        Args:
+            key (str): The setting key.
+            value (Any): The value to assign to the setting.
+        """
         # logger.debug(f"Setting {key.upper()} to {value}")
         # logger.debug(f"{self.OVERRIDES=}")
         self.OVERRIDES[key.upper()] = value
@@ -134,6 +155,11 @@ class Settings(BaseModel):
         self.save_settings()
 
     def set_settings(self, key_values: dict[str, Any]) -> None:
+        """Sets multiple settings at once and saves them.
+
+        Args:
+            key_values (dict[str, Any]): A dictionary of key-value pairs to update.
+        """
         # logger.debug(f"Setting {self.OVERRIDES}")
         if len(key_values.keys()) == 0:
             logger.debug("Clearing settings")
@@ -145,6 +171,11 @@ class Settings(BaseModel):
         self.save_settings()
 
     def delete_settings(self, keys: list[str]) -> None:
+        """Deletes specified settings from overrides and saves the settings.
+
+        Args:
+            keys (list[str]): A list of setting keys to remove.
+        """
         # logger.debug(f"Deleting {keys}")
         for key in keys:
             del self.OVERRIDES[key.upper()]
@@ -152,6 +183,11 @@ class Settings(BaseModel):
         self.save_settings()
 
     def init_settings(self) -> bool:
+        """Initializes settings by checking for an existing settings file.
+
+        Returns:
+            bool: True if settings were newly created, False if they already exist.
+        """
         if pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():
             logger.debug("Settings already exist")
             return False
@@ -161,18 +197,36 @@ class Settings(BaseModel):
 
     # clear settings
     def clear_settings(self) -> None:
+        """Clears all settings by setting overrides to None and saving."""
         self.OVERRIDES = None  # type: ignore
         # logger.debug(f"{self.OVERRIDES=}")
 
     def get_default_setting(self, key: str) -> Any:
+        """Retrieves the default value of a setting from the class attributes.
+
+        Args:
+            key (str): The setting key to retrieve.
+
+        Returns:
+            Any: The default value of the setting.
+        """
         return super().__getattribute__(key)
 
     def __init__(self) -> None:
+        """Initializes the Settings object, loading settings if they exist."""
         super().__init__()
         if not self.init_settings():
             self.load_settings()
 
     def __getattribute__(self, item: str) -> Any:
+        """Overrides attribute access to check overrides before default settings.
+
+        Args:
+            item (str): The attribute key to retrieve.
+
+        Returns:
+            Any: The overridden value if it exists, otherwise the default.
+        """
         if item.startswith("__"):
             return super().__getattribute__(item)
         # logger.debug(f"Getting {item}")
@@ -182,6 +236,12 @@ class Settings(BaseModel):
         return super().__getattribute__(item)
 
     def __setattr__(self, key: str, value: Any) -> None:
+        """Overrides attribute setting to ensure settings are properly stored.
+
+        Args:
+            key (str): The setting key.
+            value (Any): The value to assign to the setting.
+        """
         # logger.debug(f"Setting {key} to {value}")
         if key == "OVERRIDES" and value is None:
             self.OVERRIDES.clear()
