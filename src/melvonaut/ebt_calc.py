@@ -28,11 +28,32 @@ max_offset = 325
 
 # [HELPER]
 def f(d: float) -> float:
+    """
+    Computes a transformed distance value.
+
+    Args:
+        d (float): Input distance value.
+
+    Returns:
+        float: Transformed distance value.
+    """
     res = 225 + ((0.4 * (d + 1)) / 4)
     return float(res)
 
 
 def distance(x1: int, x2: int, y1: int, y2: int) -> float:
+    """
+    Computes the Euclidean distance between two points, adjusting for wraparound conditions.
+
+    Args:
+        x1 (int): X-coordinate of the first point.
+        x2 (int): X-coordinate of the second point.
+        y1 (int): Y-coordinate of the first point.
+        y2 (int): Y-coordinate of the second point.
+
+    Returns:
+        float: The Euclidean distance between the two points.
+    """
     if x1 > con.WORLD_X:
         x1 = x1 % con.WORLD_X
     while x1 < 0:
@@ -53,6 +74,16 @@ def distance(x1: int, x2: int, y1: int, y2: int) -> float:
 
 
 def parse_pings(id: int, events: list[Event]) -> list[Ping]:
+    """
+    Parses event data to extract relevant ping information.
+
+    Args:
+        id (int): Identifier for the event source.
+        events (list[Event]): List of event objects to be processed.
+
+    Returns:
+        list[Ping]: A list of parsed Ping objects.
+    """
     processed = []
     for event in events:
         if f"GALILEO_MSG_EB,ID_{id},DISTANCE_" in event.event:
@@ -69,6 +100,15 @@ def parse_pings(id: int, events: list[Event]) -> list[Ping]:
 
 
 def find_matches(pings: list[Ping]) -> list[tuple[int, int]]:
+    """
+    Identifies matching points from the given pings based on distance constraints.
+
+    Args:
+        pings (list[Ping]): List of Ping objects to process.
+
+    Returns:
+        list[tuple[int, int]]: List of coordinate pairs that satisfy all constraints.
+    """
     # Procssed first point
     res = []
     p1 = min(pings, key=lambda p: p.maxd)
@@ -99,7 +139,28 @@ def find_matches(pings: list[Ping]) -> list[tuple[int, int]]:
 def draw_res(
     id: int, res: list[tuple[int, int]], pings: list[Ping], show: bool = False
 ) -> tuple[int, int]:
+    """
+    Draws and saves a visualization of the computed emergency beacon locations.
+
+    Args:
+        id (int): Identifier for the emergency beacon tracker.
+        res (list[tuple[int, int]]): List of matched coordinate points.
+        pings (list[Ping]): List of Ping objects representing detected signals.
+        show (bool, optional): Whether to display the plot. Defaults to False.
+
+    Returns:
+        tuple[int, int]: The estimated centroid of the matched points, or (-1, -1) if no matches were found.
+    """
     def find_centroid(points: list[tuple[int, int]]) -> tuple[float, float]:
+        """
+        Computes the centroid of a set of points.
+
+        Args:
+            points (list[tuple[int, int]]): List of coordinate points.
+
+        Returns:
+            tuple[float, float]: The centroid coordinates.
+        """
         xs, ys = zip(*points)
         centroid_x = sum(xs) / len(xs)
         centroid_y = sum(ys) / len(ys)

@@ -17,6 +17,19 @@ class MelTelemetry(BaseTelemetry):
     timestamp: datetime.datetime
 
     async def store_observation_csv(self) -> None:
+        """
+        Stores the telemetry observation data in a CSV file.
+
+        This function converts the telemetry data into a flattened dictionary format,
+        ensuring nested dictionaries are stored as separate fields. It then appends
+        the data to an existing CSV file or creates a new file if one does not exist.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         tel_dict = self.model_dump()
         flattened = {}
         for key, value in tel_dict.items():
@@ -44,6 +57,20 @@ class MelTelemetry(BaseTelemetry):
             # logger.debug(f"Writing observation to {con.TELEMETRY_LOCATION_CSV}")
 
     async def store_observation_json(self) -> None:
+        """
+        Stores the telemetry observation data in a JSON file.
+
+        This function retrieves the existing telemetry data from the JSON file
+        and updates it with a new entry. If the JSON file does not exist, a new
+        one is created. The data is formatted in a structured manner with timestamps
+        as keys.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         logger.debug("Storing observation as json.")
         try:
             async with async_open(con.TELEMETRY_LOCATION_JSON, "r") as afp:
@@ -67,5 +94,14 @@ class MelTelemetry(BaseTelemetry):
         logger.debug("Observation stored")
 
     def model_post_init(self, __context__: Any) -> None:
+        """
+        Initializes the telemetry model and triggers CSV storage.
+
+        Args:
+            __context__ (Any): Context data passed during initialization.
+
+        Returns:
+            None
+        """
         loop = asyncio.get_event_loop()
         loop.create_task(self.store_observation_csv())
