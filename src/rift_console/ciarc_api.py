@@ -68,7 +68,7 @@ def console_api(
                 case HttpCode.DELETE:
                     r = s.delete(endpoint, params=params, timeout=5)
                 case HttpCode.POST:
-                    r = s.post(endpoint, params=params, files=files, timeout=5)
+                    r = s.post(endpoint, params=params, files=files)
 
     except requests.exceptions.ConnectionError:
         logger.error("Console: ConnectionError - possible no VPN?")
@@ -357,12 +357,12 @@ def upload_worldmap(image_path: str) -> Any:
     d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
     if d:
         logger.info(f"Console: Uploaded world map - {d}.")
-        shutil.copyfile(
-            image_path,
-            "src/rift_console/static/media/"
-            + live_utc().strftime("%d-%m-%Y")
-            + "worldmap.png",
-        )
+        # shutil.copyfile(
+        #     image_path,
+        #     "src/rift_console/static/media/"
+        #     + live_utc().strftime("%d-%m-%Y")
+        #     + "worldmap.png",
+        # )
         return d
     else:
         logger.warning("Console: could not upload world map")
