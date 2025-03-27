@@ -36,7 +36,7 @@ class Settings(BaseModel):
     API_PORT: int = 8080
 
     DISCORD_WEBHOOK_TOKEN: Optional[str] = os.getenv("DISCORD_WEBHOOK_TOKEN", None)
-    DISCORD_ALERTS_ENABLED: bool = True
+    DISCORD_ALERTS_ENABLED: bool = False
 
     NETWORK_SIM_ENABLED: bool = False
 
