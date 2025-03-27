@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 RUN python -m pip install --upgrade pip
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc sshpass openssh lftp rsync
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc sshpass openssh-client lftp rsync
 
 WORKDIR /app
 
