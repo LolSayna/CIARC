@@ -69,7 +69,7 @@ class Settings(BaseModel):
     TARGET_SPEED_WIDE_X: float = 49.84
     TARGET_SPEED_WIDE_Y: float = 21.16
 
-    DISTANCE_BETWEEN_IMAGES: int = 350  # How many pixel before taking another image
+    DISTANCE_BETWEEN_IMAGES: int = 450  # How many pixel before taking another image
 
     ## [Melvin Task Planing]
     # Standard mapping, with no objectives and the camera angle below
