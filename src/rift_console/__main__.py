@@ -743,7 +743,7 @@ async def results() -> Response:
         case _:
             await warning(f"Unknown button pressed: {button}.")
 
-    await update_telemetry()
+    # await update_telemetry()
 
     return redirect(url_for("index"))
 

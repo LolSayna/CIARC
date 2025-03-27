@@ -74,7 +74,7 @@ class Settings(BaseModel):
     ## [Melvin Task Planing]
     # Standard mapping, with no objectives and the camera angle below
     CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.Mapping
-    TARGET_CAMERA_ANGLE_ACQUISITION: CameraAngle = CameraAngle.Normal
+    TARGET_CAMERA_ANGLE_ACQUISITION: CameraAngle = CameraAngle.Narrow
 
     # Automatically do the next upcoming objective
     # CURRENT_MELVIN_TASK: MELVINTasks = MELVINTasks.Next_objective
