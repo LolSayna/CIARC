@@ -448,8 +448,11 @@
             <h3>Melvonaut API</h3>
             <form action="{{ url_for('melvonaut_api') }}" method="post">
               <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
                   <button type="submit" class="btn btn-info w-100" name="button" value="status">Status</button>
+                </div>
+                <div class="col-md-6">
+                  <button type="submit" class="btn btn-warning w-100" name="button" value="tunnel">Tunnel</button>
                 </div>
               </div>
               <!-- State -->

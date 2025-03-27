@@ -1,3 +1,7 @@
+import os
+import signal
+import subprocess
+import threading
 from typing import Any, Optional
 import paramiko
 from pydantic import BaseModel
@@ -13,6 +17,23 @@ url = "localhost"
 port = "8080"
 
 # ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s
+
+def create_tunnel() -> None:
+    cmd = "ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s"
+    timeout = 60 * 15  #kill connection after 15 min
+
+    process = subprocess.Popen(cmd, shell=True, preexec_fn=os.setsid)
+
+    # Function to terminate the process
+    def terminate_process():
+        print("Terminating the process...")
+        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+
+    # Start a timer to terminate the process after timeout
+    timer = threading.Timer(timeout, terminate_process)
+    timer.start()
+
+    return
 
 
 def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) -> Any:

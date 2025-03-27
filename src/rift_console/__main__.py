@@ -345,6 +345,9 @@ async def melvonaut_api() -> Response:
             console.melvin_lens = melvin_api.get_setting(
                 setting="TARGET_CAMERA_ANGLE_ACQUISITION"
             )
+        case "tunnel":
+            melvin_api.create_tunnel()
+            await flash("Created Tunnel for 15 min.")
 
         case "mapping" | "ebt":
             if melvin_api.set_setting(setting="CURRENT_MELVIN_TASK", value=button):
@@ -904,7 +907,7 @@ async def book_slot(slot_id: int) -> Response:
     else:
         ciarc_api.book_slot(slot_id=slot_id, enabled=False)
 
-    await update_telemetry()
+    # await update_telemetry()
 
     return redirect(url_for("index"))
 
