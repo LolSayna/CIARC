@@ -290,7 +290,7 @@ def create_thumbnail(panorama_path: str) -> None:
         thumb = panorama.resize(
             (con.THUMBNAIL_X, con.THUMBNAIL_Y), Image.Resampling.LANCZOS
         )
-        thumb.save(f"{panorama_path}_thumb.png")
+        thumb.save(panorama_path.replace(".png", "") + "_thumb.png")
         # thumb = thumb.convert("L")
         # thumb.save("src/rift_console/static/images/" + "thumb_grey.png")
     logger.warning(

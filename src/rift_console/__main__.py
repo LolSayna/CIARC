@@ -149,6 +149,8 @@ async def stitches() -> str:
     images = os.listdir(con.CONSOLE_STICHED_PATH)
     # filter to only png
     images = [s for s in images if s.endswith(".png")]
+    # filter high res images away
+    images = [s for s in images if "cut" in s or "thumb" in s]
 
     # sort by date modifyed, starting with the newest
     images.sort(
@@ -722,6 +724,8 @@ async def results() -> Response:
                 path = f"{con.CONSOLE_STICHED_PATH}hidden_{optic_required}_{zone[0]}_{zone[1]}_{zone[2]}_{zone[3]}_{len(final_images)}_{space}.png"
 
             panorama.save(path)
+            
+            rift_console.image_processing.create_thumbnail(path)
 
             rift_console.image_processing.cut(
                 panorama_path=path, X1=zone[0], Y1=zone[1], X2=zone[2], Y2=zone[3]
@@ -932,6 +936,8 @@ async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> N
         path = f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
 
     panorama.save(path)
+    rift_console.image_processing.create_thumbnail(path)
+
 
     if not res_obj.zone:
         await warning(f"{res_obj} has no zone, can not stitch, aborting!")
