@@ -173,7 +173,7 @@ async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
 
                             current_event = Event(
                                 event=line_content,
-                                id=line_id,
+                                id=line_id or 0,
                                 timestamp=timestamp,
                                 current_x=current_x,
                                 current_y=current_y,
