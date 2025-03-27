@@ -508,6 +508,8 @@ async def async_world_map(filtered_images: list[str], choose_date: str) -> None:
 
     panorama.save(path)
 
+    rift_console.image_processing.create_thumbnail(path)
+
     await warning(
         f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}"
     )

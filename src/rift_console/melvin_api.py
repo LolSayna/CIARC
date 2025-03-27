@@ -14,7 +14,7 @@ port = "8080"
 
 
 # TODO not tested so far
-def create_tunnel() -> None:
+def mevlonaut_api_tunnel(method: HttpCode, endpoint: str, json: dict[str, str] = {}) -> Any:
     with open(".ssh-pw") as file:
         PASSWORD = file.read()
     REMOTE_USER = "root"  # Remote SSH username
@@ -40,11 +40,13 @@ def create_tunnel() -> None:
             )
 
         logger.info(f"Port forwarding {LOCAL_PORT} -> {REMOTE_PORT} on {REMOTE_HOST}")
+        return melvonaut_api(method=method, endpoint=endpoint, json=json)
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
 
     finally:
+        logger.info(f"Close tunnel.")
         channel.close()
         client.close()
 
