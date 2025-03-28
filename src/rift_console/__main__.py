@@ -600,6 +600,9 @@ async def results() -> Response:
                 )
                 return redirect(url_for("index"))
 
+            if "thumb" in image_path:
+                await warning("DANGER you are uploading a Thumbnail image with lower resolution!!!")
+
             res = ciarc_api.upload_worldmap(image_path=image_path)
 
             if res:
@@ -612,6 +615,9 @@ async def results() -> Response:
                 form.get("path_obj", type=str) or "error_path"
             )
             id = form.get("objective_id", type=int) or 0
+
+            if "thumb" in image_path:
+                await warning("DANGER you are uploading a Thumbnail image with lower resolution!!!")
 
             if not os.path.isfile(image_path):
                 await warning(
