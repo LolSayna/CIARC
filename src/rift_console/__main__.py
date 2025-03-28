@@ -334,6 +334,8 @@ async def index() -> str:
             console_image_dates=console.console_image_dates,
             melvin_task=console.melvin_task,
             melvin_lens=console.melvin_lens,
+            # ebt ping list
+            ebt_ping_list=console.ebt_ping_list,
         )
 
 
