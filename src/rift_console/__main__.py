@@ -414,7 +414,8 @@ async def melvonaut_api() -> Response:
                         failed += 1
                         logger.warning(f'File "{image}" failed!')
                         if failed > 10:
-                            await info("Aborting since connection probaly interrupted.")
+                            await info("Cancle since connection probably interrupted.")
+                            break
                 await info(
                     f"Downloaded Images from Melvonaut, success: {success}, failed: {failed}, already exisiting: {already_there}"
                 )
