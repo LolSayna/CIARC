@@ -70,7 +70,15 @@ def distance(x1: int, x2: int, y1: int, y2: int) -> float:
         y2 = y2 % con.WORLD_Y
     while y2 < 0:
         y2 += con.WORLD_Y
-    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    
+    # check for case at edge
+    a = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    b = math.sqrt((con.WORLD_X + x2 - x1) ** 2 + (y2 - y1) ** 2)
+    c = math.sqrt((x2 - x1 - con.WORLD_X) ** 2 + (y2 - y1) ** 2)
+    d = math.sqrt((x2 - x1) ** 2 + (con.WORLD_Y + y2 - y1) ** 2)
+    e = math.sqrt((x2 - x1) ** 2 + (y2 - y1 - con.WORLD_Y) ** 2)
+    return min(a,b,c,d,e)
+    # return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 def parse_pings(id: int, events: list[Event]) -> list[Ping]:
