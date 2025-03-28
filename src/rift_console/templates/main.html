@@ -107,6 +107,7 @@
         </div>
         <div class="col-md-4">
           <h2 class="col text-center text-secondary" id="time">Loading UTC Time...</h2>
+          <h2 class="col text-center text-secondary" id="timeMEZ">Loading MEZ Time...</h2>
         </div>
         <div class="col-md-2 mt-3">
           <h4>Next Com: {{next_slot_start}}</h4>
@@ -949,6 +950,10 @@
         const isoString = now.toISOString();
         const formattedString = isoString.slice(0, 19);
         document.getElementById('time').textContent = `Live UTC: ${formattedString}`;
+        const mezDate = new Date(now.getTime() + 1 * 60 * 60 * 1000);
+        const mezISOString = mezDate.toISOString();
+        const mezFormattedString = mezISOString.slice(0, 19);
+        document.getElementById('timeMEZ').textContent = `Live MEZ: ${mezFormattedString}`;
     }
 
     // Get time for add objective form
