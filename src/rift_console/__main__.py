@@ -316,6 +316,8 @@ async def index() -> str:
             width_x=0,
             height_y=0,
             slots=console.slots,
+            next_slot_start=console.slots[0].start.strftime("%H:%M:%S") if len(console.slots) > 0 else "noData",
+            slot_ends=console.slots[0].end.strftime("%H:%M:%S") if len(console.slots) > 0 else "noData",
             # melvonaut api
             api=console.live_melvonaut_api,
             melvonaut_image_count=console.melvonaut_image_count,
