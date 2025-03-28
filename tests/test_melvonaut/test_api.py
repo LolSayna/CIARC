@@ -344,7 +344,10 @@ async def test_get_reset_settings(client: TestClient):
         new_camera_angle_acquisition = "normal"
     resp = await client.post(
         "/api/post_set_setting",
-        json={"TARGET_CAMERA_ANGLE_ACQUISITION": new_camera_angle_acquisition, "DISTANCE_BETWEEN_IMAGES": 0},
+        json={
+            "TARGET_CAMERA_ANGLE_ACQUISITION": new_camera_angle_acquisition,
+            "DISTANCE_BETWEEN_IMAGES": 0,
+        },
     )
     assert resp.status == 200
     resp = await client.post(
@@ -397,7 +400,10 @@ async def test_post_clear_setting(client: TestClient):
         new_camera_angle_acquisition = "normal"
     resp = await client.post(
         "/api/post_set_setting",
-        json={"TARGET_CAMERA_ANGLE_ACQUISITION": new_camera_angle_acquisition, "DISTANCE_BETWEEN_IMAGES": 0},
+        json={
+            "TARGET_CAMERA_ANGLE_ACQUISITION": new_camera_angle_acquisition,
+            "DISTANCE_BETWEEN_IMAGES": 0,
+        },
     )
     assert resp.status == 200
     resp = await client.post(
@@ -436,7 +442,10 @@ async def test_post_get_setting(client: TestClient):
     data = await resp.json()
     assert "TARGET_CAMERA_ANGLE_ACQUISITION" in data
     assert "DISTANCE_BETWEEN_IMAGES" in data
-    assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    assert (
+        data["TARGET_CAMERA_ANGLE_ACQUISITION"]
+        == settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    )
     assert data["DISTANCE_BETWEEN_IMAGES"] == 350
 
 
@@ -446,9 +455,10 @@ async def test_get_all_settings(client: TestClient):
     data = await resp.json()
     assert "TARGET_CAMERA_ANGLE_ACQUISITION" in data
     assert "DISTANCE_BETWEEN_IMAGES" in data
-    assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == settings.TARGET_CAMERA_ANGLE_ACQUISITION, data[
-        "TARGET_CAMERA_ANGLE_ACQUISITION"
-    ]
+    assert (
+        data["TARGET_CAMERA_ANGLE_ACQUISITION"]
+        == settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    ), data["TARGET_CAMERA_ANGLE_ACQUISITION"]
     assert data["DISTANCE_BETWEEN_IMAGES"] == 350, data["DISTANCE_BETWEEN_IMAGES"]
 
 

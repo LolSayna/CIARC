@@ -293,9 +293,7 @@ def create_thumbnail(panorama_path: str) -> None:
         thumb.save(panorama_path.replace(".png", "") + "_thumb.png")
         # thumb = thumb.convert("L")
         # thumb.save("src/rift_console/static/images/" + "thumb_grey.png")
-    logger.warning(
-        f"Saved Thumbnail to {panorama_path}_thumb.png"
-    )
+    logger.warning(f"Saved Thumbnail to {panorama_path}_thumb.png")
 
 
 # TODO add parameter to add new stiches onto an exisiting map

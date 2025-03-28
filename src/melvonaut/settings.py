@@ -102,8 +102,8 @@ class Settings(BaseModel):
     # load settings
     def load_settings(self) -> None:
         """Loads settings from a persistent JSON file.
-        
-        If the settings file does not exist or contains invalid JSON, 
+
+        If the settings file does not exist or contains invalid JSON,
         the overrides dictionary is reset to an empty state.
         """
         if not pathlib.Path(con.MEL_PERSISTENT_SETTINGS).exists():

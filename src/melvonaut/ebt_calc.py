@@ -151,6 +151,7 @@ def draw_res(
     Returns:
         tuple[int, int]: The estimated centroid of the matched points, or (-1, -1) if no matches were found.
     """
+
     def find_centroid(points: list[tuple[int, int]]) -> tuple[float, float]:
         """
         Computes the centroid of a set of points.

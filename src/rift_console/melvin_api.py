@@ -3,7 +3,6 @@ import signal
 import subprocess
 import threading
 from typing import Any, Optional
-import paramiko
 from pydantic import BaseModel
 import requests
 import csv
@@ -20,13 +19,25 @@ port = "8080"
 def create_tunnel() -> None:
     # sshpass -f .ssh-pw ssh -N -L 8080:localhost:8080 root@10.100.50.1
     # cmd = "ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s"
-    cmd = ["sshpass", "-f", ".ssh-pw" ,"ssh", "root@10.100.50.1", "-N", "-L", "8080:localhost:8080", "-o", "ConnectTimeout=1s"]
-    timeout = 60 * 15  #kill connection after 15 min
+    cmd = [
+        "sshpass",
+        "-f",
+        ".ssh-pw",
+        "ssh",
+        "root@10.100.50.1",
+        "-N",
+        "-L",
+        "8080:localhost:8080",
+        "-o",
+        "ConnectTimeout=1s",
+    ]
+    timeout = 60 * 15  # kill connection after 15 min
 
     process = subprocess.Popen(args=cmd)
     logger.info(f"Started tunnel: {process.pid}")
+
     # Function to terminate the process
-    def terminate_process():
+    def terminate_process() -> None:
         logger.warning("Cleanup tunnel")
         os.killpg(os.getpgid(process.pid), signal.SIGTERM)
 

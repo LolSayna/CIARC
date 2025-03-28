@@ -315,9 +315,18 @@ async def index() -> str:
             future_traj=[],
             width_x=0,
             height_y=0,
+            # tables
             slots=console.slots,
-            next_slot_start=console.slots[0].start.strftime("%H:%M:%S") if len(console.slots) > 0 else "noData",
-            slot_ends=console.slots[0].end.strftime("%H:%M:%S") if len(console.slots) > 0 else "noData",
+            zoned_objectives=console.zoned_objectives,
+            beacon_objectives=console.beacon_objectives,
+            achievements=console.achievements,
+            completed_ids=console.completed_ids,
+            next_slot_start=console.slots[0].start.strftime("%H:%M:%S")
+            if len(console.slots) > 0
+            else "noData",
+            slot_ends=console.slots[0].end.strftime("%H:%M:%S")
+            if len(console.slots) > 0
+            else "noData",
             # melvonaut api
             api=console.live_melvonaut_api,
             melvonaut_image_count=console.melvonaut_image_count,
@@ -732,7 +741,7 @@ async def results() -> Response:
                 path = f"{con.CONSOLE_STICHED_PATH}hidden_{optic_required}_{zone[0]}_{zone[1]}_{zone[2]}_{zone[3]}_{len(final_images)}_{space}.png"
 
             panorama.save(path)
-            
+
             rift_console.image_processing.create_thumbnail(path)
 
             rift_console.image_processing.cut(
@@ -946,7 +955,6 @@ async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> N
     panorama.save(path)
     rift_console.image_processing.create_thumbnail(path)
 
-
     if not res_obj.zone:
         await warning(f"{res_obj} has no zone, can not stitch, aborting!")
         return
@@ -1149,24 +1157,26 @@ async def control_handler() -> Response:
 # Pulls API after some changes
 async def update_telemetry() -> None:
     global console
-    (slots_used, slots) = ciarc_api.update_slots()
-    if slots_used != -1:
-        console.slots_used = slots_used
-        console.slots = slots
-    
-    res = ciarc_api.live_observation()
+
+    res = ciarc_api.update_api()
     if res:
         (
-            new_tel,
+            slots_used,
+            slots,
             zoned_objectives,
             beacon_objectives,
             achievements,
         ) = res
-        console.live_telemetry = new_tel
+        console.slots_used = slots_used
+        console.slots = slots
         console.zoned_objectives = zoned_objectives
         console.beacon_objectives = beacon_objectives
         console.achievements = achievements
-        console.user_speed_multiplier = new_tel.simulation_speed
+
+    tel = ciarc_api.live_telemetry()
+    if tel:
+        console.live_telemetry = tel
+        console.user_speed_multiplier = tel.simulation_speed
         (console.past_traj, console.future_traj) = console.predict_trajektorie()
 
         if console.live_telemetry and console.live_telemetry.state != State.Transition:
