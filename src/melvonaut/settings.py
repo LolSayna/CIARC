@@ -50,15 +50,8 @@ class Settings(BaseModel):
     # y = 49.9 / 3.35585
     # y = 14.87
     # 49.9 - 14.87 = 35.03 = x
-    # TARGET_SPEED_NORMAL_X: float = 35.03  # 2.35585 times as much as Y
-    # TARGET_SPEED_NORMAL_Y: float = 14.87
-
-    # angle stays the same
-    TARGET_SPEED_NORMAL_X: float = 30.32  # 2.35585 times as much as Y
-    TARGET_SPEED_NORMAL_Y: float = 12.87
-
-    # 32.67 / 13.87 or 30.32 12.87
-
+    TARGET_SPEED_NORMAL_X: float = 35.03  # 2.35585 times as much as Y
+    TARGET_SPEED_NORMAL_Y: float = 14.87
 
     # With total speed over 10, cannot use narrow angle camera
     # 9.9 = y + x
@@ -76,7 +69,7 @@ class Settings(BaseModel):
     TARGET_SPEED_WIDE_X: float = 49.84
     TARGET_SPEED_WIDE_Y: float = 21.16
 
-    DISTANCE_BETWEEN_IMAGES: int = 300  # How many pixel before taking another image
+    DISTANCE_BETWEEN_IMAGES: int = 450  # How many pixel before taking another image
 
     ## [Melvin Task Planing]
     # Standard mapping, with no objectives and the camera angle below
