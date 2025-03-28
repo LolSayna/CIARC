@@ -142,12 +142,21 @@ def change_simulation_env(
     return
 
 
+def update_slots() -> tuple[int, list[Slot]]:
+    s = console_api(method=HttpCode.GET, endpoint=con.SLOTS_ENDPOINT)
+    if s:
+        (slots_used, slots) = Slot.parse_api(s)
+        logger.info(f"Updated slots, found {slots_used}.")
+        return (slots_used, slots)
+    else:
+        logger.warning("Could not get slots.")
+        return (-1, [])
+
+
 def live_observation() -> (
     Optional[
         tuple[
             BaseTelemetry,
-            int,
-            list[Slot],
             list[ZonedObjective],
             list[BeaconObjective],
             list[Achievement],
@@ -155,17 +164,15 @@ def live_observation() -> (
     ]
 ):
     d = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
-    s = console_api(method=HttpCode.GET, endpoint=con.SLOTS_ENDPOINT)
     o = console_api(method=HttpCode.GET, endpoint=con.OBJECTIVE_ENDPOINT)
     a = console_api(method=HttpCode.GET, endpoint=con.ACHIEVEMENTS_ENDPOINT)
-    if d and s and o and a:
+    if d and o and a:
         b = BaseTelemetry(**d)
-        (slots_used, slots) = Slot.parse_api(s)
         zoned_objectives = ZonedObjective.parse_api(o)
         beacon_objectives = BeaconObjective.parse_api(o)
         achievements = Achievement.parse_api(a)
         logger.info(f"Console: received live telemetry\n{b}.")
-        return (b, slots_used, slots, zoned_objectives, beacon_objectives, achievements)
+        return (b, zoned_objectives, beacon_objectives, achievements)
     else:
         logger.warning("Live telemtry failed.")
         return None

@@ -315,6 +315,7 @@ async def index() -> str:
             future_traj=[],
             width_x=0,
             height_y=0,
+            slots=console.slots,
             # melvonaut api
             api=console.live_melvonaut_api,
             melvonaut_image_count=console.melvonaut_image_count,
@@ -1146,19 +1147,20 @@ async def control_handler() -> Response:
 # Pulls API after some changes
 async def update_telemetry() -> None:
     global console
+    (slots_used, slots) = ciarc_api.update_slots()
+    if slots_used != -1:
+        console.slots_used = slots_used
+        console.slots = slots
+    
     res = ciarc_api.live_observation()
     if res:
         (
             new_tel,
-            slots_used,
-            slots,
             zoned_objectives,
             beacon_objectives,
             achievements,
         ) = res
         console.live_telemetry = new_tel
-        console.slots_used = slots_used
-        console.slots = slots
         console.zoned_objectives = zoned_objectives
         console.beacon_objectives = beacon_objectives
         console.achievements = achievements
