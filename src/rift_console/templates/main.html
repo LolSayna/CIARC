@@ -950,10 +950,10 @@
         const isoString = now.toISOString();
         const formattedString = isoString.slice(0, 19);
         document.getElementById('time').textContent = `Live UTC: ${formattedString}`;
-        const mezDate = new Date(now.getTime() + 1 * 60 * 60 * 1000);
+        const mezDate = new Date(now.getTime() + 2 * 60 * 60 * 1000);
         const mezISOString = mezDate.toISOString();
         const mezFormattedString = mezISOString.slice(0, 19);
-        document.getElementById('timeMEZ').textContent = `Live MEZ: ${mezFormattedString}`;
+        document.getElementById('timeMEZ').textContent = `LSUM MEZ : ${mezFormattedString}`;
     }
 
     // Get time for add objective form
