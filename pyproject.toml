@@ -52,7 +52,7 @@ optional = true
 
 [tool.poetry.group.rift_console.dependencies]
 flask = "^3.1.0"
-quart = "^0.19.9"
+quart = "0.20.0"
 quart-flask-patch = "^0.3.0"
 hypercorn = "^0.17.3"
 
