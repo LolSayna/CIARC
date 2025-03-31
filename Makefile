@@ -95,3 +95,6 @@ docker-push: ## Push docker image to gitlab
 
 docker-compose-up:
 	docker-compose up --build -d
+
+docker-compose-down:
+	docker-compose down
