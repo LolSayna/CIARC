@@ -38,6 +38,8 @@ class Settings(BaseModel):
     DISCORD_WEBHOOK_TOKEN: Optional[str] = os.getenv("DISCORD_WEBHOOK_TOKEN", None)
     DISCORD_ALERTS_ENABLED: bool = os.getenv("DISCORD_ALERTS_ENABLED", False)
 
+    NETWORK_SIM_ENABLED: bool = os.getenv("NETWORK_SIMULATION", False)
+
     ## [Camera Settings]
     TARGET_ANGLE_DEG: float = os.getenv("TARGET_ANGLE_DEG", 23.0)  # The angle was calculated through simulations
     # With total speed over 50, cannot use wide angle camera
