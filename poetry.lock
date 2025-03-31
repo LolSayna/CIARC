@@ -210,20 +210,6 @@ requests = "*"
 requests-oauthlib = "*"
 
 [[package]]
-name = "argcomplete"
-version = "3.6.0"
-description = "Bash tab completion for argparse"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "argcomplete-3.6.0-py3-none-any.whl", hash = "sha256:4e3e4e10beb20e06444dbac0ac8dda650cb6349caeefe980208d3c548708bedd"},
-    {file = "argcomplete-3.6.0.tar.gz", hash = "sha256:2e4e42ec0ba2fff54b0d244d0b1623e86057673e57bafe72dda59c64bd5dee8b"},
-]
-
-[package.extras]
-test = ["coverage", "mypy", "pexpect", "ruff", "wheel"]
-
-[[package]]
 name = "attrs"
 version = "25.3.0"
 description = "Classes Without Boilerplate"
@@ -348,29 +334,6 @@ files = [
     {file = "blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc"},
     {file = "blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf"},
 ]
-
-[[package]]
-name = "build"
-version = "1.2.2.post1"
-description = "A simple, correct Python build frontend"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "build-1.2.2.post1-py3-none-any.whl", hash = "sha256:1d61c0887fa860c01971625baae8bdd338e517b836a2f70dd1f7aa3a6b2fc5b5"},
-    {file = "build-1.2.2.post1.tar.gz", hash = "sha256:b36993e92ca9375a219c99e606a122ff365a760a2d4bba0caa09bd5278b608b7"},
-]
-
-[package.dependencies]
-colorama = {version = "*", markers = "os_name == \"nt\""}
-packaging = ">=19.1"
-pyproject_hooks = "*"
-
-[package.extras]
-docs = ["furo (>=2023.08.17)", "sphinx (>=7.0,<8.0)", "sphinx-argparse-cli (>=1.5)", "sphinx-autodoc-typehints (>=1.10)", "sphinx-issues (>=3.0.0)"]
-test = ["build[uv,virtualenv]", "filelock (>=3)", "pytest (>=6.2.4)", "pytest-cov (>=2.12)", "pytest-mock (>=2)", "pytest-rerunfailures (>=9.1)", "pytest-xdist (>=1.34)", "setuptools (>=42.0.0)", "setuptools (>=56.0.0)", "setuptools (>=56.0.0)", "setuptools (>=67.8.0)", "wheel (>=0.36.0)"]
-typing = ["build[uv]", "importlib-metadata (>=5.1)", "mypy (>=1.9.0,<1.10.0)", "tomli", "typing-extensions (>=3.7.4.3)"]
-uv = ["uv (>=0.1.18)"]
-virtualenv = ["virtualenv (>=20.0.35)"]
 
 [[package]]
 name = "caio"
@@ -629,23 +592,6 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
-
-[[package]]
-name = "colorlog"
-version = "6.9.0"
-description = "Add colours to the output of Python's logging module."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "colorlog-6.9.0-py3-none-any.whl", hash = "sha256:5906e71acd67cb07a71e779c47c4bcb45fb8c2993eebe9e5adcd6a6f1b283eff"},
-    {file = "colorlog-6.9.0.tar.gz", hash = "sha256:bfba54a1b93b94f54e1f4fe48395725a3d92fd2a4af702f6bd70946bdc0c6ac2"},
-]
-
-[package.dependencies]
-colorama = {version = "*", markers = "sys_platform == \"win32\""}
-
-[package.extras]
-development = ["black", "flake8", "mypy", "pytest", "types-colorama"]
 
 [[package]]
 name = "contourpy"
@@ -1964,44 +1910,6 @@ files = [
 ]
 
 [[package]]
-name = "nox"
-version = "2024.10.9"
-description = "Flexible test automation."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "nox-2024.10.9-py3-none-any.whl", hash = "sha256:1d36f309a0a2a853e9bccb76bbef6bb118ba92fa92674d15604ca99adeb29eab"},
-    {file = "nox-2024.10.9.tar.gz", hash = "sha256:7aa9dc8d1c27e9f45ab046ffd1c3b2c4f7c91755304769df231308849ebded95"},
-]
-
-[package.dependencies]
-argcomplete = ">=1.9.4,<4"
-colorlog = ">=2.6.1,<7"
-packaging = ">=20.9"
-virtualenv = ">=20.14.1"
-
-[package.extras]
-tox-to-nox = ["jinja2", "tox"]
-uv = ["uv (>=0.1.6)"]
-
-[[package]]
-name = "nox-poetry"
-version = "1.2.0"
-description = "nox-poetry"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "nox_poetry-1.2.0-py3-none-any.whl", hash = "sha256:266eea7a0ab3cad7f4121ecc05b76945036db3b67e6e347557f05010a18e2682"},
-    {file = "nox_poetry-1.2.0.tar.gz", hash = "sha256:2531a404e3a21eb73fc1a587a548506a8e2c4c1e6e7ef0c1d0d8d6453b7e5d26"},
-]
-
-[package.dependencies]
-build = ">=1.2"
-nox = ">=2020.8.22"
-packaging = ">=20.9"
-tomlkit = ">=0.7"
-
-[[package]]
 name = "numpy"
 version = "2.2.4"
 description = "Fundamental package for array computing in Python"
@@ -2688,17 +2596,6 @@ files = [
 diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
-name = "pyproject-hooks"
-version = "1.2.0"
-description = "Wrappers to call pyproject.toml-based build backend hooks."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pyproject_hooks-1.2.0-py3-none-any.whl", hash = "sha256:9e5c6bfa8dcc30091c74b0cf803c81fdd29d94f01992a7707bc97babb1141913"},
-    {file = "pyproject_hooks-1.2.0.tar.gz", hash = "sha256:1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8"},
-]
-
-[[package]]
 name = "pytest"
 version = "8.3.5"
 description = "pytest: simple powerful testing with Python"
@@ -3218,17 +3115,6 @@ standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
-name = "tomlkit"
-version = "0.13.2"
-description = "Style preserving TOML library"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde"},
-    {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
-]
-
-[[package]]
 name = "typeguard"
 version = "4.4.2"
 description = "Run-time type checker for Python"
@@ -3612,4 +3498,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "79b8f0d663aaf0cb0fd5f0af56f069065d0d7b8c15ca580d4fcf5a75817e9182"
+content-hash = "30993a60db0765b8cbd0afdb0c2e78ebdb3a39400e63be5a7fb6be79d224ab1f"

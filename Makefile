@@ -57,9 +57,6 @@ test-melvonaut:
 test-rift-console:
 	pytest tests/test_rift_console
 
-test-all: ## run tests on every Python version with tox
-	nox
-
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source src -m pytest
 	coverage report -m
