@@ -69,6 +69,12 @@ async def client(aiohttp_client: ClientSession) -> TestClient:
     return await aiohttp_client(app)
 
 
+@pytest.fixture(autouse=True, scope="function")
+def cleanup():
+    yield
+    settings.clear_settings()
+
+
 async def test_health(client: TestClient):
     resp = await client.get("/api/health")
     assert resp.status == 200
@@ -338,6 +344,7 @@ async def test_post_set_melvin_task(client: TestClient):
 
 async def test_get_reset_settings(client: TestClient):
     original_camera_angle_acquisition = settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    original_distance_between_images = settings.DISTANCE_BETWEEN_IMAGES
     if original_camera_angle_acquisition == "normal":
         new_camera_angle_acquisition = "wide"
     else:
@@ -371,7 +378,7 @@ async def test_get_reset_settings(client: TestClient):
     assert "TARGET_CAMERA_ANGLE_ACQUISITION" in data
     assert "DISTANCE_BETWEEN_IMAGES" in data
     assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == original_camera_angle_acquisition
-    assert data["DISTANCE_BETWEEN_IMAGES"] == 350
+    assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images
 
 
 async def test_post_set_setting(client: TestClient):
@@ -394,6 +401,7 @@ async def test_post_set_setting(client: TestClient):
 
 async def test_post_clear_setting(client: TestClient):
     original_camera_angle_acquisition = settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    original_distance_between_images = settings.DISTANCE_BETWEEN_IMAGES
     if original_camera_angle_acquisition == "normal":
         new_camera_angle_acquisition = "wide"
     else:
@@ -429,11 +437,12 @@ async def test_post_clear_setting(client: TestClient):
     data = await resp.json()
     assert "TARGET_CAMERA_ANGLE_ACQUISITION" in data
     assert "DISTANCE_BETWEEN_IMAGES" in data
-    assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == original_camera_angle_acquisition
-    assert data["DISTANCE_BETWEEN_IMAGES"] == 350
+    assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == original_camera_angle_acquisition, settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images
 
 
 async def test_post_get_setting(client: TestClient):
+    original_distance_between_images = settings.DISTANCE_BETWEEN_IMAGES
     resp = await client.post(
         "/api/post_get_setting",
         json={"TARGET_CAMERA_ANGLE_ACQUISITION": "", "DISTANCE_BETWEEN_IMAGES": ""},
@@ -446,10 +455,11 @@ async def test_post_get_setting(client: TestClient):
         data["TARGET_CAMERA_ANGLE_ACQUISITION"]
         == settings.TARGET_CAMERA_ANGLE_ACQUISITION
     )
-    assert data["DISTANCE_BETWEEN_IMAGES"] == 350
+    assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images
 
 
 async def test_get_all_settings(client: TestClient):
+    original_distance_between_images = settings.DISTANCE_BETWEEN_IMAGES
     resp = await client.get("/api/get_all_settings")
     assert resp.status == 200, await resp.text()
     data = await resp.json()
@@ -459,7 +469,7 @@ async def test_get_all_settings(client: TestClient):
         data["TARGET_CAMERA_ANGLE_ACQUISITION"]
         == settings.TARGET_CAMERA_ANGLE_ACQUISITION
     ), data["TARGET_CAMERA_ANGLE_ACQUISITION"]
-    assert data["DISTANCE_BETWEEN_IMAGES"] == 350, data["DISTANCE_BETWEEN_IMAGES"]
+    assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images, data["DISTANCE_BETWEEN_IMAGES"]
 
 
 async def test_compression(client: TestClient):
