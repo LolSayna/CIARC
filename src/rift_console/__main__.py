@@ -1220,7 +1220,7 @@ def run_server() -> None:
 
 
 @main.command()
-def cli_only() -> None:
+def run_server_4000() -> None:
     """Original Rift Console CLI command, to run via poetry on a different port"""
     click.echo("Starting Quart server on port 4000...")
 

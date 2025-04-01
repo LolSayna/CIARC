@@ -38,7 +38,7 @@ services:
       - ./data/nginx/cache:/etc/nginx/cache
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
-      - ./.htpasswd:/etc/nginx/.htpasswd:ro
+      - ./.http-pass:/etc/nginx/.htpasswd:ro
     ports:
       - "80:80"
       - "443:443"

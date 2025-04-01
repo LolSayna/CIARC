@@ -152,62 +152,6 @@ Rift-Console can then be controlled from the web interface.
 ## Development
 
 
-
-## Conventions
-### Logging Level
-- Debug: some basic function is executed
-- Info: DEFAULT state - only important transitions
-- Warning: something noteworthy/important that should stand out from the logs
-- Error: something that should never have happened
-- CRITICAL: reserved for debugging
-
-
-## Usefule API cmds
-Reset
-```
-curl -X 'GET' \
-  'http://10.100.10.11:33000/reset' \
-  -H 'accept: application/json'
-```
-Observe
-```
-curl -X 'GET' \
-  'http://10.100.10.11:33000/observation' \
-  -H 'accept: application/json'
-```
-Simulation
-```
-curl -X 'PUT' \
-  'http://10.100.10.11:33000/simulation?is_network_simulation=false&user_speed_multiplier=20' \
-  -H 'accept: application/json'
-```
-First state
-```
-curl -X 'PUT' \
-  'http://10.100.10.11:33000/control' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "vel_x": 4.35,
-  "vel_y": 5.49,
-  "camera_angle": "narrow",
-  "state": "charge"
-}'
-```
-Second
-```
-curl -X 'PUT' \
-  'http://10.100.10.11:33000/control' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "vel_x": 4.35,
-  "vel_y": 5.49,
-  "camera_angle": "narrow",
-  "state": "acquisition"
-}'
-```
-
 ## License
 
 Distributed under the terms of the [MIT license][license],
