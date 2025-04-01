@@ -1,10 +1,10 @@
 # CIARC - Riftonauts
 
 [![Web](https://img.shields.io/badge/Web-blue)](https://c103-219.cloud.gwdg.de/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
-
-[pre-commit]: https://github.com/pre-commit/pre-commit
-
+[![Docs](https://img.shields.io/badge/Docs-green)](https://lolsayna.github.io/CIARC/)
+![GitHub top language](https://img.shields.io/github/languages/top/LolSayna/CIARC)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/LolSayna/CIARC/main.yml)
+![GitHub License](https://img.shields.io/github/license/Lolsayna/CIARC)
 
 ## Overview
 
@@ -24,15 +24,10 @@ Moreover, it provides endpoints to retrieve the collected data to the Rift-Conso
 
 ## Requirements
 
-The implementation uses Python 3.12.
-To install the requirements use [Poetry](https://python-poetry.org/).
+Melvonaut requires Python 3.12.
 
-The easiest way to set up Poetry is to use [pipx](https://pipx.pypa.io/)
-and then to run
-
-```bash
-pipx install poetry
-```
+Rift-Console requires Docker and Docker Compose.
+It is recommended to also provide a public domain name to run the application via TLS.
 
 ## Installation
 
@@ -134,7 +129,13 @@ Run `docker-compose up --build -d rift-console` to start the container.
 Rift-Console is available at `http://localhost:3000/`
 
 The docker-compose setup also includes mkdocs.
-The docs can be found at `https://<domain>/docs`.
+The docs can be found at `https://<your-domain>/docs`.
+
+Rift-Console uses an API exposed by Melvonaut to retrieve data and send control commands.
+For this Rift-Console expects the Melvonaut API to be reachable at http://localhost:8080/.
+When not running Melvonaut locally, port forwarding should be used.
+A script for this is provided in the `ssh-scripts` directory as `ssh-forward-melvonaut-api.sh`.
+The script requires a file `.ssh-pw` containing the password for the ssh connection and sshpass to be installed.
 
 ## Usage
 
@@ -145,12 +146,127 @@ Run `melvonaut --help` for more information.
 For production deployment use the `start-melvonaut.sh` script.
 This includes automatic restarts on crashes.
 
+To remotely control Melvonaut, additional scripts are provided in `ssh-scripts`.
+
+
 ### Rift-Console
 Run `rift-console` to start the service locally.
 Rift-Console can then be controlled from the web interface.
 
 ## Development
 
+The implementation uses Python 3.12 and [Poetry](https://python-poetry.org/).
+
+The easiest way to set up Poetry is to install [pipx](https://pipx.pypa.io/) and then to run
+```bash
+pipx install poetry
+```
+It is assumed that Python 3.12 is available on the system.
+
+### Installation
+
+To install Melvonaut and Rift-Console with all dependencies, run the following commands
+```bash
+# Prepare the virtual environment
+poetry config virtualenvs.in-project true
+poetry env use python3.12
+poetry install --all-groups
+
+# Then activate the virtual environment via
+source $(poetry env info --path)/bin/activate
+# or
+source .venv/bin/activate
+```
+
+This installs the Melvonaut, Rift-Console and development dependencies
+and allows running Melvonaut and Rift-Console locally via
+`melvonaut` and `rift-console`, respectively.
+
+### Code Structure
+
+```
+├── data                                              # NGINX and Certbot data
+├── docker-compose.yml
+├── Dockerfile                                        # Rift-Console Dockerfile
+├── Dockerfile.mkdocs                                 # Mkdocs Dockerfile
+├── docs                                              # Project docs
+├── init-letsencrypt.sh
+├── letsencrypt-config.sh
+├── LICENSE
+├── logs
+│     ├── melvonaut
+│     │     ├── event_melvonaut.csv                   # Announcements captured form stream
+│     │     ├── images                                # Saved images
+│     │     └── persistent_settings.json              # Settings that override defaults
+│     └── rift_console
+│         ├── from_melvonaut                          # Data downloaded from Melvonaut
+│         └── images                                  # Processed images
+├── Makefile
+├── media                                             # Static files for docs
+├── mkdocs.yml
+├── nginx.conf
+├── poetry.lock
+├── pyproject.toml
+├── README.md
+├── src
+│     ├── melvonaut
+│     │     ├── api.py                                # Melvonaut API, consumed by Rift-Console
+│     │     ├── ebt_calc.py                           # Beacon calculator
+│     │     ├── __init__.py
+│     │     ├── __main__.py                           # Main control flow
+│     │     ├── mel_telemetry.py                      # Telemtry data class
+│     │     ├── settings.py                           # Melvonaut settings
+│     │     ├── state_planer.py                       # State management logic
+│     │     └── utils.py                              # Helper functions
+│     ├── rift_console
+│     │     ├── ciarc_api.py
+│     │     ├── image_helper.py
+│     │     ├── image_processing.py
+│     │     ├── __init__.py
+│     │     ├── __main__.py
+│     │     ├── melvin_api.py
+│     │     ├── rift_console.py
+│     │     ├── static
+│     │     │     ├── images
+│     │     │     └── satellite.svg
+│     │     └── templates
+│     │         ├── downloads.html
+│     │         ├── ebt.html
+│     │         ├── live.html
+│     │         ├── main.html
+│     │         └── stitched.html
+│     └── shared
+│         ├── constants.py                            # Shared constants
+│         ├── __init__.py
+│         ├── models.py                               # Shared data classes
+├── ssh-scripts
+│     ├── ssh-forward-melvonaut-api.sh                # Port forward Melvonaut API to localhost
+│     ├── ssh-git-pull-on-melvin.sh                   # Update CIARC on Melvin
+│     ├── ssh-restart-melvin-container.sh             # Kill the Melvin container
+│     ├── ssh-restart-melvonaut.sh                    # Stop Melvonaut and let wrapper restart it
+│     ├── ssh-start-melvonaut.sh                      # Run wrapper start script
+│     └── ssh-stop-melvonaut.sh                       # Stop Melvonaut and wrapper script
+├── start-melvonaut.sh                                # Wrapper script for restarting Melvonaut
+└── tests
+    ├── test_melvonaut
+    │     ├── conftest.py
+    │     ├── __init__.py
+    │     ├── test_api.py
+    │     ├── test_main.py
+    │     ├── test_models.py
+    │     ├── test_settings.py
+    │     └── test_state_planer.py
+    └── test_rift_console
+        ├── __init__.py
+        └── test_main.py
+```
+
+### Testing
+
+Melvonaut is tested using [pytest](https://docs.pytest.org/en/latest/).
+Tests can be run via `make test`.
+To run with coverage, run `make coverage`.
+The tests are also run via Github Actions.
 
 ## License
 

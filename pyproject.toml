@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ciarc"
-version = "0.0.0"
+version = "1.0.0"
 description = "Ciarc"
 authors = ["Riftonauts"]
 license = "MIT"
@@ -17,9 +17,6 @@ packages = [
     { include = "rift_console", from = "src" },
     { include = "shared", from = "src" }
 ]
-
-[tool.poetry.urls]
-Changelog = "https://github.com/Lolsayna/CIARC/-/blob/main/CHANGELOG"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -64,8 +61,6 @@ Pygments = ">=2.10.0"
 coverage = {extras = ["toml"], version = ">=6.2"}
 darglint = ">=1.8.1"
 mypy = ">=0.930"
-pre-commit = ">=2.16.0"
-pre-commit-hooks = ">=4.1.0"
 pytest = ">=6.2.5"
 typeguard = ">=2.13.3"
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}

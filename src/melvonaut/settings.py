@@ -24,7 +24,7 @@ class Settings(BaseModel):
 
     ## [General Settings]
 
-    OBSERVATION_REFRESH_RATE: int = os.getenv("OBSERVATION_REFRESH_RATE", 5)  # seconds  # Seconds between observation requests
+    OBSERVATION_REFRESH_RATE: int = os.getenv("OBSERVATION_REFRESH_RATE", 5)  # Seconds between observation requests
     BATTERY_LOW_THRESHOLD: int = os.getenv("BATTERY_LOW_THRESHOLD", 20)
     BATTERY_HIGH_THRESHOLD: int = os.getenv("BATTERY_HIGH_THRESHOLD", 0)  # Difference to Max Battery before switching
 
