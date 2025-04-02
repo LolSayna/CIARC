@@ -18,6 +18,4 @@ RUN poetry install --no-interaction
 
 EXPOSE 3000
 
-#CMD ["rift-console", "run-server"]
-#CMD ["hypercorn", "--pythonpath", "./src", "rift_console.__main__:app", "-k", "uvicorn.workers.UvicornWorker", "--workers", "4", "--bind", "0.0.0.0:3000", "-t", "5"]
 CMD ["poetry", "run", "rift-console", "run-server"]

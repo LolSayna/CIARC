@@ -16,18 +16,18 @@ The project implements two packages: `melvonaut` and `rift-console`.
 
 The Operator Console, referred to as _Rift-Console_, implements a web application based on Quart,
 which provides an interface to visualize and control MELVIN in the satellite simulation.
-Moreover, it implements background tasks to monitor MELVIN and to retrieve data from it.
+Moreover, it implements background tasks to analyse data from MELVIN and complete given objectives.
 
 The driver software for MELVIN, referred to as _Melvonaut_, implements an async Python service,
 which continuously operates MELVIN towards the completion of its tasks.
-Moreover, it provides endpoints to retrieve the collected data to the Rift-Console.
+Moreover, it provides endpoints to retrieve the collected data to the Rift-Console in the limited communication windows.
 
 ## Requirements
 
-Melvonaut requires Python 3.12.
+Melvonaut requires Python 3.12 and expects a live connection to the CIARC API. 
 
 Rift-Console requires Docker and Docker Compose.
-It is recommended to also provide a public domain name to run the application via TLS.
+It is recommended to also provide a public domain name to run the application via TLS. A local development version of Rift-Console also exists without docker.
 
 ## Installation
 
@@ -36,8 +36,10 @@ It is recommended to also provide a public domain name to run the application vi
 For deployment of Melvonaut on Melvin, Python 3.12 is required.
 In order to provide an isolated installation that persists across reboots, we compile Python 3.12 in user space.
 
-SSH into Melvin and execute the following commands:
-```
+<details>
+    <summary>SSH into Melvin and execute the following commands</summary>
+
+```shell
 cd /home
 
 apt update
@@ -91,6 +93,7 @@ git pull
 apt update
 apt install git
 ```
+</details>
 
 Melvonaut supports sending error messages via Discord while network simulation is deactivated
 or during communication windows.
@@ -101,7 +104,7 @@ Also `DISCORD_ALERTS_ENABLED` must be set to True in the `.env` file.
 ### Rift-Console
 
 Rift-Console is intended to be deployed via docker-compose on a node
-running a wire-guard connection to MELVIN.
+running a wire-guard connection to MELVIN and the CIARC API.
 
 Ensure that docker and docker-compose are installed.
 Rift-console is intended to be deployed on a public domain.
@@ -135,13 +138,13 @@ Rift-Console uses an API exposed by Melvonaut to retrieve data and send control 
 For this Rift-Console expects the Melvonaut API to be reachable at http://localhost:8080/.
 When not running Melvonaut locally, port forwarding should be used.
 A script for this is provided in the `ssh-scripts` directory as `ssh-forward-melvonaut-api.sh`.
-The script requires a file `.ssh-pw` containing the password for the ssh connection and sshpass to be installed.
+The script requires a file `.ssh-pw` containing the password for the ssh connection and sshpass to be installed or can be modifyed to use an ssh-key.
 
 ## Usage
 
 ### Melvonaut
-Run `melvonaut` to start the service.
-Run `melvonaut --help` for more information.
+Run `poetry run melvonaut` to start the service.
+Run `poetry run  melvonaut --help` for more information.
 
 For production deployment use the `start-melvonaut.sh` script.
 This includes automatic restarts on crashes.
@@ -150,8 +153,8 @@ To remotely control Melvonaut, additional scripts are provided in `ssh-scripts`.
 
 
 ### Rift-Console
-Run `rift-console` to start the service locally.
-Rift-Console can then be controlled from the web interface.
+Run `poetry run rift-console run-server` to start the service locally.
+Rift-Console can then be controlled from the web interface at http://localhost:3000.
 
 ## Development
 
@@ -184,6 +187,9 @@ and allows running Melvonaut and Rift-Console locally via
 
 ### Code Structure
 
+<details>
+    <summary>Folders & Files</summary>
+
 ```
 ├── data                                              # NGINX and Certbot data
 ├── docker-compose.yml
@@ -197,10 +203,12 @@ and allows running Melvonaut and Rift-Console locally via
 │     ├── melvonaut
 │     │     ├── event_melvonaut.csv                   # Announcements captured form stream
 │     │     ├── images                                # Saved images
+│     │     └── log_melvonaut_XXXX.log                # Python logging
+│     │     └── telemetry_melvonaut.csv               # Telemetry
 │     │     └── persistent_settings.json              # Settings that override defaults
 │     └── rift_console
-│         ├── from_melvonaut                          # Data downloaded from Melvonaut
-│         └── images                                  # Processed images
+│         ├── from_melvonaut                          # Logs/Events/Telemetry downloaded from Melvonaut
+│         └── images                                  # Downloaded/Stitched/Processed images
 ├── Makefile
 ├── media                                             # Static files for docs
 ├── mkdocs.yml
@@ -210,34 +218,34 @@ and allows running Melvonaut and Rift-Console locally via
 ├── README.md
 ├── src
 │     ├── melvonaut
-│     │     ├── api.py                                # Melvonaut API, consumed by Rift-Console
-│     │     ├── ebt_calc.py                           # Beacon calculator
 │     │     ├── __init__.py
 │     │     ├── __main__.py                           # Main control flow
+│     │     ├── api.py                                # Melvonaut API, consumed by Rift-Console
+│     │     ├── ebt_calc.py                           # Beacon calculator
 │     │     ├── mel_telemetry.py                      # Telemtry data class
 │     │     ├── settings.py                           # Melvonaut settings
 │     │     ├── state_planer.py                       # State management logic
 │     │     └── utils.py                              # Helper functions
 │     ├── rift_console
-│     │     ├── ciarc_api.py
-│     │     ├── image_helper.py
-│     │     ├── image_processing.py
 │     │     ├── __init__.py
-│     │     ├── __main__.py
-│     │     ├── melvin_api.py
-│     │     ├── rift_console.py
-│     │     ├── static
+│     │     ├── __main__.py                           # Quart routes + logic 
+│     │     ├── rift_console.py                       # Dataclass 
+│     │     ├── ciarc_api.py                          # Connection to CIARC API
+│     │     ├── melvin_api.py                         # Connection to Melvonaut API
+│     │     ├── image_processing.py                   # Image stitching
+│     │     ├── image_helper.py
+│     │     ├── static                              
 │     │     │     ├── images
 │     │     │     └── satellite.svg
 │     │     └── templates
-│     │         ├── downloads.html
-│     │         ├── ebt.html
+│     │         ├── main.html                         # Index page
 │     │         ├── live.html
-│     │         ├── main.html
+│     │         ├── downloads.html
 │     │         └── stitched.html
+│     │         ├── ebt.html
 │     └── shared
-│         ├── constants.py                            # Shared constants
 │         ├── __init__.py
+│         ├── constants.py                            # Shared constants
 │         ├── models.py                               # Shared data classes
 ├── ssh-scripts
 │     ├── ssh-forward-melvonaut-api.sh                # Port forward Melvonaut API to localhost
@@ -249,8 +257,8 @@ and allows running Melvonaut and Rift-Console locally via
 ├── start-melvonaut.sh                                # Wrapper script for restarting Melvonaut
 └── tests
     ├── test_melvonaut
-    │     ├── conftest.py
     │     ├── __init__.py
+    │     ├── conftest.py
     │     ├── test_api.py
     │     ├── test_main.py
     │     ├── test_models.py
@@ -260,6 +268,7 @@ and allows running Melvonaut and Rift-Console locally via
         ├── __init__.py
         └── test_main.py
 ```
+</details>
 
 ### Testing
 
@@ -267,6 +276,9 @@ Melvonaut is tested using [pytest](https://docs.pytest.org/en/latest/).
 Tests can be run via `make test`.
 To run with coverage, run `make coverage`.
 The tests are also run via Github Actions.
+
+### Type Checking and Linting
+Use `make mypy` and `make lint` inside an active poetry enviroment.
 
 ## License
 

@@ -24,24 +24,30 @@ class Settings(BaseModel):
 
     ## [General Settings]
 
-    OBSERVATION_REFRESH_RATE: int = os.getenv("OBSERVATION_REFRESH_RATE", 5)  # Seconds between observation requests
-    BATTERY_LOW_THRESHOLD: int = os.getenv("BATTERY_LOW_THRESHOLD", 20)
-    BATTERY_HIGH_THRESHOLD: int = os.getenv("BATTERY_HIGH_THRESHOLD", 0)  # Difference to Max Battery before switching
+    OBSERVATION_REFRESH_RATE: int = int(
+        os.getenv("OBSERVATION_REFRESH_RATE", 5)
+    )  # Seconds between observation requests
+    BATTERY_LOW_THRESHOLD: int = int(os.getenv("BATTERY_LOW_THRESHOLD", 20))
+    BATTERY_HIGH_THRESHOLD: int = int(
+        os.getenv("BATTERY_HIGH_THRESHOLD", 0)
+    )  # Difference to Max Battery before switching
 
-    TRACING: bool = os.getenv("TRACING", False)
+    TRACING: bool = bool(os.getenv("TRACING", False))
 
     TERMINAL_LOGGING_LEVEL: str = os.getenv("TERMINAL_LOGGING_LEVEL", "INFO").upper()
     FILE_LOGGING_LEVEL: str = os.getenv("FILE_LOGGING_LEVEL", "INFO").upper()
 
-    API_PORT: int = os.getenv("API_PORT", 8080)
+    API_PORT: int = int(os.getenv("API_PORT", 8080))
 
     DISCORD_WEBHOOK_TOKEN: Optional[str] = os.getenv("DISCORD_WEBHOOK_TOKEN", None)
-    DISCORD_ALERTS_ENABLED: bool = os.getenv("DISCORD_ALERTS_ENABLED", False)
+    DISCORD_ALERTS_ENABLED: bool = bool(os.getenv("DISCORD_ALERTS_ENABLED", False))
 
-    NETWORK_SIM_ENABLED: bool = os.getenv("NETWORK_SIMULATION", False)
+    NETWORK_SIM_ENABLED: bool = bool(os.getenv("NETWORK_SIMULATION", False))
 
     ## [Camera Settings]
-    TARGET_ANGLE_DEG: float = os.getenv("TARGET_ANGLE_DEG", 23.0)  # The angle was calculated through simulations
+    TARGET_ANGLE_DEG: float = float(
+        os.getenv("TARGET_ANGLE_DEG", 23.0)
+    )  # The angle was calculated through simulations
     # With total speed over 50, cannot use wide angle camera
     # 49.9 = y + x
     # x = 2.35585 * y
@@ -50,26 +56,30 @@ class Settings(BaseModel):
     # y = 49.9 / 3.35585
     # y = 14.87
     # 49.9 - 14.87 = 35.03 = x
-    TARGET_SPEED_NORMAL_X: float = os.getenv("TARGET_SPEED_NORMAL_X", 35.03)  # 2.35585 times as much as Y
-    TARGET_SPEED_NORMAL_Y: float = os.getenv("TARGET_SPEED_NORMAL_Y", 14.87)
+    TARGET_SPEED_NORMAL_X: float = float(
+        os.getenv("TARGET_SPEED_NORMAL_X", 35.03)
+    )  # 2.35585 times as much as Y
+    TARGET_SPEED_NORMAL_Y: float = float(os.getenv("TARGET_SPEED_NORMAL_Y", 14.87))
 
     # With total speed over 10, cannot use narrow angle camera
     # 9.9 = y + x
     # y = 9.9 / 3.35585
     # y = 2.95
     # 9.9 - 2.95 = 6.95 = x
-    TARGET_SPEED_NARROW_X: float = os.getenv("TARGET_SPEED_NARROW_X", 6.95)
-    TARGET_SPEED_NARROW_Y: float = os.getenv("TARGET_SPEED_NARROW_Y", 2.95)
+    TARGET_SPEED_NARROW_X: float = float(os.getenv("TARGET_SPEED_NARROW_X", 6.95))
+    TARGET_SPEED_NARROW_Y: float = float(os.getenv("TARGET_SPEED_NARROW_Y", 2.95))
 
     # Total speed can be up to 71
     # 71 = y + x
     # y = 71 / 3.35585
     # y = 21.16
     # 71 - 21.16 = 49.84 = x
-    TARGET_SPEED_WIDE_X: float = os.getenv("TARGET_SPEED_WIDE_X", 49.84)
-    TARGET_SPEED_WIDE_Y: float = os.getenv("TARGET_SPEED_WIDE_Y", 21.16)
+    TARGET_SPEED_WIDE_X: float = float(os.getenv("TARGET_SPEED_WIDE_X", 49.84))
+    TARGET_SPEED_WIDE_Y: float = float(os.getenv("TARGET_SPEED_WIDE_Y", 21.16))
 
-    DISTANCE_BETWEEN_IMAGES: int = os.getenv("DISTANCE_BETWEEN_IMAGES", 450)  # How many pixel before taking another image
+    DISTANCE_BETWEEN_IMAGES: int = int(
+        os.getenv("DISTANCE_BETWEEN_IMAGES", 450)
+    )  # How many pixel before taking another image
 
     ## [Melvin Task Planing]
     # Standard mapping, with no objectives and the camera angle below
@@ -95,7 +105,7 @@ class Settings(BaseModel):
         2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc
     )
 
-    DO_ACTUALLY_EXIT: bool = True # Used in testing
+    DO_ACTUALLY_EXIT: bool = True  # Used in testing
 
     OVERRIDES: dict[str, Any] = {}
 

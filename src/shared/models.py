@@ -15,14 +15,19 @@ from typing import Optional, Union
 
 import shared.constants as con
 
-# Fix issue with Image size
+# Pillow  has a low default maximum image size, overwriten here
 Image.MAX_IMAGE_PIXELS = 500000000
 
+# TODO
 SSE_LINE_PATTERN: Final[re.Pattern] = re.compile("(?P<name>[^:]*):?( ?(?P<value>.*))?")
 
 
-# From User Manual
+# [From CIARC API User Manual]
 class CameraAngle(StrEnum):
+    """
+    Different camera angles possible on MELVIN.
+    """
+
     Wide = "wide"
     Narrow = "narrow"
     Normal = "normal"
@@ -30,6 +35,14 @@ class CameraAngle(StrEnum):
 
 
 class Slot(BaseModel):
+    """
+    One communication slot in which MELVIN can be contacted.
+
+    Methods:
+        parse_api(data: dict) -> tuple[int, list["Slot"]]:
+            Parses the given API data to extract slots and the number of slots used.
+    """
+
     id: int
     start: datetime.datetime
     end: datetime.datetime
@@ -37,6 +50,17 @@ class Slot(BaseModel):
 
     @staticmethod
     def parse_api(data: dict) -> tuple[int, list["Slot"]]:
+        """
+        Parses CIARC API response into the list of available slots.
+
+        Args:
+            data (dict): The API response from /slots.
+
+        Returns:
+            tuple[int, list["Slot"]]: Number of communication slots used and
+                list of slots sorted by the earliest start time.
+
+        """
         slots_used = data["communication_slots_used"]
         slots = []
         for s in data["slots"]:

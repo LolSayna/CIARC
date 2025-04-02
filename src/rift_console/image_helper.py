@@ -179,7 +179,7 @@ def find_image_names(directory: str) -> list[str]:
             raise Exception("find_image_names: did not found position in image names")
 
     # sort
-    if con.IMAGE_ITERATION_POSITION_NOT_TIME:
+    if con.SORT_IMAGE_BY_POSITION:
         image_names = sorted(image_names, key=extract_pos)
     else:
         image_names = sorted(image_names, key=extract_timestamp)

@@ -437,7 +437,9 @@ async def test_post_clear_setting(client: TestClient):
     data = await resp.json()
     assert "TARGET_CAMERA_ANGLE_ACQUISITION" in data
     assert "DISTANCE_BETWEEN_IMAGES" in data
-    assert data["TARGET_CAMERA_ANGLE_ACQUISITION"] == original_camera_angle_acquisition, settings.TARGET_CAMERA_ANGLE_ACQUISITION
+    assert (
+        data["TARGET_CAMERA_ANGLE_ACQUISITION"] == original_camera_angle_acquisition
+    ), settings.TARGET_CAMERA_ANGLE_ACQUISITION
     assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images
 
 
@@ -469,7 +471,9 @@ async def test_get_all_settings(client: TestClient):
         data["TARGET_CAMERA_ANGLE_ACQUISITION"]
         == settings.TARGET_CAMERA_ANGLE_ACQUISITION
     ), data["TARGET_CAMERA_ANGLE_ACQUISITION"]
-    assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images, data["DISTANCE_BETWEEN_IMAGES"]
+    assert data["DISTANCE_BETWEEN_IMAGES"] == original_distance_between_images, data[
+        "DISTANCE_BETWEEN_IMAGES"
+    ]
 
 
 async def test_compression(client: TestClient):

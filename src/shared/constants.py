@@ -22,11 +22,6 @@ CONSOLE_STICHED_PATH = "logs/rift_console/images/stitched/"
 CONSOLE_EBT_PATH = "logs/rift_console/images/ebt/"
 MEL_PERSISTENT_SETTINGS = "logs/melvonaut/persistent_settings.json"
 
-# [TRAJECTORY]
-# generate points up to 12 hours, each point after 1 minute
-TRAJ_TIME = 3600 * 12
-TRAJ_STEP = 10
-
 # [URLs]
 BASE_URL = "http://10.100.10.11:33000/"  # URL of our instance
 # Given Data Reference System API endpoints
@@ -51,35 +46,35 @@ WORLD_X = 21600
 WORLD_Y = 10800
 ACCELERATION = 0.02
 
+
+# [Console]
+# Since images get very large (>400MB) a smaller 2nd version is displayed
 THUMBNAIL_X = 1000
 THUMBNAIL_Y = 500
+# Calculate trajektorie
+TRAJ_TIME = 3600 * 12  # generate points up to 12 hours
+TRAJ_STEP = 10  # merge 10s into 1 point
+# How many images should be shown at once in the image viewer tabs
+CONSOLE_IMAGE_VIEWER_LIMIT = 1000
 
-# While in Stitching add this border in each direction
-STITCHING_BORDER = 1000
-## For image processing
+## [Image Processing]
+STITCHING_BORDER = 1000  # While in Stitching add this border in each direction
 NUMBER_OF_WORKER_THREADS = (cpu_count() or 4) - 2  # use 1 for single core
+SAVE_PANORAMA_STEP = 1000  # save the current panorama each X images
+STITCHING_COUNT_LIMIT = 5000  # stitching limit
+# Toogle between sorted/stitching images by position, starting in the top-right corner
+# else sort by timestamp
+SORT_IMAGE_BY_POSITION = True
+# The naming convention for images changed, can be changed for legacy data
+USE_LEGACY_IMAGE_NAMES = False  # should be false, only true for older datasets
+IMAGE_NAME_UNDERSCORE_COUNT = 8  # should be 8, only for old datasets can be 9
+IMAGE_ANGLE_POSITION = 2  # hould be 2, only for old datasets can be 3
+
+## [New stitching algorithm]
+# Activate an improved stitching algorithm, which tries different placements of each image, but
+# takes a very long run time. Works, but needs further refinement
 DO_IMAGE_NUDGING_SEARCH = False  # if False ignore SEARCH_GRID_SIDE_LENGTH
 SEARCH_GRID_SIDE_LENGTH = 15  # should be uneven
-
-# should be false, the naming convention for images changed, for all new images this should be false
-USE_LEGACY_IMAGE_NAMES = False
-# should be 8, only for old datasets can be 9
-IMAGE_NAME_UNDERSCORE_COUNT = 8
-# should be 2, only for old datasets can be 3, since files were named differently back then
-IMAGE_ANGLE_POSITION = 2
-
-# save the current panorama each X images
-SAVE_PANORAMA_STEP = 1000
-
 # see image_processing:count_matching_pixels. Images are (0-255,0-255,0-255), summed up over RGB how
 # difference two pixels are allowed to be to still count as matching
 IMAGE_NOISE_FORGIVENESS = 20
-
-# WIP
-# first version sorted images by time, this flag instead sorts by position, starting in the top-right corner
-IMAGE_ITERATION_POSITION_NOT_TIME = True
-# only stitched that many images for better testing
-STITCHING_COUNT_LIMIT = 5000
-
-# how many images should be shown at once in the viewer tabs
-CONSOLE_IMAGE_VIEWER_LIMIT = 1000
