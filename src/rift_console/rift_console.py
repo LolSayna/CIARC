@@ -15,6 +15,8 @@ from shared.models import (
 
 
 class RiftConsole:
+    """State of a currently running Console, including live data from CIARC/Melvonaut API."""
+
     last_backup_date: Optional[datetime.datetime] = None
     is_network_simulation: Optional[bool] = None
     user_speed_multiplier: Optional[int] = None
@@ -40,6 +42,7 @@ class RiftConsole:
     melvin_lens: str = ""
 
     def get_draw_zoned_obj(self) -> list[dict[str, object]]:
+        """Picks objectives to be drawn later from its telemetry."""
         get_draw_zoned_obj = []
         for obj in self.zoned_objectives:
             if obj.zone is not None:
@@ -81,6 +84,7 @@ class RiftConsole:
 
     @staticmethod
     def fix_overflow(x: int, y: int) -> tuple[int, int]:
+        """Helper for trajektorie predition. Does "teleportation" when MELVIN reaches one side of the map."""
         if x > con.WORLD_X:
             x = x % con.WORLD_X
 
