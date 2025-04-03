@@ -96,33 +96,7 @@ async def run_get_observations() -> None:
         await asyncio.gather(observe_task)
 
 
-# currently not in use
-async def get_announcements() -> None:
-    """Fetches real-time announcements from the Melvin API.
-
-    This function opens a session with the announcements API endpoint,
-    reads and logs any received messages.
-
-    Returns:
-        None
-    """
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                con.ANNOUNCEMENTS_ENDPOINT, headers={"Accept": "text/event-stream"}
-            ) as response:
-                if response.status == 200:
-                    async for line in response.content:
-                        clean_line = line.decode("utf-8").strip().replace("data:", "")
-                        logger.error(f"Received announcement: {clean_line}")
-                else:
-                    logger.error(f"Failed to get announcements: {response.status}")
-    except TimeoutError:
-        # could add async sleep here
-        logger.error("Announcements subscription timed out")
-
-
-async def get_announcements2(last_id: Optional[str] = None) -> Optional[str]:
+async def get_announcements(last_id: Optional[str] = None) -> Optional[str]:
     """Fetches announcements asynchronously with event-stream handling.
 
     This function continuously listens for new announcements from the API and processes them.
@@ -206,7 +180,7 @@ async def run_get_announcements() -> None:
     """
     logger.warning("Started announcements subscription")
     while True:
-        await asyncio.gather(get_announcements2())
+        await asyncio.gather(get_announcements())
         logger.warning("Restarted announcements subscription")
 
 

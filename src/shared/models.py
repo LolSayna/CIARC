@@ -18,9 +18,6 @@ import shared.constants as con
 # Pillow  has a low default maximum image size, overwriten here
 Image.MAX_IMAGE_PIXELS = 500000000
 
-# TODO
-SSE_LINE_PATTERN: Final[re.Pattern] = re.compile("(?P<name>[^:]*):?( ?(?P<value>.*))?")
-
 
 # [From CIARC API User Manual]
 class CameraAngle(StrEnum):
