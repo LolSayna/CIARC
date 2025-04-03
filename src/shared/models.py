@@ -6,7 +6,7 @@ import time
 from loguru import logger
 from pathlib import Path
 from enum import Enum, StrEnum
-from typing import Callable, Awaitable, Any, Final
+from typing import Callable, Awaitable, Any
 
 from PIL import Image
 from aiofile import async_open
@@ -31,6 +31,18 @@ class CameraAngle(StrEnum):
     Unknown = "unknown"
 
 
+class State(StrEnum):
+    """From CIARC user manual"""
+
+    Deployment = "deployment"
+    Acquisition = "acquisition"
+    Charge = "charge"
+    Safe = "safe"
+    Communication = "communication"
+    Transition = "transition"
+    Unknown = "none"
+
+
 class Slot(BaseModel):
     """
     One communication slot in which MELVIN can be contacted.
@@ -46,7 +58,7 @@ class Slot(BaseModel):
     enabled: bool
 
     @staticmethod
-    def parse_api(data: dict) -> tuple[int, list["Slot"]]:
+    def parse_api(data: dict) -> tuple[int, list["Slot"]]:  # type: ignore
         """
         Parses CIARC API response into the list of available slots.
 
@@ -69,6 +81,10 @@ class Slot(BaseModel):
 
 
 class ZonedObjective(BaseModel):
+    """
+    One hidden or visible objective, completed by taking pictures of its position.
+    """
+
     id: int  # could be null acording to Dto
     name: str
     start: datetime.datetime
@@ -81,9 +97,11 @@ class ZonedObjective(BaseModel):
     secret: bool
     # sprite is ignored as said in email
 
-    # extracts and parses objective format from the format given from its matching api endpoint
     @staticmethod
-    def parse_api(data: dict) -> list["ZonedObjective"]:
+    def parse_api(data: dict) -> list["ZonedObjective"]:  # type: ignore
+        """
+        Extracts and parses objectives from its matching api endpoint
+        """
         z_obj_list = []
         # parse objective list
         for obj in data["zoned_objectives"]:
@@ -116,6 +134,10 @@ class ZonedObjective(BaseModel):
 
 
 class BeaconObjective(BaseModel):
+    """
+    Emergency beacon objective from CIARC API.
+    """
+
     id: int
     name: str
     start: datetime.datetime
@@ -125,7 +147,10 @@ class BeaconObjective(BaseModel):
     description: str
 
     @staticmethod
-    def parse_api(data: dict) -> list["BeaconObjective"]:
+    def parse_api(data: dict) -> list["BeaconObjective"]:  # type: ignore
+        """
+        Parse CIARC API to list of this class
+        """
         beacon_obj = []
         for b in data["beacon_objectives"]:
             beacon_obj.append(BeaconObjective(**b))
@@ -134,6 +159,10 @@ class BeaconObjective(BaseModel):
 
 
 class Achievement(BaseModel):
+    """
+    From CIARC API.
+    """
+
     name: str
     done: bool
     points: int
@@ -142,7 +171,10 @@ class Achievement(BaseModel):
     goal_parameter: Union[bool, int, float, str]
 
     @staticmethod
-    def parse_api(data: dict) -> list["Achievement"]:
+    def parse_api(data: dict) -> list["Achievement"]:  # type: ignore
+        """
+        Parse CIARC API into list of Achievment.
+        """
         achv = []
         for a in data["achievements"]:
             achv.append(Achievement(**a))
@@ -150,165 +182,19 @@ class Achievement(BaseModel):
         return achv
 
 
-# [MELVONAUT]
-# TODO test if this actually works as intentend???
-def boxes_overlap_in_grid(box1, box2):
-    grid_width = con.WORLD_X
-    grid_height = con.WORLD_Y
-    # Extract the position and dimensions of box1
-    x1, y1, width1, height1 = box1
-    # Extract the position and dimensions of box2
-    x2, y2, width2, height2 = box2
-
-    # Define a helper function to check overlap in one dimension with overflow
-    def overlap_1d(start1, length1, start2, length2, max_length):
-        # Compute the end positions with wrapping
-        end1 = (start1 + length1 - 1) % max_length
-        end2 = (start2 + length2 - 1) % max_length
-
-        # Check overlap considering wrapping
-        return (
-            (start1 <= end2 and end1 >= start2)  # direct overlap
-            or (
-                end1 < start1 and (start1 <= end2 or end1 >= start2)
-            )  # wrapped around for first box
-            or (
-                end2 < start2 and (start2 <= end1 or end2 >= start1)
-            )  # wrapped around for second box
-        )
-
-    # Check overlap in both dimensions
-    overlap_x = overlap_1d(x1, width1, x2, width2, grid_width)
-    overlap_y = overlap_1d(y1, height1, y2, height2, grid_height)
-
-    # The boxes overlap if they overlap in both dimensions
-    return overlap_x and overlap_y
-
-
-def lens_size_by_angle(angle: CameraAngle) -> int:
-    match angle:
-        case CameraAngle.Narrow:
-            lens_size = 600
-        case CameraAngle.Normal:
-            lens_size = 800
-        case CameraAngle.Wide:
-            lens_size = 1000
-    return lens_size
-
-
-# habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
-# mypy: ignore-errors
-def log_rate_limiter(interval_seconds: int):  # type: ignore
-    def decorator(func):
-        last_log_time = [0]  # Use a list to allow modification of non-local state
-
-        def wrapper(*args, **kwargs):
-            nonlocal last_log_time
-            current_time = time.time()
-            if current_time - last_log_time[0] >= interval_seconds:
-                func(*args, **kwargs)
-                last_log_time[0] = current_time
-
-        return wrapper
-
-    return decorator
-
-
-@log_rate_limiter(3)  # Apply a 10-second rate limiter
-def limited_log(message: str) -> None:
-    logger.info(message)
-
-
-@log_rate_limiter(1)  # Apply a 10-second rate limiter
-def limited_log_debug(message: str) -> None:
-    logger.debug(message)
-
-
-class Timer(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    _timeout: float
-    _callback: Callable[[], Awaitable[Any]]
-    _task: asyncio.Task[None]
-
-    def __init__(self, timeout: float, callback: Callable[[], Awaitable[Any]]):
-        super().__init__()
-        self._timeout = timeout
-        self._callback = callback
-        self._task = asyncio.create_task(self._job())
-
-    async def _job(self) -> None:
-        await asyncio.sleep(self._timeout)
-        await self._callback()
-
-    def cancel(self) -> None:
-        self._task.cancel()
-
-    def get_task(self) -> asyncio.Task[None]:
-        return self._task
-
-
-# Our custom programs/missions/states in which we can place Melvin
-class MELVINTask(StrEnum):
-    Mapping = "mapping"
-    Next_objective = "next_objective"
-    Fixed_objective = "fixed_objective"
-    EBT = "ebt"
-    # Emergencies = "emergencies"
-    # Events = "events"
-    # Idle = "idle"
-
-
-# From User Manual
-class State(StrEnum):
-    Deployment = "deployment"
-    Acquisition = "acquisition"
-    Charge = "charge"
-    Safe = "safe"
-    Communication = "communication"
-    Transition = "transition"
-    Unknown = "none"
-
-
 class HttpCode(Enum):
+    """Used HTTP codes for API."""
+
     GET = "get"
     PUT = "put"
     DELETE = "delete"
     POST = "post"
 
 
-# [TIMEFORMATS]
-# ISO 8601 format
-# Melin returns like this: 2024-12-24T13:10:13.660337Z
-#   or                     2024-12-26T13:00:00Z
-# Z equivalent to +00:00 to indicate UTC timezone
-
-# To get current time in UTC use datetime.datetime.now(datetime.timezone.utc)
-# or get from string with datetime.datetime.fromisoformat(X)
-# to also change into isoformat use X.isoformat()
-
-
-# TARGET: 2025-03-01T00:54:02.809428+00:00
-def live_utc() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc)
-
-
-def time_seconds(date: datetime.datetime) -> str:
-    return date.strftime("%Y-%m-%dT%H:%M:%S")
-
-
-class MelvinImage(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    image: Image.Image
-    angle: CameraAngle
-    cor_x: int
-    cor_y: int
-    time: datetime.datetime
-
-
 # based on /observation API endpoint
 class BaseTelemetry(BaseModel):
+    """Based on /observation endpoint."""
+
     model_config = ConfigDict(use_enum_values=True)
 
     class AreaCovered(BaseModel):
@@ -339,7 +225,7 @@ class BaseTelemetry(BaseModel):
     vx: float
     vy: float
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"Telemetry@{self.timestamp.isoformat()} state={self.state} angle={self.angle} "
             f"(x,y)=({self.width_x},{self.height_y}) (vx,vy)=({self.vx},{self.vy}) "
@@ -350,7 +236,153 @@ class BaseTelemetry(BaseModel):
         )
 
 
+# [MELVONAUT]
+class MELVINTask(StrEnum):
+    """
+    Our custom programs/missions/states in which we can place Melvin.
+    In evaluation phase only mapping and ebt was used.
+    The other two were used in Phase 2, or could be used in a future update.
+    """
+
+    Mapping = "mapping"
+    Next_objective = "next_objective"
+    Fixed_objective = "fixed_objective"
+    EBT = "ebt"
+    # Emergencies = "emergencies"
+    # Events = "events"
+    # Idle = "idle"
+
+
+"""
+def boxes_overlap_in_grid(box1, box2):
+    
+    # Not completed helper function.
+    # Idea was to check if melvins camera range overlaps with an objective.
+    
+    grid_width = con.WORLD_X
+    grid_height = con.WORLD_Y
+    # Extract the position and dimensions of box1
+    x1, y1, width1, height1 = box1
+    # Extract the position and dimensions of box2
+    x2, y2, width2, height2 = box2
+
+    # Define a helper function to check overlap in one dimension with overflow
+    def overlap_1d(start1, length1, start2, length2, max_length):
+        # Compute the end positions with wrapping
+        end1 = (start1 + length1 - 1) % max_length
+        end2 = (start2 + length2 - 1) % max_length
+
+        # Check overlap considering wrapping
+        return (
+            (start1 <= end2 and end1 >= start2)  # direct overlap
+            or (
+                end1 < start1 and (start1 <= end2 or end1 >= start2)
+            )  # wrapped around for first box
+            or (
+                end2 < start2 and (start2 <= end1 or end2 >= start1)
+            )  # wrapped around for second box
+        )
+
+    # Check overlap in both dimensions
+    overlap_x = overlap_1d(x1, width1, x2, width2, grid_width)
+    overlap_y = overlap_1d(y1, height1, y2, height2, grid_height)
+
+    # The boxes overlap if they overlap in both dimensions
+    return overlap_x and overlap_y
+"""
+
+
+def lens_size_by_angle(angle: CameraAngle) -> int:
+    """
+    Returns covered area by a single picture.
+    """
+    match angle:
+        case CameraAngle.Narrow:
+            lens_size = 600
+        case CameraAngle.Normal:
+            lens_size = 800
+        case CameraAngle.Wide:
+            lens_size = 1000
+    return lens_size
+
+
+def log_rate_limiter(interval_seconds: int):  # type: ignore
+    """
+    Limits how often a single event can trigger a lot entry. Prevents cluttering of the same message.
+    Probaly not a "good" final solution.
+    """
+
+    # habe luhki nach loguru log rate limiter gefragt, gibt anscheinend keine besser inbuild lösung
+    def decorator(func):  # type: ignore
+        last_log_time = [0]  # Use a list to allow modification of non-local state
+
+        def wrapper(*args, **kwargs):  # type: ignore
+            nonlocal last_log_time
+            current_time = time.time()
+            if current_time - last_log_time[0] >= interval_seconds:
+                func(*args, **kwargs)
+                last_log_time[0] = current_time  # type: ignore
+
+        return wrapper
+
+    return decorator
+
+
+# Apply a 3-second rate limiter
+@log_rate_limiter(3)  # type: ignore
+def limited_log(message: str) -> None:
+    """Log limit for info"""
+    logger.info(message)
+
+
+# Apply a 1-second rate limiter
+@log_rate_limiter(1)  # type: ignore
+def limited_log_debug(message: str) -> None:
+    """Log limit for debug"""
+    logger.debug(message)
+
+
+class Timer(BaseModel):
+    """Starts tasks after a given intervall. E.g. take the next picture X-seconds after the current one."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    _timeout: float
+    _callback: Callable[[], Awaitable[Any]]
+    _task: asyncio.Task[None]
+
+    def __init__(self, timeout: float, callback: Callable[[], Awaitable[Any]]):
+        super().__init__()
+        self._timeout = timeout
+        self._callback = callback
+        self._task = asyncio.create_task(self._job())
+
+    async def _job(self) -> None:
+        await asyncio.sleep(self._timeout)
+        await self._callback()
+
+    def cancel(self) -> None:
+        self._task.cancel()
+
+    def get_task(self) -> asyncio.Task[None]:
+        return self._task
+
+
+class MelvinImage(BaseModel):
+    """Our format for a single image taken by MELVIN."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    image: Image.Image
+    angle: CameraAngle
+    cor_x: int
+    cor_y: int
+    time: datetime.datetime
+
+
 class Ping:
+    """Part of EBT objective, one single distance/ping."""
+
     def __init__(self, x: int, y: int, d: float, mind: int, maxd: int):
         self.x = x
         self.y = y
@@ -363,6 +395,8 @@ class Ping:
 
 
 class Event(BaseModel):
+    """Message by /announcements, includes time and position for ebt processing."""
+
     event: str
     id: int
     timestamp: Optional[datetime.datetime] = None
@@ -370,9 +404,10 @@ class Event(BaseModel):
     current_y: Optional[float] = None
 
     def __str__(self) -> str:
-        return f"Event: {self.event} (x,y)=({self.current_x},{self.current_y}) t={time_seconds(self.timestamp)}"
+        return f"Event: {self.event} (x,y)=({self.current_x},{self.current_y}) t={time_seconds(self.timestamp or live_utc())}"
 
     def easy_parse(self) -> tuple[float, float, float]:
+        """Custom parsing wrapper for ebt calculation."""
         pattern = r"DISTANCE_(\d+\.\d+)"
         dist = re.findall(pattern, self.event)[0]
         if dist and self.current_x and self.current_y:
@@ -382,6 +417,7 @@ class Event(BaseModel):
             return (0.0, 0.0, 0.0)
 
     async def to_csv(self) -> None:
+        """Melvonaut saves events."""
         event_dict = self.model_dump()
         if self.timestamp:
             event_dict["timestamp"] = self.timestamp.isoformat()
@@ -399,6 +435,7 @@ class Event(BaseModel):
 
     @staticmethod
     def load_events_from_csv(path: str) -> list["Event"]:
+        """Melvonaut saves events as csv, Rift-console loads them."""
         events = []
         if not Path(path).is_file():
             logger.warning(f"No event file found under {path}")
@@ -407,11 +444,32 @@ class Event(BaseModel):
                 for row in csv.DictReader(f):
                     read_event = Event(
                         event=row["event"],
-                        id=row["id"],
+                        id=int(row["id"]),
                         timestamp=datetime.datetime.fromisoformat(row["timestamp"]),
-                        current_x=row["current_x"],
-                        current_y=row["current_y"],
+                        current_x=float(row["current_x"]),
+                        current_y=float(row["current_y"]),
                     )
                     events.append(read_event)
             logger.info(f"Loaded {len(events)} events from {path}")
         return events
+
+
+# [TIMEFORMATS]
+# ISO 8601 format
+# Melin returns like this: 2024-12-24T13:10:13.660337Z
+#   or                     2024-12-26T13:00:00Z
+# Z equivalent to +00:00 to indicate UTC timezone
+
+# To get current time in UTC use datetime.datetime.now(datetime.timezone.utc)
+# or get from string with datetime.datetime.fromisoformat(X)
+# to also change into isoformat use X.isoformat()
+
+
+# TARGET: 2025-03-01T00:54:02.809428+00:00
+def live_utc() -> datetime.datetime:
+    """Returns live datetime object, including timezone utc"""
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def time_seconds(date: datetime.datetime) -> str:
+    return date.strftime("%Y-%m-%dT%H:%M:%S")
