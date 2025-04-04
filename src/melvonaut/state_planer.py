@@ -58,27 +58,57 @@ class StatePlanner(BaseModel):
     _current_obj_name: str = ""
 
     def model_post_init(self, __context__: Any) -> None:
+        """Initializes the recent_events list by loading events from a CSV file.
+
+        Args:
+            __context__ (Any): Context data passed during initialization.
+        """
         self.recent_events = Event.load_events_from_csv(path=con.EVENT_LOCATION_CSV)
 
     def get_current_state(self) -> State:
+        """Retrieves the current state from telemetry data.
+
+        Returns:
+            State: The current state if telemetry is available, otherwise State.Unknown.
+        """
         if self.current_telemetry is None:
             return State.Unknown
         return self.current_telemetry.state
 
     def get_previous_state(self) -> State:
+        """Retrieves the previous state from telemetry data.
+
+        Returns:
+            State: The previous state if telemetry is available, otherwise State.Unknown.
+        """
         if self.previous_telemetry is None:
             return State.Unknown
         return self.previous_telemetry.state
 
     def get_simulation_speed(self) -> int:
+        """Gets the current simulation speed from telemetry data.
+
+        Returns:
+            int: The simulation speed if telemetry is available, otherwise 1.
+        """
         if self.current_telemetry is None:
             return 1
         return self.current_telemetry.simulation_speed
 
     def get_time_since_state_change(self) -> datetime.timedelta:
+        """Calculates the time elapsed since the last state change.
+
+        Returns:
+            datetime.timedelta: The time difference between now and the last state change.
+        """
         return datetime.datetime.now() - self.state_change_time
 
     def calc_transition_remaining_time(self) -> datetime.timedelta:
+        """Calculates the remaining time for state transition.
+
+        Returns:
+            datetime.timedelta: The remaining transition time based on the simulation speed.
+        """
         if self.get_current_state() is State.Transition:
             logger.debug("Not in transition state, returning 0")
             return datetime.timedelta(0)
@@ -95,6 +125,11 @@ class StatePlanner(BaseModel):
             return total_time - self.get_time_since_state_change()
 
     def calc_current_location(self) -> tuple[float, float]:
+        """Estimates the current location based on telemetry data and time elapsed.
+
+        Returns:
+            tuple[float, float]: The estimated (x, y) coordinates.
+        """
         if self.current_telemetry is None:
             return 0.0, 0.0
         time_since_observation = (
@@ -111,7 +146,12 @@ class StatePlanner(BaseModel):
         return current_x, current_y
 
     async def trigger_velocity_change(self, new_vel_x: float, new_vel_y: float) -> None:
-        """Sets new values for accelartion, also set _accelerating"""
+        """Sets new values for accelartion, also set _accelerating
+
+        Args:
+            new_vel_x (float): The target velocity in the x direction.
+            new_vel_y (float): The target velocity in the y direction.
+        """
 
         self._target_vel_x = new_vel_x
         self._target_vel_y = new_vel_y
@@ -141,7 +181,11 @@ class StatePlanner(BaseModel):
                     logger.error(f"Failed to set velocity to {new_vel_x}, {new_vel_y}")
 
     async def trigger_camera_angle_change(self, new_angle: CameraAngle) -> None:
-        """Tries to change the camera angle to new_angle"""
+        """Tries to change the camera angle to new_angle
+
+        Args:
+            new_angle (CameraAngle): The desired camera angle.
+        """
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot set camera angle.")
             return
@@ -163,6 +207,11 @@ class StatePlanner(BaseModel):
                     logger.error(f"Failed to set camera angle to {new_angle}")
 
     async def trigger_state_transition(self, new_state: State) -> None:
+        """Initiates a state transition if valid conditions are met.
+
+        Args:
+            new_state (State): The target state to transition to.
+        """
         if new_state in [State.Transition, State.Unknown, State.Deployment, State.Safe]:
             logger.warning(f"Cannot transition to {new_state}.")
             return
@@ -198,6 +247,12 @@ class StatePlanner(BaseModel):
     async def switch_if_battery_low(
         self, state_low_battery: State, state_high_battery: State
     ) -> None:
+        """Switches state based on battery level.
+
+        Args:
+            state_low_battery (State): The state to switch to when battery is low.
+            state_high_battery (State): The state to switch to when battery is sufficient.
+        """
         if self.current_telemetry is None:
             logger.warning(
                 "No telemetry data available. Cannot plan battery based switching."
@@ -219,6 +274,16 @@ class StatePlanner(BaseModel):
             await self.trigger_state_transition(state_high_battery)
 
     async def plan_state_switching(self) -> None:
+        """Plans and executes state transitions based on current telemetry data.
+
+        This function checks the current state and decides whether to transition
+        to another state based on conditions like battery level and velocity.
+
+        Logs relevant debug information and triggers state transitions when necessary.
+
+        Returns:
+            None
+        """
         if self.current_telemetry is None:
             logger.warning("No telemetry data available. Cannot plan state switching.")
             return
@@ -304,6 +369,21 @@ class StatePlanner(BaseModel):
                 await self.trigger_state_transition(State.Acquisition)
 
     async def update_telemetry(self, new_telemetry: MelTelemetry) -> None:
+        """Updates the telemetry data and handles state changes.
+
+        This function updates the previous and current telemetry readings,
+        logs relevant debug information, and checks for state changes.
+
+        If a state change occurs, it logs the transition, cancels image
+        retrieval tasks if necessary, and triggers appropriate actions based on
+        the new state.
+
+        Args:
+            new_telemetry (MelTelemetry): The new telemetry data to update.
+
+        Returns:
+            None
+        """
         self.previous_telemetry = self.current_telemetry
         self.current_telemetry = new_telemetry
 
@@ -404,6 +484,15 @@ class StatePlanner(BaseModel):
             await self.plan_state_switching()
 
     async def get_image(self) -> None:
+        """Captures an image if telemetry data is available and conditions are met.
+
+        If no telemetry data is available, the function waits for the next observation cycle.
+        It checks various conditions (e.g., acceleration, camera angle, timing) before fetching an image
+        from an external API and saving it with appropriate metadata.
+
+        Returns:
+            None
+        """
         logger.debug("Getting image")
         if self.current_telemetry is None:
             logger.warning(
@@ -552,6 +641,14 @@ class StatePlanner(BaseModel):
                 logger.warning("Get image task was cancelled.")
 
     async def run_get_image(self) -> None:
+        """Continuously captures images while in the Acquisition state.
+
+        This function continuously captures images at calculated intervals,
+        adjusting timing based on velocity and acceleration.
+
+        Returns:
+            None
+        """
         logger.debug("Starting run_get_image")
         if self.get_current_state() == State.Acquisition:
             await self.get_image()
@@ -586,6 +683,14 @@ class StatePlanner(BaseModel):
 
     # run once after changing into acquisition mode -> setup
     async def control_acquisition(self) -> None:
+        """Initializes acquisition mode by updating objectives and setting camera parameters.
+
+        Retrieves objectives from an external API, determines the current objective, and adjusts
+        acquisition parameters accordingly. Also creates necessary directories for image storage.
+
+        Returns:
+            None
+        """
         async with aiohttp.ClientSession() as session:
             # update Objectives
             async with session.get(con.OBJECTIVE_ENDPOINT) as response:
@@ -661,5 +766,5 @@ class StatePlanner(BaseModel):
             case _:
                 pass
 
-
+"""Spawn StatePlanner object"""
 state_planner = StatePlanner()
