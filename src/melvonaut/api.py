@@ -655,6 +655,20 @@ def setup_routes(app: web.Application) -> None:
 
 @web.middleware
 async def compression_middleware(request: web.Request, handler: Handler) -> Any:
+        """Middleware to handle response compression using gzip or deflate.
+
+    This middleware checks the `Accept-Encoding` header of the request
+    to determine if the client supports gzip or deflate compression.
+    If supported, it applies the corresponding compression to the response.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+        handler (Handler): The next request handler in the middleware chain.
+
+    Returns:
+        Any: The compressed HTTP response if the client supports it,
+        otherwise the original response.
+    """
     accept_encoding = request.headers.get(hdrs.ACCEPT_ENCODING, "").lower()
 
     if ContentCoding.gzip.value in accept_encoding:
@@ -672,6 +686,20 @@ async def compression_middleware(request: web.Request, handler: Handler) -> Any:
 
 @web.middleware
 async def catcher_middleware(request: web.Request, handler: Handler) -> Any:
+    """Middleware to catch and log unhandled exceptions in request handling.
+
+    If an exception occurs while processing the request, this middleware
+    logs the error and returns a 500 Internal Server Error response
+    with the error message.
+
+    Args:
+        request (web.Request): The incoming HTTP request.
+        handler (Handler): The next request handler in the middleware chain.
+
+    Returns:
+        Any: The HTTP response from the handler, or a 500 error response
+        if an exception occurs.
+    """
     try:
         return await handler(request)
     except Exception as e:
