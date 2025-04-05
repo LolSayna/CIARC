@@ -24,7 +24,7 @@ Moreover, it provides endpoints to retrieve the collected data to the Rift-Conso
 
 ## Requirements
 
-Melvonaut requires Python 3.12 and expects a live connection to the CIARC API. 
+Melvonaut requires Python 3.12 and expects a live connection to the CIARC API.
 
 Rift-Console requires Docker and Docker Compose.
 It is recommended to also provide a public domain name to run the application via TLS. A local development version of Rift-Console also exists without docker.
@@ -185,6 +185,29 @@ This installs the Melvonaut, Rift-Console and development dependencies
 and allows running Melvonaut and Rift-Console locally via
 `melvonaut` and `rift-console`, respectively.
 
+### Architecture
+
+![Alt Text](media/CIARC.png)
+
+The diagram above shows the architecture of Melvonaut and Rift-Console in the context of CIARC.
+On the left side is the Operator Console, which runs on a VM with the Rift-Console and an NGINX Reverse Proxy are deployed as containers.
+NGINX exposes access to web interface of the Rift-Console via a public domain, using HTTP authentication to secure the access.
+
+The Rift-Console consists of a web interface, which enables controlling Melvonaut as well as the simulation.
+To control the simulation, the Rift-Console is able to send requests to the simulation control API.
+For controlling Melvonaut, the Rift-Console connects to an API provided by Melvonaut.
+The Melvonaut API is only reachable during communication windows via an SSH tunnel to Melvin.
+Besides performing control operations, the Melvonaut API also allows for downloading files such as logs and images.
+Moreover, the Rift-Console also implements an image stitching system to assemble pictures for objectives and the world map.
+
+The Operator Console VM also runs a WireGuard client to connect to the isolation layer, .i.e., the internal network of Melvin and the data reference system.
+On Melvin runs Melvonaut as a Python program.
+Melvonaut is managed by the state planer, which determines when to switch tasks.
+The Melvin API caller connects to the data reference system to collect telemetry data, request images and trigger state changes and other control operations.
+The current state is refreshed multiple times per second such that the state planer can wait for certain conditions to activate components and trigger state changes based on the current task.
+For example, when the state planer detects that the current battery level is below a certain threshold, it will trigger a switch to charge mode.
+The conditions and activations the state planer performs are based on the settings, which can be updated through the Melvonaut API from the Rift-Console.
+
 ### Code Structure
 
 <details>
@@ -228,13 +251,13 @@ and allows running Melvonaut and Rift-Console locally via
 │     │     └── utils.py                              # Helper functions
 │     ├── rift_console
 │     │     ├── __init__.py
-│     │     ├── __main__.py                           # Quart routes + logic 
-│     │     ├── rift_console.py                       # Dataclass 
+│     │     ├── __main__.py                           # Quart routes + logic
+│     │     ├── rift_console.py                       # Dataclass
 │     │     ├── ciarc_api.py                          # Connection to CIARC API
 │     │     ├── melvin_api.py                         # Connection to Melvonaut API
 │     │     ├── image_processing.py                   # Image stitching
 │     │     ├── image_helper.py
-│     │     ├── static                              
+│     │     ├── static
 │     │     │     ├── images
 │     │     │     └── satellite.svg
 │     │     └── templates
