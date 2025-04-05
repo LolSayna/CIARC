@@ -655,7 +655,7 @@ def setup_routes(app: web.Application) -> None:
 
 @web.middleware
 async def compression_middleware(request: web.Request, handler: Handler) -> Any:
-        """Middleware to handle response compression using gzip or deflate.
+    """Middleware to handle response compression using gzip or deflate.
 
     This middleware checks the `Accept-Encoding` header of the request
     to determine if the client supports gzip or deflate compression.
