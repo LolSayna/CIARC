@@ -55,7 +55,6 @@ logger.add(
     diagnose=True,
 )
 
-
 app = Quart(__name__)
 app.secret_key = "yoursecret_key"
 app.config["ebt"] = con.CONSOLE_EBT_PATH
@@ -64,67 +63,10 @@ app.config["stitched"] = con.CONSOLE_STICHED_PATH
 app.config["downloaded"] = con.CONSOLE_DOWNLOAD_PATH
 console = rift_console.rift_console.RiftConsole()
 
-
-# [HELPER]
-async def check_images() -> None:
-    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
-    console.console_image_count = sum(file.is_file() for file in folder.rglob("*.png"))
-    dates = set()
-    date_counts: dict[str, int] = defaultdict(int)
-    for image in folder.rglob("*.png"):
-        dates.add(get_date(image.name)[:10])
-        date_counts[get_date(image.name)[:10]] += 1
-    dates_list = list(dates)
-    dates_list.sort(reverse=True)
-    console.console_image_dates = [(date, date_counts[date]) for date in dates_list]
-
-    await info(
-        f"Counted {console.console_image_count} images on console from {len(console.console_image_dates)} different dates."
-    )
-
-
-def get_console_images() -> list[str]:
-    # list all images
-    images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
-    # filter to only png
-    images = [s for s in images if s.endswith(".png")]
-
-    return images
-
-
-async def info(mes: str) -> None:
-    logger.info(mes)
-    await flash(mes)
-
-
-async def warning(mes: str) -> None:
-    logger.warning(mes)
-    await flash(mes)
-
-
-# [ROUTES]
-@app.route(f"/{con.CONSOLE_STICHED_PATH}/<path:filename>")
-async def uploaded_file_stitched(filename):  # type: ignore
-    return await send_from_directory(con.CONSOLE_STICHED_PATH, filename)
-
-
-@app.route(f"/{con.CONSOLE_LIVE_PATH}/<path:filename>")
-async def uploaded_file_live(filename):  # type: ignore
-    return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
-
-
-@app.route(f"/{con.CONSOLE_DOWNLOAD_PATH}/<path:filename>")
-async def uploaded_file_download(filename):  # type: ignore
-    return await send_from_directory(con.CONSOLE_DOWNLOAD_PATH, filename)
-
-
-@app.route(f"/{con.CONSOLE_EBT_PATH}/<path:filename>")
-async def uploaded_file_ebt(filename):  # type: ignore
-    return await send_from_directory(con.CONSOLE_EBT_PATH, filename)
-
-
+# [Routes]
 @app.route("/view_ebt")
 async def view_ebt() -> str:
+    """Show ebt images."""
     # list all images
     images = os.listdir(con.CONSOLE_EBT_PATH)
     # filter to only png
@@ -142,9 +84,9 @@ async def view_ebt() -> str:
     # logger.info(f"Images: {images}")
     return await render_template("ebt.html", images=images, count=count)
 
-
 @app.route("/stitches")
 async def stitches() -> str:
+    """Show stitched images, e.g. Worldmap, Zoned, Hidden Objectives."""
     # list all images
     images = os.listdir(con.CONSOLE_STICHED_PATH)
     # filter to only png
@@ -174,9 +116,9 @@ async def stitches() -> str:
         hidden=hidden,
     )
 
-
 @app.route("/downloads")
 async def downloads() -> str:
+    """Show donwloaded indiviual images from melvonaut."""
     images = get_console_images()
 
     # sort by timestamp
@@ -215,9 +157,9 @@ async def downloads() -> str:
         dates=dates_list,
     )
 
-
 @app.route("/live")
 async def live() -> str:
+    """Show single images that are taken by a button press in console."""
     # list all images
     images = os.listdir(con.CONSOLE_LIVE_PATH)
     # filter to only png
@@ -243,6 +185,7 @@ async def live() -> str:
 
 @app.route("/", methods=["GET"])
 async def index() -> str:
+    """Main web-page."""
     if console.live_telemetry:
         return await render_template(
             "main.html",
@@ -340,10 +283,9 @@ async def index() -> str:
 
 
 # [BUTTONS]
-
-
 @app.route("/melvonaut_api", methods=["POST"])
 async def melvonaut_api() -> Response:
+    """Buttons for Melvonaut API."""
     global console
 
     # read which button was pressed
@@ -507,39 +449,9 @@ async def melvonaut_api() -> Response:
     return redirect(url_for("index"))
 
 
-async def async_world_map(filtered_images: list[str], choose_date: str) -> None:
-    panorama = rift_console.image_processing.stitch_images(
-        image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images
-    )
-
-    remove_offset = (
-        con.STITCHING_BORDER,
-        con.STITCHING_BORDER,
-        con.WORLD_X + con.STITCHING_BORDER,
-        con.WORLD_Y + con.STITCHING_BORDER,
-    )
-    panorama = panorama.crop(remove_offset)
-
-    space = ""
-    count = 0
-    path = f"{con.CONSOLE_STICHED_PATH}worldmap_{len(filtered_images)}_{choose_date}{space}.png"
-    while os.path.isfile(path):
-        count += 1
-        space = "_" + str(count)
-        path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
-
-    panorama.save(path)
-
-    rift_console.image_processing.create_thumbnail(path)
-
-    await warning(
-        f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}"
-    )
-
-
-# Upload world map/images/beacon position
 @app.route("/results", methods=["POST"])
 async def results() -> Response:
+    """Upload world map/images/beacon position"""
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
@@ -773,9 +685,9 @@ async def results() -> Response:
     return redirect(url_for("index"))
 
 
-# Add/Modify zoned_objectives
 @app.route("/obj_mod", methods=["POST"])
 async def obj_mod() -> Response:
+    """Add/Modify zoned_objectives""""
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
@@ -925,6 +837,7 @@ async def obj_mod() -> Response:
 
 @app.route("/book_slot/<int:slot_id>", methods=["POST"])
 async def book_slot(slot_id: int) -> Response:
+    """Book com slots."""
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
@@ -939,54 +852,9 @@ async def book_slot(slot_id: int) -> Response:
     return redirect(url_for("index"))
 
 
-# helper func
-async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> None:
-    final_images = [image.split("/")[-1] for image in final_images]
-
-    panorama = rift_console.image_processing.stitch_images(
-        image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=final_images
-    )
-
-    remove_offset = (
-        con.STITCHING_BORDER,
-        con.STITCHING_BORDER,
-        con.WORLD_X + con.STITCHING_BORDER,
-        con.WORLD_Y + con.STITCHING_BORDER,
-    )
-    panorama = panorama.crop(remove_offset)
-
-    space = ""
-    count = 0
-    path = (
-        f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
-    )
-    while os.path.isfile(path):
-        count += 1
-        space = "_" + str(count)
-        path = f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
-
-    panorama.save(path)
-    rift_console.image_processing.create_thumbnail(path)
-
-    if not res_obj.zone:
-        await warning(f"{res_obj} has no zone, can not stitch, aborting!")
-        return
-
-    rift_console.image_processing.cut(
-        panorama_path=path,
-        X1=res_obj.zone[0],
-        Y1=res_obj.zone[1],
-        X2=res_obj.zone[2],
-        Y2=res_obj.zone[3],
-    )
-
-    await warning(
-        f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}"
-    )
-
-
 @app.route("/stitch_obj/<int:obj_id>", methods=["POST"])
 async def stitch_obj(obj_id: int) -> Response:
+    """Part of upload panel, stitching of objectives."""
     logger.info(f"Stiching Zoned Objective with id {obj_id}.")
 
     res_obj = None
@@ -1028,15 +896,16 @@ async def stitch_obj(obj_id: int) -> Response:
 
 @app.route("/del_obj/<int:obj_id>", methods=["POST"])
 async def del_obj(obj_id: int) -> Response:
+    """Deleting objectives."""
     ciarc_api.delete_objective(id=obj_id)
     await update_telemetry()
 
     return redirect(url_for("index"))
 
 
-# Wrapper to change Melvin Status
 @app.route("/satellite_handler", methods=["POST"])
 async def satellite_handler() -> Response:
+    """Wrapper for Melvin control."""
     global console
 
     # read which button was pressed
@@ -1106,9 +975,9 @@ async def satellite_handler() -> Response:
     return redirect(url_for("index"))
 
 
-# Wrapper for all Simulation Manipulation buttons
 @app.route("/control_handler", methods=["POST"])
 async def control_handler() -> Response:
+    """Wrapper for CIARC API simulation manipulation."""
     global console
 
     # read which button was pressed
@@ -1167,8 +1036,8 @@ async def control_handler() -> Response:
     return redirect(url_for("index"))
 
 
-# Pulls API after some changes
 async def update_telemetry() -> None:
+    """Query CIARC API for new telemetry, very helpful while developing."""
     global console
 
     res = ciarc_api.update_api()
@@ -1199,20 +1068,145 @@ async def update_telemetry() -> None:
         await flash("Could not contact CIARC API.")
 
 
+# [HELPER]
+async def info(mes: str) -> None:
+    """Log to console and show message on webpage."""
+    logger.info(mes)
+    await flash(mes)
+async def warning(mes: str) -> None:
+    """Log to console and show message on webpage."""
+    logger.warning(mes)
+    await flash(mes)
+
+async def async_stitching(res_obj: ZonedObjective, final_images: list[str]) -> None:
+    """Tried to outsource stitching to another thread, so main thread already returns, but not completed."""
+    final_images = [image.split("/")[-1] for image in final_images]
+
+    panorama = rift_console.image_processing.stitch_images(
+        image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=final_images
+    )
+
+    remove_offset = (
+        con.STITCHING_BORDER,
+        con.STITCHING_BORDER,
+        con.WORLD_X + con.STITCHING_BORDER,
+        con.WORLD_Y + con.STITCHING_BORDER,
+    )
+    panorama = panorama.crop(remove_offset)
+
+    space = ""
+    count = 0
+    path = (
+        f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
+    )
+    while os.path.isfile(path):
+        count += 1
+        space = "_" + str(count)
+        path = f"{con.CONSOLE_STICHED_PATH}zoned_{len(final_images)}_{res_obj.name}{space}.png"
+
+    panorama.save(path)
+    rift_console.image_processing.create_thumbnail(path)
+
+    if not res_obj.zone:
+        await warning(f"{res_obj} has no zone, can not stitch, aborting!")
+        return
+
+    rift_console.image_processing.cut(
+        panorama_path=path,
+        X1=res_obj.zone[0],
+        Y1=res_obj.zone[1],
+        X2=res_obj.zone[2],
+        Y2=res_obj.zone[3],
+    )
+
+    await warning(
+        f"Saved stitch of {res_obj.name} - {len(final_images)} images to {path}"
+    )
+
+
+
+async def async_world_map(filtered_images: list[str], choose_date: str) -> None:
+    """Tried to outsource stitching to another thread, so main thread already returns, but not completed."""
+    panorama = rift_console.image_processing.stitch_images(
+        image_path=con.CONSOLE_DOWNLOAD_PATH, image_name_list=filtered_images
+    )
+
+    remove_offset = (
+        con.STITCHING_BORDER,
+        con.STITCHING_BORDER,
+        con.WORLD_X + con.STITCHING_BORDER,
+        con.WORLD_Y + con.STITCHING_BORDER,
+    )
+    panorama = panorama.crop(remove_offset)
+
+    space = ""
+    count = 0
+    path = f"{con.CONSOLE_STICHED_PATH}worldmap_{len(filtered_images)}_{choose_date}{space}.png"
+    while os.path.isfile(path):
+        count += 1
+        space = "_" + str(count)
+        path = f"{con.CONSOLE_STICHED_PATH}worldmap_{choose_date}{space}.png"
+
+    panorama.save(path)
+
+    rift_console.image_processing.create_thumbnail(path)
+
+    await warning(
+        f"Saved {choose_date} panorama of {len(filtered_images)} images to {path}"
+    )
+
+async def check_images() -> None:
+    """Sorts downloaded images on console and saves them by date."""
+    folder = pathlib.Path(con.CONSOLE_DOWNLOAD_PATH)
+    console.console_image_count = sum(file.is_file() for file in folder.rglob("*.png"))
+    dates = set()
+    date_counts: dict[str, int] = defaultdict(int)
+    for image in folder.rglob("*.png"):
+        dates.add(get_date(image.name)[:10])
+        date_counts[get_date(image.name)[:10]] += 1
+    dates_list = list(dates)
+    dates_list.sort(reverse=True)
+    console.console_image_dates = [(date, date_counts[date]) for date in dates_list]
+
+    await info(
+        f"Counted {console.console_image_count} images on console from {len(console.console_image_dates)} different dates."
+    )
+
+def get_console_images() -> list[str]:
+    """Count donwloaded images."""
+    # list all images
+    images = os.listdir(con.CONSOLE_DOWNLOAD_PATH)
+    # filter to only png
+    images = [s for s in images if s.endswith(".png")]
+
+    return images
+
+# [Helper for image viewer]
+# called inside html-template to match filename to location
+@app.route(f"/{con.CONSOLE_STICHED_PATH}/<path:filename>")
+async def uploaded_file_stitched(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_STICHED_PATH, filename)
+@app.route(f"/{con.CONSOLE_LIVE_PATH}/<path:filename>")
+async def uploaded_file_live(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_LIVE_PATH, filename)
+@app.route(f"/{con.CONSOLE_DOWNLOAD_PATH}/<path:filename>")
+async def uploaded_file_download(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_DOWNLOAD_PATH, filename)
+@app.route(f"/{con.CONSOLE_EBT_PATH}/<path:filename>")
+async def uploaded_file_ebt(filename):  # type: ignore
+    return await send_from_directory(con.CONSOLE_EBT_PATH, filename)
+
+
 @click.group()
 @click.version_option()
 def main() -> None:
     """Rift Console."""
     pass
 
-
 @main.command()
 def run_server() -> None:
-    """Run the Flask development server on port 3000."""
+    """Run the Quart development server on port 3000."""
     click.echo("Starting Quart server on port 3000...")
-
-    # thread = threading.Thread(target=call_telemetry)
-    # thread.start()
 
     config = Config()
     config.bind = ["0.0.0.0:3000"]
@@ -1221,7 +1215,6 @@ def run_server() -> None:
 
     # old run command
     # app.run(port=3000, debug=False, host="0.0.0.0")
-
 
 @main.command()
 def run_server_4000() -> None:
@@ -1232,7 +1225,6 @@ def run_server_4000() -> None:
     config.bind = ["0.0.0.0:4000"]
 
     asyncio.run(serve(app, config))
-
 
 if __name__ == "__main__":
     main(prog_name="Rift Console")  # pragma: no cover

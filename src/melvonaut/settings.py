@@ -20,10 +20,23 @@ file_log_handler_id = None
 
 
 class Settings(BaseModel):
+    """Startup settings for Melvonaut, can be changed by Melvonaut API."""
+
     model_config = {"arbitrary_types_allowed": True}
 
-    ## [General Settings]
+    # [Logging]
+    TRACING: bool = bool(os.getenv("TRACING", False))
 
+    TERMINAL_LOGGING_LEVEL: str = os.getenv("TERMINAL_LOGGING_LEVEL", "INFO").upper()
+    FILE_LOGGING_LEVEL: str = os.getenv("FILE_LOGGING_LEVEL", "INFO").upper()
+
+    API_PORT: int = int(os.getenv("API_PORT", 8080))
+    DISCORD_WEBHOOK_TOKEN: Optional[str] = os.getenv("DISCORD_WEBHOOK_TOKEN", None)
+    DISCORD_ALERTS_ENABLED: bool = bool(os.getenv("DISCORD_ALERTS_ENABLED", False))
+
+    NETWORK_SIM_ENABLED: bool = bool(os.getenv("NETWORK_SIMULATION", False))
+
+    ## [Stateplaning]
     OBSERVATION_REFRESH_RATE: int = int(
         os.getenv("OBSERVATION_REFRESH_RATE", 5)
     )  # Seconds between observation requests
@@ -32,19 +45,6 @@ class Settings(BaseModel):
         os.getenv("BATTERY_HIGH_THRESHOLD", 0)
     )  # Difference to Max Battery before switching
 
-    TRACING: bool = bool(os.getenv("TRACING", False))
-
-    TERMINAL_LOGGING_LEVEL: str = os.getenv("TERMINAL_LOGGING_LEVEL", "INFO").upper()
-    FILE_LOGGING_LEVEL: str = os.getenv("FILE_LOGGING_LEVEL", "INFO").upper()
-
-    API_PORT: int = int(os.getenv("API_PORT", 8080))
-
-    DISCORD_WEBHOOK_TOKEN: Optional[str] = os.getenv("DISCORD_WEBHOOK_TOKEN", None)
-    DISCORD_ALERTS_ENABLED: bool = bool(os.getenv("DISCORD_ALERTS_ENABLED", False))
-
-    NETWORK_SIM_ENABLED: bool = bool(os.getenv("NETWORK_SIMULATION", False))
-
-    ## [Camera Settings]
     TARGET_ANGLE_DEG: float = float(
         os.getenv("TARGET_ANGLE_DEG", 23.0)
     )  # The angle was calculated through simulations
@@ -81,7 +81,7 @@ class Settings(BaseModel):
         os.getenv("DISTANCE_BETWEEN_IMAGES", 450)
     )  # How many pixel before taking another image
 
-    ## [Melvin Task Planing]
+    # [Melvin Task Planing]
     # Standard mapping, with no objectives and the camera angle below
     CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.Mapping
     TARGET_CAMERA_ANGLE_ACQUISITION: CameraAngle = CameraAngle.Narrow
@@ -96,6 +96,7 @@ class Settings(BaseModel):
     # Go for the emergency beacon tracker
     # CURRENT_MELVIN_TASK: MELVINTask = MELVINTask.EBT
 
+    # [Legacy]
     # To set a custom time window to be active, or to disable all timing checks
     DO_TIMING_CHECK: bool = False
     START_TIME: datetime.datetime = datetime.datetime(
@@ -104,9 +105,7 @@ class Settings(BaseModel):
     STOP_TIME: datetime.datetime = datetime.datetime(
         2025, 1, 30, 12, 00, tzinfo=datetime.timezone.utc
     )
-
     DO_ACTUALLY_EXIT: bool = True  # Used in testing
-
     OVERRIDES: dict[str, Any] = {}
 
     # load settings

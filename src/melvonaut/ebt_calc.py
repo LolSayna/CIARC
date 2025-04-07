@@ -288,7 +288,7 @@ def draw_res(
     else:
         return (-1, -1)
 
-
+# for local testing purposes
 if __name__ == "__main__":
     # Open idea: use midpoint circle algorithm? -> not used for now
     logger.info("Running from cli.")
