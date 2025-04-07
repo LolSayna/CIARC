@@ -11,44 +11,12 @@ from loguru import logger
 from shared.models import HttpCode, live_utc
 import shared.constants as con
 
-# TODO
+# Works with active port forwarding
 url = "localhost"
 port = "8080"
 
-
-def create_tunnel() -> None:
-    # sshpass -f .ssh-pw ssh -N -L 8080:localhost:8080 root@10.100.50.1
-    # cmd = "ssh melvin -N -L 8080:localhost:8080 -o ConnectTimeout=1s"
-    cmd = [
-        "sshpass",
-        "-f",
-        ".ssh-pw",
-        "ssh",
-        "root@10.100.50.1",
-        "-N",
-        "-L",
-        "8080:localhost:8080",
-        "-o",
-        "ConnectTimeout=1s",
-    ]
-    timeout = 60 * 15  # kill connection after 15 min
-
-    process = subprocess.Popen(args=cmd)
-    logger.info(f"Started tunnel: {process.pid}")
-
-    # Function to terminate the process
-    def terminate_process() -> None:
-        logger.warning("Cleanup tunnel")
-        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-
-    # Start a timer to terminate the process after timeout
-    timer = threading.Timer(timeout, terminate_process)
-    timer.start()
-
-    return
-
-
 def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) -> Any:
+    """Wrapper with error handling for Melvonaut API."""
     try:
         with requests.Session() as s:
             match method:
@@ -87,6 +55,7 @@ def melvonaut_api(method: HttpCode, endpoint: str, json: dict[str, str] = {}) ->
 
 
 class MelvonautTelemetry(BaseModel):
+    """Datapoint of Disk, Memory and CPU utilization."""
     disk_total: int
     disk_free: int
     disk_perc: float
@@ -96,23 +65,34 @@ class MelvonautTelemetry(BaseModel):
     cpu_cores: int
     cpu_perc: float
 
-
-def clear_events() -> str:
+def live_melvonaut() -> Optional[MelvonautTelemetry]:
+    """Get live MelvonautTelemetry."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
-        return ""
+        return None
+    d = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_disk_usage").json()
+    m = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_memory_usage").json()
+    c = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_cpu_usage").json()
 
-    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_events")
-
-    if r:
-        res = "Mevlonaut get_clear_events done."
+    gigabyte = 2**30
+    if d and m and c:
+        logger.info("Mevlonaut telemetry done.")
+        return MelvonautTelemetry(
+            disk_total=int(d["root"]["total"] / gigabyte),
+            disk_free=int(d["root"]["free"] / gigabyte),
+            disk_perc=100 - d["root"]["percent"],  # invert
+            mem_total=int(m["total"] / gigabyte),
+            mem_available=int(m["available"] / gigabyte),
+            mem_perc=m["percent"],
+            cpu_cores=c["physical_cores"],
+            cpu_perc=c["percent"],
+        )
     else:
-        res = "Mevlonaut get_clear_events failed, is okay if event-log is empty."
-    logger.warning(res)
-    return res
-
+        logger.warning("Mevlonaut telemetry failed.")
+        return None
 
 def get_setting(setting: str) -> str:
+    """Get a Melvonaut Setting from settings.py."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return ""
@@ -127,8 +107,8 @@ def get_setting(setting: str) -> str:
     logger.warning('Mevlonaut get setting "{setting}" failed.')
     return ""
 
-
 def set_setting(setting: str, value: str) -> bool:
+    """Set a Melvonaut Setting from settings.py."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return False
@@ -147,8 +127,8 @@ def set_setting(setting: str, value: str) -> bool:
     logger.warning(f'Mevlonaut set_Settting "{setting}" to "{value}" failed.')
     return False
 
-
 def download_events() -> str:
+    """Download event log."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return ""
@@ -175,24 +155,23 @@ def download_events() -> str:
     logger.warning(res)
     return res
 
-
-def clear_telemetry() -> str:
+def clear_events() -> str:
+    """Clear event log."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return ""
 
-    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_telemetry")
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_events")
 
     if r:
-        res = "Mevlonaut clear_telemetry done."
+        res = "Mevlonaut get_clear_events done."
     else:
-        res = "Mevlonaut clear_telemetry failed."
-
+        res = "Mevlonaut get_clear_events failed, is okay if event-log is empty."
     logger.warning(res)
     return res
 
-
 def download_telemetry() -> str:
+    """Download existing telemetry files on Melvonaut."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return ""
@@ -219,38 +198,41 @@ def download_telemetry() -> str:
     logger.warning(res)
     return res
 
+def clear_telemetry() -> str:
+    """Delete exisiting telemtry files on Melvonaut."""
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return ""
 
-def clear_images() -> bool:
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_telemetry")
+
+    if r:
+        res = "Mevlonaut clear_telemetry done."
+    else:
+        res = "Mevlonaut clear_telemetry failed."
+
+    logger.warning(res)
+    return res
+
+
+def list_logs() -> list[str] | bool:
+    """List all log fiels on Melvonaut."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return False
 
-    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_all_images")
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_list_log_files").json()
 
     if r:
-        logger.warning("Mevlonaut cleared all images done.")
-        return True
+        logs: list[str] = r["log_files"]
+        logger.info(f"Mevlonaut list logs done, found {len(logs)} images.")
+        return logs
     else:
-        logger.warning("Mevlonaut clear_images failed.")
+        logger.warning("Mevlonaut list_images failed.")
         return False
-
-
-def clear_logs() -> bool:
-    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
-        logger.warning("Melvonaut API unreachable!")
-        return False
-
-    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_all_logs")
-
-    if r:
-        logger.warning("Mevlonaut cleared all logs done.")
-        return True
-    else:
-        logger.warning("Mevlonaut clear_logs failed.")
-        return False
-
 
 def get_download_save_log(log_name: str) -> Any:
+    """Downloads all logs from Melvonaut."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return None
@@ -266,24 +248,40 @@ def get_download_save_log(log_name: str) -> Any:
         logger.warning("Mevlonaut get_download_save_log failed.")
         return None
 
-
-def list_logs() -> list[str] | bool:
+def clear_logs() -> bool:
+    """Deletes logs on Melvonaut."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return False
 
-    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_list_log_files").json()
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_all_logs")
 
     if r:
-        logs: list[str] = r["log_files"]
-        logger.info(f"Mevlonaut list logs done, found {len(logs)} images.")
-        return logs
+        logger.warning("Mevlonaut cleared all logs done.")
+        return True
+    else:
+        logger.warning("Mevlonaut clear_logs failed.")
+        return False
+
+
+def list_images() -> list[str] | bool:
+    """List all exising images on Melvonaut."""
+    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
+        logger.warning("Melvonaut API unreachable!")
+        return False
+
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_list_images").json()
+
+    if r:
+        images: list[str] = r["images"]
+        logger.info(f"Mevlonaut image list done, found {len(images)} images.")
+        return images
     else:
         logger.warning("Mevlonaut list_images failed.")
         return False
 
-
 def get_download_save_image(image_name: str) -> Any:
+    """Download a single image from Melvonaut."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return None
@@ -301,44 +299,49 @@ def get_download_save_image(image_name: str) -> Any:
         logger.warning("Mevlonaut get_download_save_image failed.")
         return None
 
-
-def list_images() -> list[str] | bool:
+def clear_images() -> bool:
+    """Deletes exisiting images on Melvonaut."""
     if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
         logger.warning("Melvonaut API unreachable!")
         return False
 
-    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_list_images").json()
+    r = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_clear_all_images")
 
     if r:
-        images: list[str] = r["images"]
-        logger.info(f"Mevlonaut image list done, found {len(images)} images.")
-        return images
+        logger.warning("Mevlonaut cleared all images done.")
+        return True
     else:
-        logger.warning("Mevlonaut list_images failed.")
+        logger.warning("Mevlonaut clear_images failed.")
         return False
 
 
-def live_melvonaut() -> Optional[MelvonautTelemetry]:
-    if not melvonaut_api(method=HttpCode.GET, endpoint="/api/health"):
-        logger.warning("Melvonaut API unreachable!")
-        return None
-    d = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_disk_usage").json()
-    m = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_memory_usage").json()
-    c = melvonaut_api(method=HttpCode.GET, endpoint="/api/get_cpu_usage").json()
+def create_tunnel() -> None:
+    """Not completed function to automatically create an ssh tunnel with port forwarding,
+    alternative use 'shpass -f .ssh-pw ssh -N -L 8080:localhost:8080 root@10.100.50.1'"""
+    cmd = [
+        "sshpass",
+        "-f",
+        ".ssh-pw",
+        "ssh",
+        "root@10.100.50.1",
+        "-N",
+        "-L",
+        "8080:localhost:8080",
+        "-o",
+        "ConnectTimeout=1s",
+    ]
+    timeout = 60 * 15  # kill connection after 15 min
 
-    gigabyte = 2**30
-    if d and m and c:
-        logger.info("Mevlonaut telemetry done.")
-        return MelvonautTelemetry(
-            disk_total=int(d["root"]["total"] / gigabyte),
-            disk_free=int(d["root"]["free"] / gigabyte),
-            disk_perc=100 - d["root"]["percent"],  # invert
-            mem_total=int(m["total"] / gigabyte),
-            mem_available=int(m["available"] / gigabyte),
-            mem_perc=m["percent"],
-            cpu_cores=c["physical_cores"],
-            cpu_perc=c["percent"],
-        )
-    else:
-        logger.warning("Mevlonaut telemetry failed.")
-        return None
+    process = subprocess.Popen(args=cmd)
+    logger.info(f"Started tunnel: {process.pid}")
+
+    # Function to terminate the process
+    def terminate_process() -> None:
+        logger.warning("Cleanup tunnel")
+        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+
+    # Start a timer to terminate the process after timeout
+    timer = threading.Timer(timeout, terminate_process)
+    timer.start()
+
+    return

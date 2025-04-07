@@ -687,7 +687,7 @@ async def results() -> Response:
 
 @app.route("/obj_mod", methods=["POST"])
 async def obj_mod() -> Response:
-    """Add/Modify zoned_objectives""""
+    """Add/Modify zoned_objectives"""
     # read which button was pressed
     form = await request.form
     button = form.get("button", type=str)
