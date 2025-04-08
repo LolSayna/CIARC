@@ -1,0 +1,1226 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Melvonaut and Riftconsole">
+      
+      
+      
+        <link rel="canonical" href="https://c103-219.cloud.gwdg.de/docs/">
+      
+      
+      
+        <link rel="next" href="license/">
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Overview - Riftonauts Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="css/mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ciarc-riftonauts" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Riftonauts Docs" class="md-header__button md-logo" aria-label="Riftonauts Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Riftonauts Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/LolSayna/CIARC" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    LolSayna/CIARC
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="." class="md-tabs__link">
+          
+  
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="melvonaut/" class="md-tabs__link">
+          
+  
+  
+  Code Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Riftonauts Docs" class="md-nav__button md-logo" aria-label="Riftonauts Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Riftonauts Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/LolSayna/CIARC" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    LolSayna/CIARC
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#melvonaut" class="md-nav__link">
+    <span class="md-ellipsis">
+      Melvonaut
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rift-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rift-Console
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#melvonaut_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Melvonaut
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rift-console_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rift-Console
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checking-and-linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Checking and Linting
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      License
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    License
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Coverage Report
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Code Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Code Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="melvonaut/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Melvonaut
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rift_console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rift-Console
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="shared/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shared
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#melvonaut" class="md-nav__link">
+    <span class="md-ellipsis">
+      Melvonaut
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rift-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rift-Console
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#melvonaut_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Melvonaut
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rift-console_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rift-Console
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checking-and-linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Checking and Linting
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      License
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ciarc-riftonauts">CIARC - Riftonauts<a class="headerlink" href="#ciarc-riftonauts" title="Permanent link">&para;</a></h1>
+<p><a href="https://c103-219.cloud.gwdg.de/"><img alt="Web" src="https://img.shields.io/badge/Web-blue" /></a>
+<a href="https://lolsayna.github.io/CIARC/"><img alt="Docs" src="https://img.shields.io/badge/Docs-green" /></a>
+<img alt="GitHub top language" src="https://img.shields.io/github/languages/top/LolSayna/CIARC" />
+<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/LolSayna/CIARC/main.yml" />
+<img alt="GitHub License" src="https://img.shields.io/github/license/Lolsayna/CIARC" /></p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>This is the <a href="https://github.com/Lolsayna/CIARC">Riftonaut's CIARC</a> repository.
+It implements software for MELVIN and the Operator Console for the
+ESA <a href="https://www.esa.int/Education/Engagement/Applications_are_now_open_for_the_ESA_Academy_s_Computer_In_A_Room_Challenge_CIARC_3">Computer In A Room Challenge 3</a>.</p>
+<p>The project implements two packages: <code>melvonaut</code> and <code>rift-console</code>.</p>
+<p>The Operator Console, referred to as <em>Rift-Console</em>, implements a web application based on Quart,
+which provides an interface to visualize and control MELVIN in the satellite simulation.
+Moreover, it implements background tasks to analyse data from MELVIN and complete given objectives.</p>
+<p>The driver software for MELVIN, referred to as <em>Melvonaut</em>, implements an async Python service,
+which continuously operates MELVIN towards the completion of its tasks.
+Moreover, it provides endpoints to retrieve the collected data to the Rift-Console in the limited communication windows.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<p>Melvonaut requires Python 3.12 and expects a live connection to the CIARC API.</p>
+<p>Rift-Console requires Docker and Docker Compose.
+It is recommended to also provide a public domain name to run the application via TLS. A local development version of Rift-Console also exists without docker.</p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<h3 id="melvonaut">Melvonaut<a class="headerlink" href="#melvonaut" title="Permanent link">&para;</a></h3>
+<p>For deployment of Melvonaut on Melvin, Python 3.12 is required.
+In order to provide an isolated installation that persists across reboots, we compile Python 3.12 in user space.</p>
+<details>
+    <summary>SSH into Melvin and execute the following commands</summary>
+
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>/home
+
+apt<span class="w"> </span>update
+apt<span class="w"> </span>install<span class="w"> </span>git<span class="w"> </span>nano
+
+<span class="c1"># Install Python 3.12 build dependencies</span>
+apt<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>build-essential<span class="w"> </span>zlib1g-dev<span class="w"> </span>libncurses5-dev<span class="w"> </span>libgdbm-dev<span class="w"> </span>libnss3-dev<span class="w"> </span>libssl-dev<span class="w"> </span>libreadline-dev<span class="w"> </span>libffi-dev<span class="w"> </span>libsqlite3-dev<span class="w"> </span>wget<span class="w"> </span>libbz2-dev
+
+<span class="c1"># Get and build Python 3.12.9, newest 3.12 at the time of writing</span>
+wget<span class="w"> </span>https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz
+tar<span class="w"> </span>xzf<span class="w"> </span>Python-3.12.9.tgz
+rm<span class="w"> </span>Python-3.12.9.tgz
+<span class="nb">cd</span><span class="w"> </span>Python-3.12.9
+./configure<span class="w"> </span>--enable-optimizations
+
+<span class="c1"># This takes some time</span>
+make<span class="w"> </span>-j<span class="w"> </span><span class="m">16</span>
+
+<span class="c1"># Verify that it worked</span>
+./python<span class="w"> </span>--version
+
+<span class="c1"># Install Melvonaut</span>
+<span class="nb">cd</span><span class="w"> </span>/home
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/LolSayna/CIARC
+<span class="nb">cd</span><span class="w"> </span>CIARC
+../Python-3.12.9/python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>poetry
+poetry<span class="w"> </span>install<span class="w"> </span>--with<span class="w"> </span>melvonaut
+
+<span class="c1"># Optional, reset the container to remove the build dependencies</span>
+<span class="nb">kill</span><span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># Run Melvonaut with</span>
+./start-melvonaut.sh
+<span class="c1"># To let it run in the background use</span>
+./start-melvonaut.sh<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span><span class="nb">disown</span>
+
+<span class="c1"># To follow the logs</span>
+<span class="nb">cd</span><span class="w"> </span>/home/CIARC/logs/melvonaut
+<span class="c1"># Replace yyyy-mm-dd-hh with the current date or look for the newest file</span>
+tail<span class="w"> </span>-f<span class="w"> </span>log_melvonaut_yyyy-mm-dd-hh.log
+
+<span class="c1"># To stop Melvonaut restart the container</span>
+<span class="nb">kill</span><span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># To update</span>
+git<span class="w"> </span>pull
+
+<span class="c1"># To be able to update after restarting the container, git must be reinstalled</span>
+apt<span class="w"> </span>update
+apt<span class="w"> </span>install<span class="w"> </span>git
+</code></pre></div>
+</details>
+
+<p>Melvonaut supports sending error messages via Discord while network simulation is deactivated
+or during communication windows.
+To use this, a Discord webhook must be set via the environment variable <code>DISCORD_WEBHOOK_TOKEN</code>.
+This can be done by copying the <code>.env.example</code> file to <code>.env</code> and inserting the token retrieved from Discord.
+Also <code>DISCORD_ALERTS_ENABLED</code> must be set to True in the <code>.env</code> file.</p>
+<h3 id="rift-console">Rift-Console<a class="headerlink" href="#rift-console" title="Permanent link">&para;</a></h3>
+<p>Rift-Console is intended to be deployed via docker-compose on a node
+running a wire-guard connection to MELVIN and the CIARC API.</p>
+<p>Ensure that docker and docker-compose are installed.
+Rift-console is intended to be deployed on a public domain.
+If available edit <code>nginx.conf</code> to add the public domain under <code>map "" $domain</code> and the IP of the host under <code>map "" $host_ip</code>.</p>
+<p>To run the application via TLS, lets encrypt may be used.
+Edit the file <code>letsencrypt-config.sh</code> and add your domain and IP address.
+It is recommended to test with the staging environment active first.
+Then run <code>./init-letsencrypt.sh</code> to generate the initial certificates.
+The host must be publicly reachable on port 80 and 443.</p>
+<p>Rift-console is protected via HTTP Basic Authentication.
+Valid username and password pairs are read from <code>.http-pass</code>.
+Install <code>htpasswd</code> via the respective package, e.g., <code>apt install apache2-utils</code>.
+Run <code>htpasswd .http-pass username</code> to create a new user.
+You will be prompted for a password.</p>
+<p>To deploy the Rift-Console using docker-compose, run <code>make docker-compose-up</code>.
+This builds the image and starts the containers.
+Follow the logs with <code>docker-compose logs -f</code>.
+To stop the containers run <code>docker-compose down</code>.</p>
+<p>If no public domain is available, Rift-Console can also be run locally.
+Run <code>docker-compose up --build -d rift-console</code> to start the container.
+Rift-Console is available at <code>http://localhost:3000/</code></p>
+<p>The docker-compose setup also includes mkdocs.
+The docs can be found at <code>https://&lt;your-domain&gt;/docs</code>.</p>
+<p>Rift-Console uses an API exposed by Melvonaut to retrieve data and send control commands.
+For this Rift-Console expects the Melvonaut API to be reachable at <a href="http://localhost:8080/">http://localhost:8080/</a>.
+When not running Melvonaut locally, port forwarding should be used.
+A script for this is provided in the <code>ssh-scripts</code> directory as <code>ssh-forward-melvonaut-api.sh</code>.
+The script requires a file <code>.ssh-pw</code> containing the password for the ssh connection and sshpass to be installed or can be modifyed to use an ssh-key.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="melvonaut_1">Melvonaut<a class="headerlink" href="#melvonaut_1" title="Permanent link">&para;</a></h3>
+<p>Run <code>poetry run melvonaut</code> to start the service.
+Run <code>poetry run  melvonaut --help</code> for more information.</p>
+<p>For production deployment use the <code>start-melvonaut.sh</code> script.
+This includes automatic restarts on crashes.</p>
+<p>To remotely control Melvonaut, additional scripts are provided in <code>ssh-scripts</code>.</p>
+<h3 id="rift-console_1">Rift-Console<a class="headerlink" href="#rift-console_1" title="Permanent link">&para;</a></h3>
+<p>Run <code>poetry run rift-console run-server</code> to start the service locally.
+Rift-Console can then be controlled from the web interface at <a href="http://localhost:3000">http://localhost:3000</a>.</p>
+<h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h2>
+<p>The implementation uses Python 3.12 and <a href="https://python-poetry.org/">Poetry</a>.</p>
+<p>The easiest way to set up Poetry is to install <a href="https://pipx.pypa.io/">pipx</a> and then to run
+<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span>poetry
+</code></pre></div>
+It is assumed that Python 3.12 is available on the system.</p>
+<h3 id="installation_1">Installation<a class="headerlink" href="#installation_1" title="Permanent link">&para;</a></h3>
+<p>To install Melvonaut and Rift-Console with all dependencies, run the following commands
+<div class="highlight"><pre><span></span><code><span class="c1"># Prepare the virtual environment</span>
+poetry<span class="w"> </span>config<span class="w"> </span>virtualenvs.in-project<span class="w"> </span><span class="nb">true</span>
+poetry<span class="w"> </span>env<span class="w"> </span>use<span class="w"> </span>python3.12
+poetry<span class="w"> </span>install<span class="w"> </span>--all-groups
+
+<span class="c1"># Then activate the virtual environment via</span>
+<span class="nb">source</span><span class="w"> </span><span class="k">$(</span>poetry<span class="w"> </span>env<span class="w"> </span>info<span class="w"> </span>--path<span class="k">)</span>/bin/activate
+<span class="c1"># or</span>
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</code></pre></div></p>
+<p>This installs the Melvonaut, Rift-Console and development dependencies
+and allows running Melvonaut and Rift-Console locally via
+<code>melvonaut</code> and <code>rift-console</code>, respectively.</p>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
+<p><img alt="Alt Text" src="media/CIARC.png" /></p>
+<p>The diagram above shows the architecture of Melvonaut and Rift-Console in the context of CIARC.
+On the left side is the Operator Console, which runs on a VM with the Rift-Console and an NGINX Reverse Proxy are deployed as containers.
+NGINX exposes access to web interface of the Rift-Console via a public domain, using HTTP authentication to secure the access.</p>
+<p>The Rift-Console consists of a web interface, which enables controlling Melvonaut as well as the simulation.
+To control the simulation, the Rift-Console is able to send requests to the simulation control API.
+For controlling Melvonaut, the Rift-Console connects to an API provided by Melvonaut.
+The Melvonaut API is only reachable during communication windows via an SSH tunnel to Melvin.
+Besides performing control operations, the Melvonaut API also allows for downloading files such as logs and images.
+Moreover, the Rift-Console also implements an image stitching system to assemble pictures for objectives and the world map.</p>
+<p>The Operator Console VM also runs a WireGuard client to connect to the isolation layer, .i.e., the internal network of Melvin and the data reference system.
+On Melvin runs Melvonaut as a Python program.
+Melvonaut is managed by the state planer, which determines when to switch tasks.
+The Melvin API caller connects to the data reference system to collect telemetry data, request images and trigger state changes and other control operations.
+The current state is refreshed multiple times per second such that the state planer can wait for certain conditions to activate components and trigger state changes based on the current task.
+For example, when the state planer detects that the current battery level is below a certain threshold, it will trigger a switch to charge mode.
+The conditions and activations the state planer performs are based on the settings, which can be updated through the Melvonaut API from the Rift-Console.</p>
+<h3 id="code-structure">Code Structure<a class="headerlink" href="#code-structure" title="Permanent link">&para;</a></h3>
+<details>
+    <summary>Folders & Files</summary>
+
+<div class="highlight"><pre><span></span><code>├── data                                              # NGINX and Certbot data
+├── docker-compose.yml
+├── Dockerfile                                        # Rift-Console Dockerfile
+├── Dockerfile.mkdocs                                 # Mkdocs Dockerfile
+├── docs                                              # Project docs
+├── init-letsencrypt.sh
+├── letsencrypt-config.sh
+├── LICENSE
+├── logs
+│     ├── melvonaut
+│     │     ├── event_melvonaut.csv                   # Announcements captured form stream
+│     │     ├── images                                # Saved images
+│     │     └── log_melvonaut_XXXX.log                # Python logging
+│     │     └── telemetry_melvonaut.csv               # Telemetry
+│     │     └── persistent_settings.json              # Settings that override defaults
+│     └── rift_console
+│         ├── from_melvonaut                          # Logs/Events/Telemetry downloaded from Melvonaut
+│         └── images                                  # Downloaded/Stitched/Processed images
+├── Makefile
+├── media                                             # Static files for docs
+├── mkdocs.yml
+├── nginx.conf
+├── poetry.lock
+├── pyproject.toml
+├── README.md
+├── src
+│     ├── melvonaut
+│     │     ├── __init__.py
+│     │     ├── __main__.py                           # Main control flow
+│     │     ├── api.py                                # Melvonaut API, consumed by Rift-Console
+│     │     ├── ebt_calc.py                           # Beacon calculator
+│     │     ├── mel_telemetry.py                      # Telemtry data class
+│     │     ├── settings.py                           # Melvonaut settings
+│     │     ├── state_planer.py                       # State management logic
+│     │     └── utils.py                              # Helper functions
+│     ├── rift_console
+│     │     ├── __init__.py
+│     │     ├── __main__.py                           # Quart routes + logic
+│     │     ├── rift_console.py                       # Dataclass
+│     │     ├── ciarc_api.py                          # Connection to CIARC API
+│     │     ├── melvin_api.py                         # Connection to Melvonaut API
+│     │     ├── image_processing.py                   # Image stitching
+│     │     ├── image_helper.py
+│     │     ├── static
+│     │     │     ├── images
+│     │     │     └── satellite.svg
+│     │     └── templates
+│     │         ├── main.html                         # Index page
+│     │         ├── live.html
+│     │         ├── downloads.html
+│     │         └── stitched.html
+│     │         ├── ebt.html
+│     └── shared
+│         ├── __init__.py
+│         ├── constants.py                            # Shared constants
+│         ├── models.py                               # Shared data classes
+├── ssh-scripts
+│     ├── ssh-forward-melvonaut-api.sh                # Port forward Melvonaut API to localhost
+│     ├── ssh-git-pull-on-melvin.sh                   # Update CIARC on Melvin
+│     ├── ssh-restart-melvin-container.sh             # Kill the Melvin container
+│     ├── ssh-restart-melvonaut.sh                    # Stop Melvonaut and let wrapper restart it
+│     ├── ssh-start-melvonaut.sh                      # Run wrapper start script
+│     └── ssh-stop-melvonaut.sh                       # Stop Melvonaut and wrapper script
+├── start-melvonaut.sh                                # Wrapper script for restarting Melvonaut
+└── tests
+    ├── test_melvonaut
+    │     ├── __init__.py
+    │     ├── conftest.py
+    │     ├── test_api.py
+    │     ├── test_main.py
+    │     ├── test_models.py
+    │     ├── test_settings.py
+    │     └── test_state_planer.py
+    └── test_rift_console
+        ├── __init__.py
+        └── test_main.py
+</code></pre></div>
+</details>
+
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<p>Melvonaut is tested using <a href="https://docs.pytest.org/en/latest/">pytest</a>.
+Tests can be run via <code>make test</code>.
+To run with coverage, run <code>make coverage</code>.
+The tests are also run via Github Actions.</p>
+<h3 id="type-checking-and-linting">Type Checking and Linting<a class="headerlink" href="#type-checking-and-linting" title="Permanent link">&para;</a></h3>
+<p>Use <code>make mypy</code> and <code>make lint</code> inside an active poetry enviroment.</p>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>Distributed under the terms of the <a href="https://github.com/Lolsayna/CIARC/blob/main/LICENSE">MIT license</a>,
+<em>Ciarc</em> is free and open source software.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
