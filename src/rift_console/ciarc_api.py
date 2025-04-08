@@ -17,39 +17,6 @@ from shared.models import (
     HttpCode,
 )
 
-
-def console_api_image(angle: CameraAngle) -> Optional[str]:
-    try:
-        with requests.Session() as s:
-            r = s.get(con.IMAGE_ENDPOINT, timeout=10)
-    except requests.exceptions.ConnectionError:
-        logger.error("Console: ConnectionError - possible no VPN?")
-        return None
-    except requests.exceptions.ReadTimeout:
-        logger.error("Console: Timeout error - possible no VPN?")
-        return None
-
-    match r.status_code:
-        case 200:
-            img_timestamp = datetime.datetime.fromisoformat(
-                r.headers.get("image-timestamp") or ""
-            ).strftime("%Y-%m-%dT%H:%M:%S")
-            with open(
-                con.CONSOLE_LIVE_PATH + "live_" + angle + "_" + img_timestamp + ".png",
-                "wb",
-            ) as f:
-                f.write(r.content)
-            logger.warning(f"Console: received Image - {img_timestamp}")
-            return img_timestamp
-        case 400:
-            logger.warning(f"Console: Bad request - {type(r.json())} - {r.json()}")
-            return None
-        case _:
-            logger.warning(f"Console: Unkown error: - {type(r.json())} - {r}")
-            return None
-
-
-# wrapper with error handling for ciarc api
 def console_api(
     method: HttpCode,
     endpoint: str,
@@ -57,6 +24,7 @@ def console_api(
     json: dict[str, Any] = {},
     files: dict[str, Any] = {},
 ) -> Any:
+    """Wrapper for ciarc api with error handling."""
     try:
         with requests.Session() as s:
             match method:
@@ -106,29 +74,62 @@ def console_api(
             return {}
 
 
+def console_api_image(angle: CameraAngle) -> Optional[str]:
+    """Wrapper for CIARC API with images, since it has a slighly different syntax."""
+    try:
+        with requests.Session() as s:
+            r = s.get(con.IMAGE_ENDPOINT, timeout=10)
+    except requests.exceptions.ConnectionError:
+        logger.error("Console: ConnectionError - possible no VPN?")
+        return None
+    except requests.exceptions.ReadTimeout:
+        logger.error("Console: Timeout error - possible no VPN?")
+        return None
+
+    match r.status_code:
+        case 200:
+            img_timestamp = datetime.datetime.fromisoformat(
+                r.headers.get("image-timestamp") or ""
+            ).strftime("%Y-%m-%dT%H:%M:%S")
+            with open(
+                con.CONSOLE_LIVE_PATH + "live_" + angle + "_" + img_timestamp + ".png",
+                "wb",
+            ) as f:
+                f.write(r.content)
+            logger.warning(f"Console: received Image - {img_timestamp}")
+            return img_timestamp
+        case 400:
+            logger.warning(f"Console: Bad request - {type(r.json())} - {r.json()}")
+            return None
+        case _:
+            logger.warning(f"Console: Unkown error: - {type(r.json())} - {r}")
+            return None
+
+
 def reset() -> None:
+    """Reset Simulation."""
     console_api(method=HttpCode.GET, endpoint=con.RESET_ENDPOINT)
     return
 
-
 def save_backup() -> datetime.datetime:
+    """Save backup of simulation."""
     console_api(method=HttpCode.GET, endpoint=con.BACKUP_ENDPOINT)
     t = live_utc()
     logger.info("Console: saving satellite state.")
 
     return t
 
-
 def load_backup(last_backup_date: Optional[datetime.datetime]) -> None:
+    """Load backup of simulation."""
     console_api(method=HttpCode.PUT, endpoint=con.BACKUP_ENDPOINT)
     logger.info(f"Console: restoring satellite state from {last_backup_date}.")
 
     return
 
-
 def change_simulation_env(
     is_network_simulation: bool = False, user_speed_multiplier: int = 1
 ) -> None:
+    """Change simspeed or network simulation."""
     params = {
         "is_network_simulation": str(is_network_simulation).lower(),
         "user_speed_multiplier": str(user_speed_multiplier),
@@ -152,6 +153,7 @@ def update_api() -> (
         ]
     ]
 ):
+    """Pull status like slots and objectives, that are available even outside comms window."""
     s = console_api(method=HttpCode.GET, endpoint=con.SLOTS_ENDPOINT)
     o = console_api(method=HttpCode.GET, endpoint=con.OBJECTIVE_ENDPOINT)
     a = console_api(method=HttpCode.GET, endpoint=con.ACHIEVEMENTS_ENDPOINT)
@@ -170,6 +172,7 @@ def update_api() -> (
 
 
 def live_telemetry() -> Optional[BaseTelemetry]:
+    """Pulls /observation."""
     d = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if d:
         b = BaseTelemetry(**d)
@@ -181,6 +184,7 @@ def live_telemetry() -> Optional[BaseTelemetry]:
 
 
 def change_angle(angle: CameraAngle) -> Any:
+    """Change camera angle, keep veloctiy constant."""
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
@@ -203,6 +207,7 @@ def change_angle(angle: CameraAngle) -> Any:
 
 
 def change_state(state: State) -> Any:
+    """Change State."""
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
@@ -225,6 +230,7 @@ def change_state(state: State) -> Any:
 
 
 def change_velocity(vel_x: float, vel_y: float) -> Any:
+    """Change velocity of MELVIN."""
     obs = console_api(method=HttpCode.GET, endpoint=con.OBSERVATION_ENDPOINT)
     if not obs:
         logger.warning("Console: no telemetry available, could not change camera angle")
@@ -246,6 +252,7 @@ def change_velocity(vel_x: float, vel_y: float) -> Any:
 
 
 def book_slot(slot_id: int, enabled: bool) -> None:
+    """Book coms slot."""
     params = {
         "slot_id": slot_id,
         "enabled": str(enabled).lower(),
@@ -262,6 +269,7 @@ def book_slot(slot_id: int, enabled: bool) -> None:
 
 
 def delete_objective(id: int) -> None:
+    """Delete objective (only used while testing)."""
     params = {
         "id": str(id),
     }
@@ -285,6 +293,7 @@ def add_modify_zoned_objective(
     description: str,
     secret: bool,
 ) -> bool:
+    """Add zoned or hidden objectives for testing."""
     json = {
         "zoned_objectives": [
             {
@@ -323,6 +332,7 @@ def add_modify_ebt_objective(
     beacon_height: int,
     beacon_width: int,
 ) -> bool:
+    """Add EBT objectives for testing."""
     json = {
         "zoned_objectives": [],
         "beacon_objectives": [
@@ -351,6 +361,7 @@ def add_modify_ebt_objective(
 
 
 def send_beacon(beacon_id: int, height: int, width: int) -> Any:
+    """Guess a EBT position."""
     params = {"beacon_id": beacon_id, "height": height, "width": width}
     d = console_api(method=HttpCode.PUT, endpoint=con.BEACON_ENDPOINT, params=params)
     if d:
@@ -362,6 +373,7 @@ def send_beacon(beacon_id: int, height: int, width: int) -> Any:
 
 
 def upload_worldmap(image_path: str) -> Any:
+    """Upload a worldmap"""
     files = {"image": (image_path, open(image_path, "rb"), "image/png")}
     d = console_api(method=HttpCode.POST, endpoint=con.DAILYMAP_ENDPOINT, files=files)
     if d:
@@ -379,6 +391,7 @@ def upload_worldmap(image_path: str) -> Any:
 
 
 def upload_objective(image_path: str, objective_id: int) -> Any:
+    """Upload an images of an objective."""
     params = {
         "objective_id": objective_id,
     }
